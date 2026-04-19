@@ -1,0 +1,11 @@
+{
+  "type": "module",
+  "dependencies": {
+    "antlr4": "^4.13.2",
+    "prettier": "^3.8.1"
+  },
+  "prettier": {
+    "tabWidth": 4,
+    "useTabs": false
+  }
+}
