@@ -62,6 +62,9 @@ function print(path, options, print) {
         case ALParser.RULE_tableFieldProperty:
             return printTableFieldProperty(path, options, print);
 
+        case ALParser.RULE_tableRelationExpression:
+            return printTableRelationExpression(path, options, print);
+
         case ALParser.RULE_tableRelationRelatedTableExpr:
             return printRelatedTableExpression(path, options, print);
 
@@ -335,8 +338,8 @@ function print(path, options, print) {
         case ALParser.RULE_optionDataType:
             return printOptionDataType(path, options, print);
 
-        case ALParser.RULE_optionMembersList:
-            return printOptionMembersList(path, options, print);
+        case ALParser.RULE_identifiersList:
+            return printIdentifiersList(path, options, print);
 
         case ALParser.RULE_procedureCall:
             return printProcedureCall(path, options, print);
@@ -380,6 +383,57 @@ function print(path, options, print) {
     }
 }
 
+function printComment(path, options) {
+    const comment = path.node;
+
+    if (!comment?.symbol?.text) {
+        return "";
+    }
+
+    const trimmed = comment.symbol.text.trim();
+
+    // Line comment (// style)
+    if (trimmed.startsWith("//")) {
+        return trimmed;
+    }
+
+    // Block comment (/* */ style)
+    if (trimmed.startsWith("/*")) {
+        // For multi-line block comments, preserve the structure
+        if (trimmed.includes("\n")) {
+            // Return as-is, preserving multi-line block comment formatting
+            return trimmed;
+        }
+        return trimmed;
+    }
+
+    return trimmed;
+}
+
+function canAttachComment(node) {
+    if (!node) return false;
+
+    // Comments cannot be attached to EOF or whitespace-like nodes
+    if (node.symbol && node.symbol.text === "<EOF>") return false;
+    if (node.hidden) return false;  // Skip hidden tokens themselves
+
+    return true;
+}
+
+function isBlockComment(node) {
+    if (!node || !node.symbol) return false;
+    const text = node.symbol.text;
+    return text && text.trim().startsWith("/*");
+}
+
+function getCommentType(node) {
+    if (!node || !node.symbol) return "line";
+    const text = node.symbol.text.trim();
+    if (text.startsWith("//")) return "line";
+    if (text.startsWith("/*")) return "block";
+    return "line";
+}
+
 function printCompilationUnit(path, options, print) {
     // Grammar: namespaceDeclaration? usingRefList? objectDefinition* EOF
     const children = path.node.children;
@@ -387,8 +441,6 @@ function printCompilationUnit(path, options, print) {
     const usingRefListIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_usingRefList);
     const objectDefinitionIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_objectDefinition);
 
-    // const namespace = namespaceDescIdx > -1 ? join(hardline, [path.call(print, 'children', namespaceDescIdx), hardline]) : [];
-    // const usingRefList = namespaceDescIdx > -1 ? join(hardline, [path.call(print, 'children', usingRefListIdx), hardline]) : [];
     const namespace = namespaceDescIdx > -1 ? path.call(print, 'children', namespaceDescIdx) : [];
     const usingRefList = usingRefListIdx > -1 ? path.call(print, 'children', usingRefListIdx) : [];
 
@@ -817,6 +869,10 @@ function printActionGroupDefinition(path, options, print) {
     return ["group(", name, ")", hardline, "{", indent([hardline, elements]), hardline, "}"];
 }
 
+function printTableRelationExpression(path, options, print) {
+    return group(indent(join(line, path.map(print, 'children'))));
+}
+
 function printRelatedTableExpression(path, options, print) {
     return path.map(print, 'children');
 }
@@ -843,7 +899,7 @@ function printTableRelationFilter(path, options, print) {
 }
 
 function printCalcFormulaExpression(path, options, print) {
-    // Grammar: identifier LPAREN identifier (DOT identifier)? (tableRelationWhereExpression)? RPAREN;
+    // Grammar: identifier LPAREN tableFieldReference (tableRelationWhereExpression)? RPAREN;
     const children = path.node.children;
     const whereExprIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_tableRelationWhereExpression);
     const rparenIdx = children.findIndex(c => c.symbol?.type === ALParser.RPAREN);
@@ -857,7 +913,7 @@ function printCalcFormulaExpression(path, options, print) {
     }
 
     const tableRef = path.call(print, 'children', tableRefIdx);
-    return [...calcFormulaFunction, "(", indent([...tableRef, line, ...whereExpr]), ")"];
+    return group([...calcFormulaFunction, "(", indent([...tableRef, line, ...whereExpr]), ")"]);
 }
 
 //#endregion Page functions
@@ -1379,7 +1435,7 @@ function printOptionDataType(path, options, print) {
         : [TypeName];
 }
 
-function printOptionMembersList(path, options, print) {
+function printIdentifiersList(path, options, print) {
     // Grammar: identifier (COMMA identifier)*
     const optionValues = [];
     for (let i = 0; i < path.node.children.length; i += 2) {
@@ -1397,5 +1453,9 @@ function printProperty(path, options, print) {
 
 export const printer = {
     print,
-    getVisitorKeys
+    getVisitorKeys,
+    printComment,
+    canAttachComment,
+    isBlockComment,
+    getCommentType
 }

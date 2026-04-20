@@ -9,7 +9,49 @@ function parse(text, options) {
     const tokens = new CommonTokenStream(lexer);
     const parser = new ALParser(tokens);
 
-    return parser.compilationUnit();
+    const compilationUnit = parser.compilationUnit();
+
+    const comments = [];
+    findNodeComments(compilationUnit, tokens, comments);
+    if (comments.length > 0) {
+        compilationUnit.comments = comments;
+    }
+
+    return compilationUnit;
+}
+
+function findNodeComments(node, tokenStream, comments) {
+    if (!node || !Array.isArray(node.children)) {
+        return;
+    }
+
+    let index = 0;
+    while (index < node.children.length) {
+        const child = node.children[index];
+
+        if (child && !child.hidden && child.symbol && typeof child.symbol.tokenIndex === "number") {
+            const commentTokens = tokenStream.getHiddenTokensToLeft(child.symbol.tokenIndex, ALLexer.COMMENTS_CHANNEL);
+            if (commentTokens && commentTokens.length > 0) {
+                comments.push(...commentTokens.map(token => ({
+                    symbol: {
+                        text: token.text,
+                        start: token.start,
+                        stop: token.stop,
+                        startLine: token.line,
+                        startColumn: token.column,
+                        stopLine: token.line,
+                        stopColumn: token.column + token.text.length,
+                    },
+                    printed: false
+                })));
+                index += 1;
+                continue;
+            }
+        }
+
+        findNodeComments(child, tokenStream, comments);
+        index += 1;
+    }
 }
 
 function locStart(node) {
