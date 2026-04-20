@@ -38,8 +38,8 @@ function print(path, options, print) {
         case ALParser.RULE_tableObject:
             return printTableObject(path, options, print);
 
-        case ALParser.RULE_tablePropertiesListList:
-            return printTablePropertiesListList(path, options, print);
+        case ALParser.RULE_tablePropertiesList:
+            return printTablePropertiesList(path, options, print);
 
         case ALParser.RULE_tablePropertyItem:
             return printTablePropertyItem(path, options, print);
@@ -65,6 +65,18 @@ function print(path, options, print) {
         case ALParser.RULE_tableRelationRelatedTableExpr:
             return printRelatedTableExpression(path, options, print);
 
+        case ALParser.RULE_tableRelationWhereExpression:
+            return printTableRelationWhereExpression(path, options, print);
+
+        case ALParser.RULE_tableRelationFieldReference:
+            return printTableRelationFieldReference(path, options, print);
+
+        case ALParser.RULE_tableRelationFilter:
+            return printTableRelationFilter(path, options, print);
+
+        case ALParser.RULE_calcFormulaExpression:
+            return printCalcFormulaExpression(path, options, print);
+
         case ALParser.RULE_tableKeysSection:
             return printTableKeysSection(path, options, print);
 
@@ -79,6 +91,18 @@ function print(path, options, print) {
 
         case ALParser.RULE_keyPropertyItem:
             return printKeyPropertyItem(path, options, print);
+
+        case ALParser.RULE_fieldGroupsList:
+            return printFieldGroupsList(path, options, print);
+
+        case ALParser.RULE_fieldGroupItem:
+            return printFieldGroupItem(path, options, print);
+
+        case ALParser.RULE_fieldGroupDefinition:
+            return printFieldGroupDefinition(path, options, print);
+
+        case ALParser.RULE_fieldGroupFieldsList:
+            return printFieldGroupFieldsList(path, options, print);
 
         //#endregion Table object
 
@@ -216,6 +240,15 @@ function print(path, options, print) {
 
         //#region Code statements
 
+        case ALParser.RULE_namespaceDeclaration:
+            return printNamespaceDeclaration(path, options, print);
+
+        case ALParser.RULE_usingRefList:
+            return printUsingRefList(path, options, print);
+
+        case ALParser.RULE_usingReference:
+            return printUsingReference(path, options, print);
+
         case ALParser.RULE_variableDeclaration:
             return printVariableDeclaration(path, options, print);
 
@@ -334,6 +367,7 @@ function print(path, options, print) {
         case ALParser.RULE_equalityExpression:
         case ALParser.RULE_relationalExpression:
         case ALParser.RULE_additiveExpression:
+        case ALParser.RULE_tableRelationEqualityExpression:
             return printBinaryExpression(path, options, print);
 
         //#endregion Code statements
@@ -347,7 +381,19 @@ function print(path, options, print) {
 }
 
 function printCompilationUnit(path, options, print) {
-    return [join(hardline, path.map(print, 'children').filter(Boolean)), hardline];
+    // Grammar: namespaceDeclaration? usingRefList? objectDefinition* EOF
+    const children = path.node.children;
+    const namespaceDescIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_namespaceDeclaration);
+    const usingRefListIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_usingRefList);
+    const objectDefinitionIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_objectDefinition);
+
+    // const namespace = namespaceDescIdx > -1 ? join(hardline, [path.call(print, 'children', namespaceDescIdx), hardline]) : [];
+    // const usingRefList = namespaceDescIdx > -1 ? join(hardline, [path.call(print, 'children', usingRefListIdx), hardline]) : [];
+    const namespace = namespaceDescIdx > -1 ? path.call(print, 'children', namespaceDescIdx) : [];
+    const usingRefList = usingRefListIdx > -1 ? path.call(print, 'children', usingRefListIdx) : [];
+
+    const objectDef = path.call(print, 'children', objectDefinitionIdx);
+    return [join([hardline, hardline], [namespace, usingRefList, objectDef]), hardline];
 }
 
 function printObjectDefinition(path, options, print) {
@@ -364,7 +410,7 @@ function printTableObject(path, options, print) {
     return printALObject(path, options, print, ALParser.TABLE);
 }
 
-function printTablePropertiesListList(path, options, print) {
+function printTablePropertiesList(path, options, print) {
     // Grammar: tablePropertyItem+
     return join(hardline, path.map(print, 'children'));
 }
@@ -479,12 +525,44 @@ function printKeyPropertyItem(path, options, print) {
     return printProperty(path, options, print);
 }
 
+function printFieldGroupsList(path, options, print) {
+    // Grammar: FIELDGROUPS LBRACE fieldGroupItem* RBRACE
+    const rBraceIdx = path.node.children.findIndex(c => c.symbol?.type === ALParser.RBRACE);
+    const items = [];
+
+    for (let i = 2; i < rBraceIdx; i++) {
+        items.push(path.call(print, 'children', 2));
+    }
+
+    return ["fieldgroups", hardline, "{", indent([hardline, join(hardline, items)]), hardline, "}"];
+}
+
+function printFieldGroupItem(path, options, print) {
+    // Grammar: FIELDGROUP LPAREN fieldGroupDefinition RPAREN LBRACE RBRACE
+    return ["fieldgroup(", path.call(print, 'children', 2), ")", hardline, "{", hardline, "}"];
+}
+
+function printFieldGroupDefinition(path, options, print) {
+    // Grammar: identifier SEMICOLON fieldGroupFieldsList
+    return [path.call(print, 'children', 0), "; ", path.call(print, 'children', 2)];
+}
+
+function printFieldGroupFieldsList(path, options, print) {
+    // Grammar: identifier (COMMA identifier)*
+    const fieldNames = [];
+    for (let i = 0; i < path.node.children.length; i += 2) {
+        fieldNames.push(path.call(print, 'children', i));
+    }
+
+    return join(", ", fieldNames);
+}
+
 //#endregion Table functions
 
 //#region Table extension functions
 
 function printTableExtObject(path, options, print) {
-    // Grammar: namespaceDeclaration? usingReference* TABLEEXTENSION INTEGER_LITERAL IDENTIFIER EXTENDS IDENTIFIER LBRACE tableExtPropertiesList? tableExtFieldsList? tableKeysSection? (variablesList | triggersList | proceduresList)* RBRACE;
+    // Grammar: TABLEEXTENSION INTEGER_LITERAL IDENTIFIER EXTENDS IDENTIFIER LBRACE tableExtPropertiesList? tableExtFieldsList? tableKeysSection? (variablesList | triggersList | proceduresList)* RBRACE;
     const children = path.node.children;
 
     const objectIdx = children.findIndex(c => c.symbol?.type === ALParser.TABLEEXTENSION);
@@ -743,13 +821,52 @@ function printRelatedTableExpression(path, options, print) {
     return path.map(print, 'children');
 }
 
+function printTableRelationWhereExpression(path, options, print) {
+    // Grammar: WHERE LPAREN tableRelationEqualityExpression (COMMA tableRelationEqualityExpression)* RPAREN
+    const children = path.node.children;
+    const filters = [];
+    for (let i = 2; i < children.length; i += 2) {
+        filters.push(path.call(print, 'children', i));
+    }
+
+    return ["where(", indent(join([",", line], filters)), ")"];
+}
+
+function printTableRelationFieldReference(path, options, print) {
+    // Grammar: FIELD LPAREN tableFieldReference RPAREN
+    return ["field(", ...path.call(print, 'children', 2), ")"];
+}
+
+function printTableRelationFilter(path, options, print) {
+    // Grammar: FILTER LPAREN relationFilterExpression RPAREN
+    return ["filter(", ...path.call(print, 'children', 2), ")"];
+}
+
+function printCalcFormulaExpression(path, options, print) {
+    // Grammar: identifier LPAREN identifier (DOT identifier)? (tableRelationWhereExpression)? RPAREN;
+    const children = path.node.children;
+    const whereExprIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_tableRelationWhereExpression);
+    const rparenIdx = children.findIndex(c => c.symbol?.type === ALParser.RPAREN);
+    const tableRefIdx = whereExprIdx > 0 ? whereExprIdx - 1 : rparenIdx - 1;
+
+    const calcFormulaFunction = path.call(print, 'children', 0);
+
+    let whereExpr = [];
+    if (whereExprIdx > 0) {
+        whereExpr = path.call(print, 'children', whereExprIdx);
+    }
+
+    const tableRef = path.call(print, 'children', tableRefIdx);
+    return [...calcFormulaFunction, "(", indent([...tableRef, line, ...whereExpr]), ")"];
+}
+
 //#endregion Page functions
 
 //#region Interface functions
 
 function printInterfaceObject(path, options, print) {
     const children = path.node.children;
-    // Grammar: namespaceDeclaration? usingReference* INTERFACE intentifier LBRACE interfacePropertiesList? procedureDeclaration* RBRACE
+    // Grammar: INTERFACE intentifier LBRACE interfacePropertiesList? procedureDeclaration* RBRACE
     const objectIdx = children.findIndex(c => c.symbol?.type === ALParser.INTERFACE);
     if (objectIdx === -1) return "";
 
@@ -823,6 +940,20 @@ function printCodeunitObject(path, options, print) {
 //#endregion Codeunit functions
 
 //#region Code statements
+
+function printNamespaceDeclaration(path, options, print) {
+    // Grammar: NAMESPACE namespaceName SEMICOLON;
+    return ["namespace ", ...path.call(print, 'children', 1), ";"];
+}
+
+function printUsingRefList(path, options, print) {
+    return join(hardline, path.map(print, 'children'));
+}
+
+function printUsingReference(path, options, print) {
+    // Grammar: USING namespaceName SEMICOLON;
+    return ["using ", ...path.call(print, 'children', 1), ";"];
+}
 
 function printVariableDeclaration(path, options, print) {
     // Grammar: identifier (COMMA identifier)* COLON dataType SEMICOLON
@@ -900,7 +1031,7 @@ function printProcedureDefinition(path, options, print) {
 
     let attributes = [];
     if (children[0].ruleIndex === ALParser.RULE_procedureAttributesList) {
-        attributes = path.call(print, "children", 0);
+        attributes = [...path.call(print, "children", 0), hardline];
     }
 
     const name = path.call(print, 'children', procKeywordIdx + 1);
@@ -925,7 +1056,7 @@ function printProcedureDefinition(path, options, print) {
     }
 
     let accessModifier = [];
-    if (accessModifierIdx > 0) {
+    if (accessModifierIdx >= 0) {
         accessModifier = [path.call(print, 'children', accessModifierIdx), " "];
     }
 
@@ -934,7 +1065,7 @@ function printProcedureDefinition(path, options, print) {
         ? [hardline, "begin", indent([hardline, path.call(print, 'children', statementListId)]), hardline, "end;"]
         : [hardline, "begin", hardline, "end;"];
 
-    return [...attributes, hardline, ...accessModifier, ...signature, ...returnType, ...vars, ...body];
+    return [...attributes, ...accessModifier, ...signature, ...returnType, ...vars, ...body];
 }
 
 function printProcedureAttributes(path, options, print) {
@@ -1163,7 +1294,7 @@ function printCompoundBlock(path, options, print) {
 function printALObject(path, options, print, objectType) {
     const children = path.node.children;
     // Grammar is similar for most objects.
-    // For example, table grammar: namespaceDeclaration? usingReference* TABLE INTEGER_LITERAL identifier LBRACE
+    // For example, table grammar: TABLE INTEGER_LITERAL identifier LBRACE
     //              tablePropertyList? variablesList? tableFieldsList? tableKeysSection?
     //              variablesList? triggersList? variablesList? proceduresList? variablesList?
     //          RBRACE
