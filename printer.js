@@ -20,7 +20,7 @@ function print(path, options, print) {
     if (node.symbol) {
         const text = node.symbol.text;
         if (text === "<EOF>") return "";
-        return text;
+        return printToken(node);
     }
 
     // Non-terminal rule context
@@ -34,18 +34,33 @@ function print(path, options, print) {
         case ALParser.RULE_genericObjectProperty:
             return printGenericObjectProperty(path, options, print);
 
+        case ALParser.RULE_tablePropertiesList:
+        case ALParser.RULE_codeunitPropertiesList:
+            return printObjectPropertiesList(path, options, print);
+
+        case ALParser.RULE_tablePropertyItem:
+        case ALParser.RULE_codeunitPropertyItem:
+        case ALParser.RULE_pagePropertyItem:
+        case ALParser.RULE_tableFieldPropertyItem:
+            return printObjectPropertyItem(path, options, print);
+
+        case ALParser.RULE_tableProperty:
+        case ALParser.RULE_pageProperty:
+        case ALParser.RULE_codeunitProperty:
+        case ALParser.RULE_tableFieldProperty:
+        case ALParser.RULE_groupProperty:
+        case ALParser.RULE_partProperty:
+            return printObjectProperty(path, options, print);
+
+        case ALParser.RULE_objectPermissionsList:
+            return printObjectPermissionsList(path, options, print);
+
+        case ALParser.RULE_permissionsPropertyValue:
+            return printPermissionsPropertyValue(path, options, print);
+
         //#region Table object
         case ALParser.RULE_tableObject:
             return printTableObject(path, options, print);
-
-        case ALParser.RULE_tablePropertiesList:
-            return printTablePropertiesList(path, options, print);
-
-        case ALParser.RULE_tablePropertyItem:
-            return printTablePropertyItem(path, options, print);
-
-        case ALParser.RULE_tableProperty:
-            return printTableProperty(path, options, print);
 
         case ALParser.RULE_tableFieldsList:
             return printTableFieldsList(path, options, print);
@@ -55,12 +70,6 @@ function print(path, options, print) {
 
         case ALParser.RULE_tableFieldPropertiesList:
             return printTableFieldPropertiesList(path, options, print);
-
-        case ALParser.RULE_tableFieldPropertyItem:
-            return printTableFieldPropertyItem(path, options, print);
-
-        case ALParser.RULE_tableFieldProperty:
-            return printTableFieldProperty(path, options, print);
 
         case ALParser.RULE_tableRelationExpression:
             return printTableRelationExpression(path, options, print);
@@ -72,10 +81,9 @@ function print(path, options, print) {
             return printTableRelationWhereExpression(path, options, print);
 
         case ALParser.RULE_tableRelationFieldReference:
-            return printTableRelationFieldReference(path, options, print);
-
+        case ALParser.RULE_tableRelationConstReference:
         case ALParser.RULE_tableRelationFilter:
-            return printTableRelationFilter(path, options, print);
+            return printTableRelationFilterRef(path, options, print);
 
         case ALParser.RULE_calcFormulaExpression:
             return printCalcFormulaExpression(path, options, print);
@@ -124,12 +132,6 @@ function print(path, options, print) {
         case ALParser.RULE_pagePropertyList:
             return printPagePropertyList(path, options, print);
 
-        case ALParser.RULE_pagePropertyItem:
-            return printPagePropertyItem(path, options, print);
-
-        case ALParser.RULE_pageProperty:
-            return printPageProperty(path, options, print);
-
         case ALParser.RULE_layoutDefinition:
             return printLayoutDefinition(path, options, print);
 
@@ -147,9 +149,6 @@ function print(path, options, print) {
 
         case ALParser.RULE_groupElements:
             return printGroupElements(path, options, print);
-
-        case ALParser.RULE_groupProperty:
-            return printGroupProperty(path, options, print);
 
         case ALParser.RULE_groupPropertyItem:
             return printGroupPropertyItem(path, options, print);
@@ -365,19 +364,22 @@ function print(path, options, print) {
             return printCaseBranch(path, options, print);
 
         case ALParser.RULE_assignmentStatement:
-        case ALParser.RULE_logicalOrExpression:
-        case ALParser.RULE_logicalAndExpression:
         case ALParser.RULE_equalityExpression:
         case ALParser.RULE_relationalExpression:
-        case ALParser.RULE_additiveExpression:
         case ALParser.RULE_tableRelationEqualityExpression:
             return printBinaryExpression(path, options, print);
+
+        case ALParser.RULE_logicalOrExpression:
+        case ALParser.RULE_logicalAndExpression:
+        case ALParser.RULE_additiveExpression:
+        case ALParser.RULE_multiplicativeExpression:
+            return printMultipartExpression(path, options, print);
 
         //#endregion Code statements
 
         default:
             if (Array.isArray(node.children)) {
-                return join("", path.map(print, 'children'));
+                return path.map(print, 'children');
             }
             return "";
     }
@@ -390,24 +392,7 @@ function printComment(path, options) {
         return "";
     }
 
-    const trimmed = comment.symbol.text.trim();
-
-    // Line comment (// style)
-    if (trimmed.startsWith("//")) {
-        return trimmed;
-    }
-
-    // Block comment (/* */ style)
-    if (trimmed.startsWith("/*")) {
-        // For multi-line block comments, preserve the structure
-        if (trimmed.includes("\n")) {
-            // Return as-is, preserving multi-line block comment formatting
-            return trimmed;
-        }
-        return trimmed;
-    }
-
-    return trimmed;
+    return comment.symbol.text.trim();
 }
 
 function canAttachComment(node) {
@@ -445,7 +430,20 @@ function printCompilationUnit(path, options, print) {
     const usingRefList = usingRefListIdx > -1 ? path.call(print, 'children', usingRefListIdx) : [];
 
     const objectDef = path.call(print, 'children', objectDefinitionIdx);
-    return [join([hardline, hardline], [namespace, usingRefList, objectDef]), hardline];
+
+    const result = [];
+    if (namespace.length > 0) {
+        result.push(...namespace, hardline, hardline);
+    }
+    if (usingRefList.length > 0) {
+        result.push(...usingRefList, hardline, hardline);
+    }
+
+    if (objectDef.length > 0) {
+        result.push(...objectDef, hardline);
+    }
+
+    return result;
 }
 
 function printObjectDefinition(path, options, print) {
@@ -453,28 +451,26 @@ function printObjectDefinition(path, options, print) {
 }
 
 function printGenericObjectProperty(path, options, print) {
-    return printProperty(path, options, print);
+    return printObjectProperty(path, options, print);
+}
+
+function printObjectPropertiesList(path, options, print) {
+    return join(hardline, path.map(print, 'children'));
+}
+
+function printObjectPropertyItem(path, options, print) {
+    // Grammar: tableProperty SEMICOLON (For table. Other object follow the same grammar, only with the respective object type.)
+    return [path.call(print, 'children', 0), path.call(print, 'children', 1)];
+}
+
+function printObjectProperty(path, options, print) {
+    return join(" ", path.map(print, 'children'));
 }
 
 //#region Table functions
 
 function printTableObject(path, options, print) {
     return printALObject(path, options, print, ALParser.TABLE);
-}
-
-function printTablePropertiesList(path, options, print) {
-    // Grammar: tablePropertyItem+
-    return join(hardline, path.map(print, 'children'));
-}
-
-function printTablePropertyItem(path, options, print) {
-    // Grammar: tableProperty SEMICOLON
-    return [path.call(print, 'children', 0), ";"];
-}
-
-function printTableProperty(path, options, print) {
-    // All variants are keyword = value sequences; join tokens with spaces
-    return printProperty(path, options, print);
 }
 
 function printTableFieldsList(path, options, print) {
@@ -511,11 +507,6 @@ function printTableFieldDefinition(path, options, print) {
 function printTableFieldPropertiesList(path, options, print) {
     // Grammar: tableFieldPropertyItem+
     return join(hardline, path.map(print, 'children'));
-}
-
-function printTableFieldPropertyItem(path, options, print) {
-    // Grammar: tableFieldProperty SEMICOLON
-    return [path.call(print, 'children', 0), ";"];
 }
 
 function printTableFieldProperty(path, options, print) {
@@ -650,16 +641,6 @@ function printPagePropertyList(path, options, print) {
     return join(hardline, path.map(print, 'children'));
 }
 
-function printPagePropertyItem(path, options, print) {
-    // Grammar: pageProperty SEMICOLON
-    return [path.call(print, 'children', 0), ";"];
-}
-
-function printPageProperty(path, options, print) {
-    // All variants are keyword = value sequences; join tokens with spaces
-    return printProperty(path, options, print);
-}
-
 function printLayoutDefinition(path, options, print) {
     // Grammar: LAYOUT LBRACE layoutElements RBRACE
     const elements = path.call(print, 'children', 2);
@@ -743,10 +724,6 @@ function printPartPropertiesList(path, options, print) {
 function printPartPropertyItem(path, options, print) {
     // Grammar: partProperty SEMICOLON
     return [path.call(print, 'children', 0), ";"];
-}
-
-function printPartProperty(path, options, print) {
-    return printProperty(path, options, print);
 }
 
 function printRepeaterDefinition(path, options, print) {
@@ -888,14 +865,11 @@ function printTableRelationWhereExpression(path, options, print) {
     return ["where(", indent(join([",", line], filters)), ")"];
 }
 
-function printTableRelationFieldReference(path, options, print) {
-    // Grammar: FIELD LPAREN tableFieldReference RPAREN
-    return ["field(", ...path.call(print, 'children', 2), ")"];
-}
-
-function printTableRelationFilter(path, options, print) {
-    // Grammar: FILTER LPAREN relationFilterExpression RPAREN
-    return ["filter(", ...path.call(print, 'children', 2), ")"];
+function printTableRelationFilterRef(path, options, print) {
+    // Grammar: (FIELD | CONST | FILTER) LPAREN tableFieldReference RPAREN
+    const func = path.call(print, 'children', 0);
+    const rParen = path.call(print, 'children', 3);
+    return [func, "(", ...path.call(print, 'children', 2), rParen];
 }
 
 function printCalcFormulaExpression(path, options, print) {
@@ -999,7 +973,7 @@ function printCodeunitObject(path, options, print) {
 
 function printNamespaceDeclaration(path, options, print) {
     // Grammar: NAMESPACE namespaceName SEMICOLON;
-    return ["namespace ", ...path.call(print, 'children', 1), ";"];
+    return [path.call(print, 'children', 0), " ", ...path.call(print, 'children', 1), path.call(print, 'children', 2)];
 }
 
 function printUsingRefList(path, options, print) {
@@ -1008,7 +982,7 @@ function printUsingRefList(path, options, print) {
 
 function printUsingReference(path, options, print) {
     // Grammar: USING namespaceName SEMICOLON;
-    return ["using ", ...path.call(print, 'children', 1), ";"];
+    return [path.call(print, 'children', 0), " ", ...path.call(print, 'children', 1), path.call(print, 'children', 2)];
 }
 
 function printVariableDeclaration(path, options, print) {
@@ -1184,10 +1158,12 @@ function printParameter(path, options, print) {
 function printIfStatement(path, options, print) {
     // Grammar: IF expression THEN statement (ELSE statement)?
     const children = path.node.children;
+    const ifKeyword = path.call(print, 'children', 0);
     const condition = path.call(print, 'children', 1);  // expression
+    const thenKeyword = path.call(print, 'children', 2);
     let thenStmt = path.call(print, 'children', 3);   // statement
 
-    // Statement following "then". If it's a compond statement "begin..end", do not insert a hardline before the statement.
+    // Statement following "then". If it's a compound statement "begin..end", do not insert a hardline before the statement.
     if (children[3]?.children[0]?.ruleIndex === ALParser.RULE_compoundBlock) {
         thenStmt = [" ", thenStmt];
     }
@@ -1195,12 +1171,21 @@ function printIfStatement(path, options, print) {
         thenStmt = indent([hardline, thenStmt]);
     }
 
-    const ifPart = [group(["if ", condition, line, "then"]), thenStmt];
+    const ifPart = [group([ifKeyword, " ", condition, line, thenKeyword]), thenStmt];
 
     // ELSE and its statement are optional — present when children.length > 4
     if (children.length > 4) {
-        const elseStmt = path.call(print, 'children', 5);
-        return [ifPart, hardline, "else", indent([hardline, elseStmt])];
+        // Similar to "then begin" above, "else begin" must not break the line.
+        const elseKeyword = path.call(print, 'children', 4);
+        let elseStmt = path.call(print, 'children', 5);
+        if (children[5]?.children[0]?.ruleIndex === ALParser.RULE_compoundBlock) {
+            elseStmt = [" ", elseStmt];
+        }
+        else {
+            elseStmt = indent([hardline, elseStmt]);
+        }
+
+        return [ifPart, hardline, elseKeyword, elseStmt];
     }
 
     return ifPart;
@@ -1314,14 +1299,16 @@ function printProcedureCall(path, options, print) {
 }
 
 function printArgumentList(path, options, print) {
-    // Grammar: expression (COMMA expression)* — COMMA tokens at odd indices are skipped
+    // Grammar: expression (COMMA expression)*
     const children = path.node.children;
     const argDocs = [];
     for (let i = 0; i < children.length; i += 2) {
-        argDocs.push(path.call(print, 'children', i));
+        const argument = path.call(print, 'children', i);
+        const comma = i < children.length - 2 ? [path.call(print, 'children', i + 1), line] : [];
+        argDocs.push([...argument, ...comma]);
     }
 
-    return join([",", line], argDocs);
+    return argDocs;
 }
 
 function printUnaryExpression(path, options, print) {
@@ -1341,10 +1328,28 @@ function printBinaryExpression(path, options, print) {
         : join(" ", path.map(print, 'children'));
 }
 
+function printMultipartExpression(path, options, print) {
+    // Grammar: unaryExpression ((MULTIPLY | DIVIDE | DIV | MOD) unaryExpression)*;
+    const children = path.node.children;
+
+    const parts = [];
+    for (let i = 0; i < children.length; i += 2) {
+        const operand = path.call(print, 'children', i);
+        parts.length === 0 ? parts.push(operand) : parts.push([line, operand]);
+        if (i + 1 < children.length) {
+            parts.push([" ", path.call(print, 'children', i + 1)]);
+        }
+    }
+
+    return children.length > 1 ? group(indent(parts)) : parts;
+}
+
 function printCompoundBlock(path, options, print) {
     // Grammar: BEGIN statementList END
+    const beginKeyword = path.call(print, 'children', 0);
     const statementList = path.call(print, 'children', 1);
-    return ["begin", indent([hardline, join(hardline, statementList)]), [hardline, "end"]];
+    const endKeyword = path.call(print, 'children', 2);
+    return [beginKeyword, indent([hardline, join(hardline, statementList)]), [hardline, endKeyword]];
 }
 
 function printALObject(path, options, print, objectType) {
@@ -1357,6 +1362,9 @@ function printALObject(path, options, print, objectType) {
     // Optional prefix rules are omitted from children when absent, so find the object type token (TABLE, PAGE, CODEUNIT, etc) dynamically
     const objectIdx = children.findIndex(c => c.symbol?.type === objectType);
     if (objectIdx === -1) return "";
+
+    const lBraceIdx = children.findIndex(c => c.symbol?.type === ALParser.LBRACE);
+    const rBraceIdx = children.findIndex(c => c.symbol?.type === ALParser.RBRACE);
 
     const keyword = path.call(print, 'children', objectIdx);
     const objectId = path.call(print, 'children', objectIdx + 1);
@@ -1374,7 +1382,7 @@ function printALObject(path, options, print, objectType) {
         ? [indent([hardline, join([hardline, hardline], elementDocs)]), hardline]
         : [hardline];
 
-    return [keyword, " ", objectId, " ", objectName, hardline, "{", ...body, "}"];
+    return [keyword, " ", objectId, " ", objectName, hardline, path.call(print, 'children', lBraceIdx), ...body, path.call(print, 'children', rBraceIdx)];
 }
 
 function printArrayDataType(path, options, print) {
@@ -1445,8 +1453,82 @@ function printIdentifiersList(path, options, print) {
     return join(", ", optionValues);
 }
 
-function printProperty(path, options, print) {
-    return join(" ", path.map(print, 'children'));
+function printObjectPermissionsList(path, options, print) {
+    // Grammar: PERMISSIONS EQUAL permissionsPropertyValue (COMMA permissionsPropertyValue)*
+    const children = path.node.children;
+    const permissionsKeyword = path.call(print, 'children', 0);
+    const equalSign = path.call(print, 'children', 1);
+
+    const propValues = [];
+    for (let i = 2; i < children.length; i += 2) {
+        let value = path.call(print, 'children', i);
+        if (i < children.length - 1) {
+            value.push(path.call(print, 'children', i + 1));  // Print comma
+        }
+        propValues.push(value);
+    }
+
+    return group(indent([permissionsKeyword, " ", equalSign, line, join(line, propValues)]));
+}
+
+function printPermissionsPropertyValue(path, options, print) {
+    // Grammar: identifier identifier EQUAL PERMISSION_VALUES
+    const objectType = path.call(print, 'children', 0);
+    const objectName = path.call(print, 'children', 1);
+    const equalSign = path.call(print, 'children', 2);
+    const permissions = path.call(print, 'children', 3);
+
+    return join(" ", [objectType, objectName, equalSign, permissions]);
+}
+
+function printToken(token) {
+    const text = token.symbol.text;
+    return isLowerCaseToken(token) ? text.toLowerCase() : text;
+}
+
+function isLowerCaseToken(token) {
+    if (!token.symbol) return false;
+
+    const lowerCaseTokens = new Set([
+        ALParser.AND,
+        ALParser.BEGIN,
+        ALParser.BREAK,
+        ALParser.CASE,
+        ALParser.CONST,
+        ALParser.CONTINUE,
+        ALParser.DIV,
+        ALParser.DO,
+        ALParser.DOWNTO,
+        ALParser.ELSE,
+        ALParser.END,
+        ALParser.EXIT,
+        ALParser.EXTENDS,
+        ALParser.FIELD,
+        ALParser.FILTER,
+        ALParser.FOR,
+        ALParser.FOREACH,
+        ALParser.IF,
+        ALParser.IN,
+        ALParser.MOD,
+        ALParser.NAMESPACE,
+        ALParser.NOT,
+        ALParser.OF,
+        ALParser.OR,
+        ALParser.PROCEDURE,
+        ALParser.REPEAT,
+        ALParser.THEN,
+        ALParser.THIS,
+        ALParser.TO,
+        ALParser.TRIGGER,
+        ALParser.UNTIL,
+        ALParser.USING,
+        ALParser.VAR,
+        ALParser.WHILE,
+        ALParser.WITH,
+        ALParser.XOR,
+    ]);
+
+    return lowerCaseTokens.has(token.symbol.type);
 }
 
 //#endregion Code statements
