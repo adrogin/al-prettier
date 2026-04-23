@@ -12,7 +12,7 @@ function parse(text, options) {
     const compilationUnit = parser.compilationUnit();
 
     const comments = [];
-    findNodeComments(compilationUnit, tokens, comments);
+    attachNodeComments(compilationUnit, tokens, comments);
     if (comments.length > 0) {
         compilationUnit.comments = comments;
     }
@@ -20,7 +20,7 @@ function parse(text, options) {
     return compilationUnit;
 }
 
-function findNodeComments(node, tokenStream, comments) {
+function attachNodeComments(node, tokenStream, comments) {
     if (!node || !Array.isArray(node.children)) {
         return;
     }
@@ -42,14 +42,13 @@ function findNodeComments(node, tokenStream, comments) {
                         stopLine: token.line,
                         stopColumn: token.column + token.text.length,
                     },
+                    value: token.text,
                     printed: false
                 })));
-                index += 1;
-                continue;
             }
         }
 
-        findNodeComments(child, tokenStream, comments);
+        attachNodeComments(child, tokenStream, comments);
         index += 1;
     }
 }
@@ -72,20 +71,10 @@ function locEnd(node) {
     return token && typeof token.stop === "number" ? token.stop : 0;
 }
 
-function hasPragma(text) {
-    return true;
-}
-
-function hasIgnorePragma(text) {
-    return false;
-}
-
 export const parser =
 {
     parse,
     astFormat: "al-ast",
-    hasPragma,
-    hasIgnorePragma,
     locStart,
     locEnd
 };
