@@ -1713,7 +1713,7 @@ function isLowerCaseToken(token) {
 
 //#endregion Code statements
 
-export const printer = {
+export default {
     print,
     getVisitorKeys,
     printComment,

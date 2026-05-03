@@ -71,8 +71,7 @@ function locEnd(node) {
     return token && typeof token.stop === "number" ? token.stop : 0;
 }
 
-export const parser =
-{
+export default {
     parse,
     astFormat: "al-ast",
     locStart,

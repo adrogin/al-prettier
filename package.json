@@ -1,11 +1,27 @@
 {
-  "type": "module",
-  "dependencies": {
-    "antlr4": "^4.13.2",
-    "prettier": "^3.8.1"
-  },
-  "prettier": {
-    "tabWidth": 4,
-    "useTabs": false
-  }
+    "type": "module",
+    "name": "al-prettier",
+    "version": "1.0.0",
+    "description": "Prettier plugin for AL language",
+    "scripts": {
+        "test": "NODE_OPTIONS=--experimental-vm-modules mocha",
+        "test:watch": "NODE_OPTIONS=--experimental-vm-modules mocha --watch",
+        "test:coverage": "c8 NODE_OPTIONS=--experimental-vm-modules mocha"
+    },
+    "dependencies": {
+        "antlr4": "^4.13.2",
+        "prettier": "^3.8.1"
+    },
+    "devDependencies": {
+        "@babel/core": "^7.23.0",
+        "@babel/preset-env": "^7.23.0",
+        "@babel/register": "^7.23.0",
+        "chai": "^4.3.10",
+        "mocha": "^10.2.0",
+        "c8": "^8.0.0"
+    },
+    "prettier": {
+        "tabWidth": 4,
+        "useTabs": false
+    }
 }

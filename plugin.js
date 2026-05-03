@@ -1,5 +1,5 @@
-import { parser } from "./parser.js";
-import { printer } from "./printer.js";
+import parser from "./parser.js";
+import printer from "./printer.js";
 
 const alPrettier = {
   languages: [
