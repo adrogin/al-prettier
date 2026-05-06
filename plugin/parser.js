@@ -1,6 +1,6 @@
 import { CharStream, CommonTokenStream } from 'antlr4';
-import ALLexer from "../algrammar/JS/ALLexer.js";
-import ALParser from "../algrammar/JS/ALParser.js";
+import ALLexer from "../../algrammar/JS/ALLexer.js";
+import ALParser from "../../algrammar/JS/ALParser.js";
 
 function parse(text, options) {
     const input = text;

@@ -1,5 +1,5 @@
 import * as prettier from 'prettier';
-import ALParser from '../algrammar/JS/ALParser.js';
+import ALParser from '../../algrammar/JS/ALParser.js';
 
 const { hardline, join, indent, group, line, softline } = prettier.doc.builders;
 
@@ -1367,10 +1367,10 @@ function printForLoopStatement(path, options, print) {
     const initialization = path.call(print, 'children', 3);
     const increment = path.call(print, 'children', 4);  // "to" or "downto" keyword
     const condition = path.call(print, 'children', 5);
-    let statement = path.call(print, 'children', 6);
+    let statement = path.call(print, 'children', 7);
 
     // Statement executed inside the loop. If it's a compond statement "begin..end", do not insert a hardline before the statement.
-    if (children[6]?.children[0]?.ruleIndex === ALParser.RULE_compoundBlock) {
+    if (children[7].children && children[7].children[0].ruleIndex === ALParser.RULE_compoundBlock) {
         statement = [" ", statement];
     }
     else {
@@ -1405,7 +1405,7 @@ function printRepeatStatement(path, options, print) {
     const statementList = path.call(print, 'children', 1);
     const condition = path.call(print, 'children', 3);
 
-    return ["repeat", indent([hardline, join(hardline, statementList)]), [hardline, "until ", condition]];
+    return ["repeat", indent([hardline, statementList]), [hardline, "until ", condition]];
 }
 
 function printWhileLoopStatement(path, options, print) {
@@ -1516,7 +1516,7 @@ function printCompoundBlock(path, options, print) {
     const beginKeyword = path.call(print, 'children', 0);
     const statementList = path.call(print, 'children', 1);
     const endKeyword = path.call(print, 'children', 2);
-    return [beginKeyword, indent([hardline, join(hardline, statementList)]), [hardline, endKeyword]];
+    return [beginKeyword, indent([hardline, statementList]), [hardline, endKeyword]];
 }
 
 function printALObject(path, options, print, objectType) {

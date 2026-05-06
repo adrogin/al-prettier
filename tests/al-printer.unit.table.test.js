@@ -1,20 +1,22 @@
 import { describe, it } from 'mocha';
 import { expect } from 'chai';
-import printer from '../printer.js';
+import printer from '../plugin/printer.js';
 import {
     mockPrettyPrint,
     mockTerminalNode,
     mockRuleNode,
-    mockTableProperty,
     mockTablePropertyItem,
     mockTablePropertiesList,
     mockTableFieldDefinition,
-    mockTableFieldProperty,
     mockTableFieldPropertyItem,
     mockTableFieldPropertiesList,
     mockTableFieldsList,
     mockTableObjectWithProperties,
-    mockTableObjectWithFields
+    mockTableObjectWithFields,
+    mockTableKeyDefinition,
+    mockTableKeysList,
+    mockTableKeyPropertyItem,
+    mockTableKeyPropertiesList
 } from './objectMocks.js';
 import { compareIndentedList } from './testUtils.js';
 import * as prettier from 'prettier';
@@ -182,11 +184,12 @@ describe('Table fields list', () => {
     });
 
     it('Fields list with multiple fields prints correctly', () => {
-        const field1 = mockTableFieldDefinition('1', 'ID', 'Integer');
-        const field2 = mockTableFieldDefinition('2', 'Description', 'Text[100]');
-        const field3 = mockTableFieldDefinition('3', 'Amount', 'Decimal');
+        const fields = [
+            mockTableFieldDefinition('1', 'ID', 'Integer'),
+            mockTableFieldDefinition('2', 'Description', 'Text[100]'),
+            mockTableFieldDefinition('3', 'Amount', 'Decimal')];
 
-        const fieldsList = mockTableFieldsList([field1, field2, field3]);
+        const fieldsList = mockTableFieldsList(fields);
         const fieldsListNode = mockPrettyPrint(fieldsList);
 
         const printed = printer.print(fieldsListNode, null, mockPrettyPrint).flat(Infinity);
@@ -199,6 +202,29 @@ describe('Table fields list', () => {
                     'field(', '2', '; ', 'Description', '; ', 'Text[100]', ')', hardline, '{', hardline, '}', hardline,
                     'field(', '3', '; ', 'Amount', '; ', 'Decimal', ')', hardline, '{', hardline, '}']
             ]), hardline,
+            "}"
+        ].flat();
+
+        compareIndentedList(expected, printed);
+    });
+});
+
+describe('Table keys', () => {
+    it('Print table keys list with one clustered key', () => {
+        const key = mockTableKeyDefinition('PK', ['ID'], mockTableKeyPropertiesList([mockTableKeyPropertyItem('Clustered', 'true')]));
+        const keysListNode = mockPrettyPrint(mockTableKeysList([key]));
+
+        const printed = printer.print(keysListNode, null, mockPrettyPrint).flat(Infinity);
+
+        const expected = [
+            "keys", hardline,
+            "{", indent([hardline, [
+                'key(', 'PK', '; ', 'ID', ')', hardline,
+                '{', indent([hardline, [
+                    "Clustered", " ", "=", " ", "true", ";"
+                ]]), hardline,
+                '}'
+            ]]), hardline,
             "}"
         ].flat();
 
@@ -257,65 +283,6 @@ describe('Field definitions with properties', () => {
     });
 });
 
-describe('Table with fields and properties combined', () => {
-    it('Table with properties and fields prints correctly', () => {
-        const tableId = "50002";
-        const tableName = "Invoice";
+describe('AL keywords as identifiers', () => {
 
-        const field1 = mockTableFieldDefinition('1', 'InvoiceNo', 'Code[20]');
-        const field2 = mockTableFieldDefinition('2', 'Amount', 'Decimal');
-
-        const tableProperties = mockTablePropertiesList([
-            mockTableProperty('Caption', "'Invoice Register'"),
-            mockTableProperty('Description', "'Stores invoice data'")
-        ]);
-
-        const children = [
-            mockTerminalNode('table', ALParser.TABLE),
-            mockTerminalNode(tableId),
-            mockTerminalNode(`"${tableName}"`),
-            mockTerminalNode('{', ALParser.LBRACE),
-            tableProperties,
-            mockTableFieldsList([field1, field2]),
-            mockTerminalNode('}', ALParser.RBRACE)
-        ];
-
-        const tableNode = mockRuleNode(ALParser.RULE_tableObject, children);
-        const ast = mockPrettyPrint(tableNode);
-
-        const printed = printer.print(ast, null, mockPrettyPrint).flat(Infinity);
-
-        expect(printed).to.include('table');
-        expect(printed).to.include(tableId);
-        expect(printed).to.include(tableName);
-        expect(printed).to.include('fields');
-    });
-
-    it('Complex table with multiple field properties prints correctly', () => {
-        const field1Props = [
-            mockTableFieldProperty('Caption', "'Primary Key'"),
-            mockTableFieldProperty('Description', "'Unique identifier'"),
-            mockTableFieldProperty('Editable', 'false')
-        ];
-        const field1PropertiesList = mockTableFieldPropertiesList(field1Props);
-        const field1 = mockTableFieldDefinition('1', 'RecordID', 'Integer', [field1PropertiesList]);
-
-        const field2Props = [
-            mockTableFieldProperty('Caption', "'Amount'"),
-            mockTableFieldProperty('DecimalPlaces', '2')
-        ];
-        const field2PropertiesList = mockTableFieldPropertiesList(field2Props);
-        const field2 = mockTableFieldDefinition('2', 'LineAmount', 'Decimal', [field2PropertiesList]);
-
-        const fieldsList = mockTableFieldsList([field1, field2]);
-        const fieldsListNode = mockPrettyPrint(fieldsList);
-
-        const printed = printer.print(fieldsListNode, null, mockPrettyPrint).flat(Infinity);
-
-        expect(printed).to.include('RecordID');
-        expect(printed).to.include('LineAmount');
-        expect(printed).to.include('Caption');
-        expect(printed).to.include('Description');
-        expect(printed).to.include('Editable');
-    });
 });

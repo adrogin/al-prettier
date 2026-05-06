@@ -46,22 +46,19 @@
     },
     "scripts": {
         "build": "node build.js",
-        "build:prod": "node build.js --production",
         "watch": "node build.js --watch",
         "pretest": "npm run build",
         "test": "node ./dist/test/runTest.js",
-        "vscode:prepublish": "npm run build:prod",
-        "package": "vsce package --no-dependencies",
-        "package:prod": "npm run build:prod && vsce package --no-dependencies",
-        "package:dev": "npm run build && vsce package --no-dependencies --allow-star-activation"
+        "vscode:prepublish": "npm run build",
+        "package": "vsce package --no-dependencies"
     },
     "dependencies": {
-        "antlr4": "^4.13.2",
-        "prettier": "^3.8.1"
+        "prettier": "^3.8.1",
+        "antlr4": "^4.13.2"
     },
     "devDependencies": {
         "@types/vscode": "^1.75.0",
-        "esbuild": "^0.25.0",
+        "esbuild": "^0.19.0",
         "vsce": "^2.15.0"
     }
 }

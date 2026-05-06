@@ -3,7 +3,7 @@ import * as prettier from "prettier";
 export async function alFormat(code) {
     return prettier.format(code, {
         parser: "al-parse",
-        plugins: ["./plugin.js"],
+        plugins: ["./plugin/plugin.js"],
     });
 }
 

@@ -1,5 +1,5 @@
 import ALParser from "../../algrammar/JS/ALParser.js";
-import printer from '../printer.js';
+import printer from '../plugin/printer.js';
 
 export function mockPrettyPrint(node) {
     return {
@@ -31,7 +31,6 @@ export function mockRuleNode(ruleIndex, children = []) {
 }
 
 export function mockTableProperty(propertyName, propertyValue) {
-    // Mock: tableProperty - e.g., Caption = 'My Table'
     return mockRuleNode(ALParser.RULE_tableProperty, [
         mockTerminalNode(propertyName),
         mockTerminalNode('='),
@@ -72,7 +71,6 @@ export function mockTableFieldDefinition(fieldId, fieldName, dataType, propertie
 }
 
 export function mockTableFieldProperty(propertyName, propertyValue) {
-    // Mock: tableFieldProperty - e.g., Caption = 'ID'
     return mockRuleNode(ALParser.RULE_tableFieldProperty, [
         mockTerminalNode(propertyName),
         mockTerminalNode('='),
@@ -81,7 +79,6 @@ export function mockTableFieldProperty(propertyName, propertyValue) {
 }
 
 export function mockTableFieldPropertyItem(propertyName, propertyValue) {
-    // Mock: tableFieldPropertyItem
     return mockRuleNode(ALParser.RULE_tableFieldPropertyItem, [
         mockTableProperty(propertyName, propertyValue),
         mockTerminalNode(";")
@@ -93,8 +90,6 @@ export function mockTableFieldPropertiesList(properties = []) {
 }
 
 export function mockTableFieldsList(fields = []) {
-    // Mock: tableFieldsList
-    // FIELDS LBRACE tableFieldDefinition* RBRACE
     const children = [
         mockTerminalNode('fields', ALParser.FIELDS),
         mockTerminalNode('{', ALParser.LBRACE),
@@ -104,8 +99,57 @@ export function mockTableFieldsList(fields = []) {
     return mockRuleNode(ALParser.RULE_tableFieldsList, children);
 }
 
+export function mockTableKeysList(keys = []) {
+    const children = [
+        mockTerminalNode('keys', ALParser.KEYS),
+        mockTerminalNode('{', ALParser.LBRACE),
+        ...keys,
+        mockTerminalNode('}', ALParser.RBRACE)
+    ];
+    return mockRuleNode(ALParser.RULE_tableKeysSection, children);
+}
+
+export function mockTableKeyDefinition(keyName, keyFields, propertiesList) {
+    const keyFieldNodes = keyFields.map(field => mockTerminalNode(field));
+
+    for (let i = 0; i < keyFieldNodes.length - 1; i++) {
+        keyFieldNodes.splice(2 * i + 1, 0, mockTerminalNode(',', ALParser.COMMA));
+    }
+
+    const children = [
+        mockTerminalNode('key', ALParser.KEY),
+        mockTerminalNode('(', ALParser.LPAREN),
+        mockTerminalNode(keyName),
+        mockTerminalNode(';', ALParser.SEMICOLON),
+        ...keyFieldNodes,
+        mockTerminalNode(')', ALParser.RPAREN),
+        mockTerminalNode('{', ALParser.LBRACE),
+        propertiesList,
+        mockTerminalNode('}', ALParser.RBRACE)
+    ];
+    return mockRuleNode(ALParser.RULE_keyItem, children);
+}
+
+export function mockTableKeyPropertyItem(propertyName, propertyValue) {
+    return mockRuleNode(ALParser.RULE_keyPropertyItem, [
+        mockTableKeyProperty(propertyName, propertyValue),
+        mockTerminalNode(";")
+    ]);
+}
+
+export function mockTableKeyProperty(propertyName, propertyValue) {
+    return mockRuleNode(ALParser.RULE_keyProperty, [
+        mockTerminalNode(propertyName),
+        mockTerminalNode('='),
+        mockTerminalNode(propertyValue)
+    ]);
+}
+
+export function mockTableKeyPropertiesList(properties = []) {
+    return mockRuleNode(ALParser.RULE_keyPropertiesList, properties);
+}
+
 export function mockTableObjectWithProperties(tableId, tableName, properties = []) {
-    // Mock: tableObject with properties
     const children = [
         mockTerminalNode('table', ALParser.TABLE),
         mockTerminalNode(tableId),

@@ -1,0 +1,14 @@
+node_modules
+.vscode-test
+.git
+.gitignore
+.mocharc.json
+tests
+**/*.test.ts
+**/*.test.js
+*.vsix
+src
+tsconfig.json
+.prettierrc
+babel.config.js
+*.md
