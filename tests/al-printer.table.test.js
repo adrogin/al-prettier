@@ -2,7 +2,6 @@ import { describe, it } from 'mocha';
 import { expect } from 'chai';
 import antlr4 from 'antlr4';
 import ALParser from '../../algrammar/JS/ALParser.js';
-import ALLexer from '../../algrammar/JS/ALLexer.js';
 import printer from '../plugin/printer.js';
 import * as prettier from "prettier";
 import { alFormat } from './testUtils.js';

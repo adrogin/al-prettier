@@ -1,5 +1,6 @@
 import * as prettier from 'prettier';
 import ALParser from '../../algrammar/JS/ALParser.js';
+import { isParagraphStatement } from "./printerHelpers.js";
 
 const { hardline, join, indent, group, line, softline } = prettier.doc.builders;
 
@@ -1291,8 +1292,14 @@ function printProcReturnType(path, options, print) {
 
 function printStatementList(path, options, print) {
     const stmtDocs = [];
+    const paragraphs = [];
     for (let i = 0; i < path.node.children.length; i++) {
-        stmtDocs.push(path.call(print, 'children', i));
+        const doc = path.call(print, 'children', i);
+        paragraphs.push(isParagraphStatement(path.node.children[i]));
+
+        i > 0 && (paragraphs[i] || paragraphs[i - 1])
+            ? stmtDocs.push([hardline, doc])
+            : stmtDocs.push(doc);
     }
 
     return stmtDocs.length > 0

@@ -22,7 +22,7 @@ const buildOptions = {
     format: 'cjs',
     platform: 'node',
     target: 'node16',
-    sourcemap: !isProduction,
+    sourcemap: isProduction ? false : 'external',
     minify: isProduction,
     // Prettier v3 uses createRequire(import.meta.url) to dynamically load Node built-ins.
     // esbuild replaces import.meta with {} in CJS output, making .url undefined.

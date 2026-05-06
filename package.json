@@ -49,7 +49,9 @@
         "build:prod": "node build.js --production",
         "watch": "node build.js --watch",
         "pretest": "npm run build",
-        "test": "node ./dist/test/runTest.js",
+        "test": "NODE_OPTIONS=--experimental-vm-modules mocha",
+        "test:watch": "NODE_OPTIONS=--experimental-vm-modules mocha --watch",
+        "test:coverage": "c8 NODE_OPTIONS=--experimental-vm-modules mocha",
         "vscode:prepublish": "npm run build:prod",
         "package": "vsce package --no-dependencies",
         "package:prod": "npm run build:prod && vsce package --no-dependencies",
@@ -61,7 +63,9 @@
     },
     "devDependencies": {
         "@types/vscode": "^1.75.0",
+        "chai": "^6.2.2",
         "esbuild": "^0.25.0",
+        "mocha": "^11.7.5",
         "vsce": "^2.15.0"
     }
 }
