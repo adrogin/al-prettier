@@ -2,14 +2,226 @@ import { describe, it } from 'mocha';
 import { expect } from 'chai';
 import antlr4 from 'antlr4';
 import ALParser from '../../algrammar/JS/ALParser.js';
-import ALLexer from '../../algrammar/JS/ALLexer.js';
 import printer from '../plugin/printer.js';
 import * as prettier from "prettier";
 import { alFormat } from './testUtils.js';
 
+describe('Conditional statements', () => {
+  it('Simple "if" statement', () => {
+    const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure Compare()
+  begin
+    if a = b then exit('A equals B');
+  end;
+}`;
+
+    const expected = `codeunit 50000 MyCodeunit
+{
+  procedure Compare()
+  begin
+    if a = b then
+      exit('A equals B');
+  end;
+}
+`;
+
+    return alFormat(code).then(formattedCode =>
+      expect(formattedCode).to.equal(expected))
+  });
+
+  it('"if" statement with "else" block', () => {
+    const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure Compare()
+  begin
+    if a = b then exit('A equals B') else exit('Not equal');
+  end;
+}`;
+
+    const expected = `codeunit 50000 MyCodeunit
+{
+  procedure Compare()
+  begin
+    if a = b then
+      exit('A equals B')
+    else
+      exit('Not equal');
+  end;
+}
+`;
+
+    return alFormat(code).then(formattedCode =>
+      expect(formattedCode).to.equal(expected))
+  });
+
+  it('Compound statements in both branches', () => {
+    const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure Calculate()
+  begin
+    if a = b then begin
+      a := -a;
+      b := 0;
+      c := a -b; end else begin
+      c := b;
+      CallProcedure(a);
+    end;
+    exit(c);
+  end;
+}`;
+
+    const expected = `codeunit 50000 MyCodeunit
+{
+  procedure Calculate()
+  begin
+    if a = b then begin
+      a := -a;
+      b := 0;
+      c := a - b;
+    end
+    else begin
+      c := b;
+      CallProcedure(a);
+    end;
+
+    exit(c);
+  end;
+}
+`;
+
+    return alFormat(code).then(formattedCode =>
+      expect(formattedCode).to.equal(expected))
+  });
+
+});
+
+describe('Case statements', () => {
+  it('Simple case block', () => {
+    const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure DoSomething()
+  begin
+    case Option of 1: CallProcedure1(); 2: CallProcedure2(); end;
+  end;
+}`;
+
+    const expected = `codeunit 50000 MyCodeunit
+{
+  procedure DoSomething()
+  begin
+    case Option of
+      1:
+        CallProcedure1();
+      2:
+        CallProcedure2();
+    end;
+  end;
+}
+`;
+
+    return alFormat(code).then(formattedCode =>
+      expect(formattedCode).to.equal(expected))
+  });
+
+  it('Case with else branch', () => {
+    const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure DoSomething()
+  begin
+    case Option of 1: CallProcedure1(); 2: CallProcedure2();else CallProcedure3(); end;
+  end;
+}`;
+
+    const expected = `codeunit 50000 MyCodeunit
+{
+  procedure DoSomething()
+  begin
+    case Option of
+      1:
+        CallProcedure1();
+      2:
+        CallProcedure2();
+      else
+        CallProcedure3();
+    end;
+  end;
+}
+`;
+
+    return alFormat(code).then(formattedCode =>
+      expect(formattedCode).to.equal(expected))
+  });
+
+  it('Case with compound statements in branches', () => {
+    const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure DoSomething()
+  begin
+    case Option of 1: begin CallProcedure1(); end; else begin CallProcedure3(); end; end;
+  end;
+}`;
+
+    const expected = `codeunit 50000 MyCodeunit
+{
+  procedure DoSomething()
+  begin
+    case Option of
+      1:
+        begin
+          CallProcedure1();
+        end;
+      else begin
+        CallProcedure3();
+      end;
+    end;
+  end;
+}
+`;
+
+    return alFormat(code).then(formattedCode =>
+      expect(formattedCode).to.equal(expected))
+
+  });
+
+  it('Missing semicolon added after else branch', () => {
+    const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure DoSomething()
+  begin
+    case Option of 1: CallProcedure1(); else CallProcedure3() end;
+  end;
+}`;
+
+    const expected = `codeunit 50000 MyCodeunit
+{
+  procedure DoSomething()
+  begin
+    case Option of
+      1:
+        CallProcedure1();
+      else
+        CallProcedure3();
+    end;
+  end;
+}
+`;
+
+    return alFormat(code).then(formattedCode =>
+      expect(formattedCode).to.equal(expected))
+  });
+});
+
 describe('Empty lines in statements list', () => {
-    it('Empty lines are not printed at the beginning or end of a procedure', () => {
-        const code = `
+  it('Empty lines are not printed at the beginning or end of a procedure', () => {
+    const code = `
 codeunit 50000 MyCodeunit
 {
   procedure DoSomething()
@@ -22,7 +234,7 @@ codeunit 50000 MyCodeunit
   end;
 }`;
 
-        const expected = `codeunit 50000 MyCodeunit
+    const expected = `codeunit 50000 MyCodeunit
 {
   procedure DoSomething()
   var
@@ -34,12 +246,12 @@ codeunit 50000 MyCodeunit
 }
 `;
 
-        return alFormat(code).then(formattedCode =>
-            expect(formattedCode).to.equal(expected))
-    });
+    return alFormat(code).then(formattedCode =>
+      expect(formattedCode).to.equal(expected))
+  });
 
-    it('Empty lines are not printed at the beginning or end of a repeat loop', () => {
-        const code = `
+  it('Empty lines are not printed at the beginning or end of a repeat loop', () => {
+    const code = `
 codeunit 50000 MyCodeunit
 {
   procedure DoSomething()
@@ -55,7 +267,7 @@ end;
 }
 `;
 
-        const expected = `codeunit 50000 MyCodeunit
+    const expected = `codeunit 50000 MyCodeunit
 {
   procedure DoSomething()
   var
@@ -69,12 +281,12 @@ end;
 }
 `;
 
-        return alFormat(code).then(formattedCode =>
-            expect(formattedCode).to.equal(expected))
-    });
+    return alFormat(code).then(formattedCode =>
+      expect(formattedCode).to.equal(expected))
+  });
 
-    it('Empty lines are not printed at the beginning or end of a statement list after an if condition', () => {
-        const code = `
+  it('Empty lines are not printed at the beginning or end of a statement list after an if condition', () => {
+    const code = `
 codeunit 50000 MyCodeunit
 {
   procedure DoSomething()
@@ -90,7 +302,7 @@ codeunit 50000 MyCodeunit
 }
 `;
 
-        const expected = `codeunit 50000 MyCodeunit
+    const expected = `codeunit 50000 MyCodeunit
 {
   procedure DoSomething()
   var
@@ -104,12 +316,12 @@ codeunit 50000 MyCodeunit
 }
 `;
 
-        return alFormat(code).then(formattedCode =>
-            expect(formattedCode).to.equal(expected))
-    });
+    return alFormat(code).then(formattedCode =>
+      expect(formattedCode).to.equal(expected))
+  });
 
-    it('Empty line is printed before a statement list after a previous statement', () => {
-        const code = `
+  it('Empty line is printed before a statement list after a previous statement', () => {
+    const code = `
 codeunit 50000 MyCodeunit
 {
   procedure DoSomething()
@@ -123,7 +335,7 @@ codeunit 50000 MyCodeunit
 }
 `;
 
-        const expected = `codeunit 50000 MyCodeunit
+    const expected = `codeunit 50000 MyCodeunit
 {
   procedure DoSomething()
   var
@@ -137,12 +349,12 @@ codeunit 50000 MyCodeunit
 }
 `;
 
-        return alFormat(code).then(formattedCode =>
-            expect(formattedCode).to.equal(expected))
-    });
+    return alFormat(code).then(formattedCode =>
+      expect(formattedCode).to.equal(expected))
+  });
 
-    it('Empty line is printed after a statement list before a following statement', () => {
-        const code = `
+  it('Empty line is printed after a statement list before a following statement', () => {
+    const code = `
 codeunit 50000 MyCodeunit
 {
   procedure DoSomething()
@@ -156,7 +368,7 @@ codeunit 50000 MyCodeunit
 }
 `;
 
-        const expected = `codeunit 50000 MyCodeunit
+    const expected = `codeunit 50000 MyCodeunit
 {
   procedure DoSomething()
   var
@@ -170,12 +382,12 @@ codeunit 50000 MyCodeunit
 }
 `;
 
-        return alFormat(code).then(formattedCode =>
-            expect(formattedCode).to.equal(expected))
-    });
+    return alFormat(code).then(formattedCode =>
+      expect(formattedCode).to.equal(expected))
+  });
 
-    it('Empty line separates two compound statements', () => {
-        const code = `
+  it('Empty line separates two compound statements', () => {
+    const code = `
 codeunit 50000 MyCodeunit
 {
   procedure DoSomething()
@@ -195,7 +407,7 @@ codeunit 50000 MyCodeunit
 }
 `;
 
-        const expected = `codeunit 50000 MyCodeunit
+    const expected = `codeunit 50000 MyCodeunit
 {
   procedure DoSomething()
   var
@@ -213,12 +425,12 @@ codeunit 50000 MyCodeunit
 }
 `;
 
-        return alFormat(code).then(formattedCode =>
-            expect(formattedCode).to.equal(expected))
-    });
+    return alFormat(code).then(formattedCode =>
+      expect(formattedCode).to.equal(expected))
+  });
 
-    it('Empty lines separate two compound statements and a statement block between', () => {
-        const code = `
+  it('Empty lines separate two compound statements and a statement block between', () => {
+    const code = `
 codeunit 50000 MyCodeunit
 {
   procedure DoSomething()
@@ -240,7 +452,7 @@ codeunit 50000 MyCodeunit
 }
 `;
 
-        const expected = `codeunit 50000 MyCodeunit
+    const expected = `codeunit 50000 MyCodeunit
 {
   procedure DoSomething()
   var
@@ -261,7 +473,113 @@ codeunit 50000 MyCodeunit
 }
 `;
 
-        return alFormat(code).then(formattedCode =>
-            expect(formattedCode).to.equal(expected))
-    });
+    return alFormat(code).then(formattedCode =>
+      expect(formattedCode).to.equal(expected))
+  });
+});
+
+describe('Variable declarations', () => {
+  it('Global record variable with quoted type', () => {
+    const code = `
+codeunit 50000 MyCodeunit
+{
+  var ApprovalEntry: Record "Approval Entry";
+}
+`;
+
+    const expected = `codeunit 50000 MyCodeunit
+{
+  var
+    ApprovalEntry: Record "Approval Entry";
+}
+`;
+
+    return alFormat(code).then(formattedCode =>
+      expect(formattedCode).to.equal(expected))
+  });
+
+  it('Global record variable with quoted name', () => {
+    const code = `
+codeunit 50000 MyCodeunit
+{
+  var "Approval Entry": Record "Approval Entry";
+}
+`;
+
+    const expected = `codeunit 50000 MyCodeunit
+{
+  var
+    "Approval Entry": Record "Approval Entry";
+}
+`;
+
+    return alFormat(code).then(formattedCode =>
+      expect(formattedCode).to.equal(expected))
+  });
+
+  it('Record variable as procedure parameter', () => {
+    const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure Approve(ApprovalEntry:Record "Approval Entry")
+  begin end;
+}
+`;
+
+    const expected = `codeunit 50000 MyCodeunit
+{
+  procedure Approve(ApprovalEntry: Record "Approval Entry")
+  begin
+  end;
+}
+`;
+
+    return alFormat(code).then(formattedCode =>
+      expect(formattedCode).to.equal(expected))
+  });
+
+  it('Record procedure parameter with var reference', () => {
+    const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure Approve(var ApprovalEntry:Record "Approval Entry")
+  begin
+  end;
+}
+`;
+
+    const expected = `codeunit 50000 MyCodeunit
+{
+  procedure Approve(var ApprovalEntry: Record "Approval Entry")
+  begin
+  end;
+}
+`;
+
+    return alFormat(code).then(formattedCode =>
+      expect(formattedCode).to.equal(expected))
+  });
+
+  it('Interface procedure parameter', () => {
+    const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure Define(InvoicePosting: Interface "Invoice Posting")
+  begin
+  end;
+}
+`;
+
+    const expected = `codeunit 50000 MyCodeunit
+{
+  procedure Define(InvoicePosting: Interface "Invoice Posting")
+  begin
+  end;
+}
+`;
+
+    return alFormat(code).then(formattedCode =>
+      expect(formattedCode).to.equal(expected))
+  });
+
 });

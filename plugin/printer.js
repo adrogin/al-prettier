@@ -63,12 +63,16 @@ function print(path, options, print) {
         case ALParser.RULE_keyProperty:
         case ALParser.RULE_groupProperty:
         case ALParser.RULE_partProperty:
-        case ALParser.RULE_subpageLinkProperty:
-        case ALParser.RULE_subpageLinkExpression:
         case ALParser.RULE_enumProperty:
         case ALParser.RULE_enumValueProperty:
         case ALParser.RULE_interfaceProperty:
             return printObjectProperty(path, options, print);
+
+        case ALParser.RULE_subpageLinkProperty:
+            return printSubPageLinkProperty(path, options, print);
+
+        case ALParser.RULE_subpageLinkExpression:
+            return printSubPageLinkExpression(path, options, print);
 
         case ALParser.RULE_objectPermissionsList:
             return printObjectPermissionsList(path, options, print);
@@ -212,6 +216,12 @@ function print(path, options, print) {
         case ALParser.RULE_actionGroupDefinition:
             return printActionGroupDefinition(path, options, print);
 
+        case ALParser.RULE_actionRefsList:
+            return printActionRefsList(path, options, print);
+
+        case ALParser.RULE_actionRef:
+            return printActionRef(path, options, print);
+
         //#endregion Page object
 
         //#region Codeunit object
@@ -333,6 +343,9 @@ function print(path, options, print) {
         case ALParser.RULE_ifStatement:
             return printIfStatement(path, options, print);
 
+        case ALParser.RULE_elseStatement:  // Works for both "if .. else" and "case .. else"
+            return printElseStatement(path, options, print);
+
         case ALParser.RULE_forStatement:
             return printForLoopStatement(path, options, print);
 
@@ -356,6 +369,7 @@ function print(path, options, print) {
         // Two-token types (e.g. Record Customer) — join with space
         case ALParser.RULE_codeunitDataType:
         case ALParser.RULE_enumDataType:
+        case ALParser.RULE_interfaceDataType:
         case ALParser.RULE_pageDataType:
         case ALParser.RULE_recordDataType:
         case ALParser.RULE_reportDataType:
@@ -404,6 +418,7 @@ function print(path, options, print) {
         case ALParser.RULE_equalityExpression:
         case ALParser.RULE_relationalExpression:
         case ALParser.RULE_tableRelationEqualityExpression:
+        case ALParser.RULE_subpageLinkFilter:
             return printBinaryExpression(path, options, print);
 
         case ALParser.RULE_logicalOrExpression:
@@ -736,18 +751,40 @@ function printPartPropertyItem(path, options, print) {
 }
 
 function printRepeaterDefinition(path, options, print) {
-    // Grammar: REPEATER LPAREN IDENTIFIER SEMICOLON IDENTIFIER RPAREN LBRACE repeaterElements RBRACE
+    // Grammar: REPEATER LPAREN identifier RPAREN LBRACE repeaterElements RBRACE
+    const repeaterKeyword = path.call(print, 'children', 0);
+    const lparen = path.call(print, 'children', 1);
     const repeaterName = path.call(print, 'children', 2);
-    const sourceName = path.call(print, 'children', 4);
-    const elements = path.call(print, 'children', 7);
-    return ["repeater(", repeaterName, "; ", sourceName, ")", hardline, "{", indent([hardline, elements]), hardline, "}"];
+    const rparen = path.call(print, 'children', 3);
+    const lbrace = path.call(print, 'children', 4);
+    const elements = path.call(print, 'children', 5);
+    const rbrace = path.call(print, 'children', 6);
+
+    return [repeaterKeyword, lparen, repeaterName, rparen, hardline, lbrace, indent([hardline, elements]), hardline, rbrace];
 }
 
 function printRepeaterElements(path, options, print) {
-    // Grammar: (pageFieldItem | groupDefinition)*
+    // Grammar: pageFieldPropertiesList? (pageFieldItem | groupDefinition)*
     const children = path.node.children;
-    if (!children || children.length === 0) return "";
-    return join(hardline, path.map(print, 'children'));
+    if (!children || children.length === 0)
+        return "";
+
+    let firstElementIdx = 0;
+    const elements = [];
+    if (children[0].ruleIndex === ALParser.RULE_pageFieldPropertiesList) {
+        const properties = path.call(print, 'children', 0);
+        if (children.length === 1)
+            return properties;
+
+        elements.push([properties, hardline]);
+        firstElementIdx += 1;
+    }
+
+    for (let i = firstElementIdx; i < children.length; i++) {
+        elements.push([path.call(print, 'children', i)]);
+    }
+
+    return join(hardline, elements);
 }
 
 function printPageFieldItem(path, options, print) {
@@ -845,6 +882,31 @@ function printActionGroupDefinition(path, options, print) {
     return ["group(", name, ")", hardline, "{", indent([hardline, elements]), hardline, "}"];
 }
 
+function printActionRefsList(path, options, print) {
+    // Grammar: actionRef+
+    return join(hardline, path.map(print, 'children'));
+}
+
+function printActionRef(path, options, print) {
+    // Grammar: ACTIONREF LPAREN identifier SEMICOLON identifier RPAREN LBRACE actionPropertiesList? RBRACE
+    const actionRefKeyword = path.call(print, 'children', 0);
+    const lparen = path.call(print, 'children', 1);
+    const name = path.call(print, 'children', 2);
+    const semicolon = path.call(print, 'children', 3);
+    const actionName = path.call(print, 'children', 4);
+    const rparen = path.call(print, 'children', 5);
+    const lbrace = path.call(print, 'children', 6);
+    const rbrace = path.call(print, 'children', path.node.children.length - 1);
+
+    const actionPropsIdx = path.node.children.findIndex(c => c.ruleIndex === ALParser.RULE_actionPropertiesList);
+    const properties = [];
+    if (actionPropsIdx > -1) {
+        properties.push(indent([hardline, path.call(print, 'children', actionPropsIdx)]));
+    }
+
+    return [actionRefKeyword, lparen, name, semicolon, " ", actionName, rparen, hardline, lbrace, properties, hardline, rbrace];
+}
+
 function printTableRelationExpression(path, options, print) {
     return group(indent(join(line, path.map(print, 'children'))));
 }
@@ -887,6 +949,32 @@ function printCalcFormulaExpression(path, options, print) {
 
     const tableRef = path.call(print, 'children', tableRefIdx);
     return group([...calcFormulaFunction, "(", indent([...tableRef, line, ...whereExpr]), ")"]);
+}
+
+function printSubPageLinkProperty(path, options, print) {
+    // Grammar: SUBPAGELINK EQUAL subpageLinkExpression
+    const keyword = path.call(print, 'children', 0);
+    const equalSign = path.call(print, 'children', 1);
+    const expression = path.call(print, 'children', 2);
+
+    return [keyword, " ", equalSign, group(indent([line, expression]))];
+}
+
+function printSubPageLinkExpression(path, options, print) {
+    // Grammar: subpageLinkFilter (COMMA subpageLinkFilter)*;
+    const children = path.node.children;
+    const filters = [];
+    for (let i = 0; i < children.length; i += 2) {
+        const filter = [];
+        filter.push(path.call(print, 'children', i));
+
+        if (children.length > i + 1 && children[i + 1].symbol?.type === ALParser.COMMA) {
+            filter.push([path.call(print, 'children', i + 1), line]);
+        }
+        filters.push(filter);
+    }
+
+    return filters;
 }
 
 //#endregion Page functions
@@ -1330,7 +1418,7 @@ function printParameter(path, options, print) {
 }
 
 function printIfStatement(path, options, print) {
-    // Grammar: IF expression THEN statement (ELSE statement)?
+    // Grammar: IF expression THEN statement elseStatement?
     const children = path.node.children;
     const ifKeyword = path.call(print, 'children', 0);
     const condition = path.call(print, 'children', 1);  // expression
@@ -1349,20 +1437,26 @@ function printIfStatement(path, options, print) {
 
     // ELSE and its statement are optional — present when children.length > 4
     if (children.length > 4) {
-        // Similar to "then begin" above, "else begin" must not break the line.
-        const elseKeyword = path.call(print, 'children', 4);
-        let elseStmt = path.call(print, 'children', 5);
-        if (children[5]?.children[0]?.ruleIndex === ALParser.RULE_compoundBlock) {
-            elseStmt = [" ", elseStmt];
-        }
-        else {
-            elseStmt = indent([hardline, elseStmt]);
-        }
-
-        return [ifPart, hardline, elseKeyword, elseStmt];
+        let elseStmt = path.call(print, 'children', 4);
+        return [ifPart, hardline, elseStmt];
     }
 
     return ifPart;
+}
+
+function printElseStatement(path, options, print) {
+    // Grammar: ELSE statementWithSeparator;
+    // Similar to "then begin" in the if statement above, "else begin" must not break the line.
+    const elseKeyword = path.call(print, 'children', 0);
+    let elseStmt = path.call(print, 'children', 1);
+    if (path.node.children[1]?.children[0]?.ruleIndex === ALParser.RULE_compoundBlock) {
+        elseStmt = [" ", elseStmt];
+    }
+    else {
+        elseStmt = indent([hardline, elseStmt]);
+    }
+
+    return [elseKeyword, elseStmt];
 }
 
 function printForLoopStatement(path, options, print) {
@@ -1434,16 +1528,33 @@ function printWhileLoopStatement(path, options, print) {
 }
 
 function printCaseStatement(path, options, print) {
-    // Grammar: CASE expression OF caseBranch+ END;
+    // Grammar: CASE expression OF caseBranch+ (elseStatement SEMICOLON?)? END
+    const children = path.node.children;
+    const caseKeyword = path.call(print, 'children', 0);
+    const ofKeyword = path.call(print, 'children', 2);
+    const endKeyword = path.call(print, 'children', path.node.children.length - 1);
+
+    const elseIdx = path.node.children.findIndex(c => c.ruleIndex === ALParser.RULE_elseStatement);
+    let elseBranch = elseIdx > -1 ? path.call(print, 'children', elseIdx) : [];
+    if (elseIdx > -1) {
+        const semicolon = children[elseIdx + 1].symbol?.type === ALParser.SEMICOLON
+            ? path.call(print, 'children', elseIdx + 1)  // If the semicolon is present in the source, print as a code token, since there may be a comment attached to it
+            : ";";  // If the semicolon symbol is missing in source, we need to add it
+        elseBranch = [elseBranch, semicolon];
+    }
 
     const switchExpr = path.call(print, 'children', 1);
     const branches = [];
 
-    for (let i = 3; i < path.node.children.length - 1; i++) {
+    const lastBranchIdx = elseIdx > -1 ? elseIdx - 1 : children.length - 2;
+    for (let i = 3; i <= lastBranchIdx; i++) {
         branches.push(path.call(print, 'children', i));
     }
+    if (elseIdx > -1) {
+        branches.push(elseBranch);
+    }
 
-    return ["case ", switchExpr, " of", indent([hardline, join(hardline, branches)]), hardline, "end"];
+    return [caseKeyword, " ", switchExpr, " ", ofKeyword, indent([hardline, join(hardline, branches)]), hardline, endKeyword];
 }
 
 function printCaseBranch(path, options, print) {
@@ -1672,6 +1783,8 @@ function isLowerCaseToken(token) {
         ALParser.ADDBEFORE,
         ALParser.ADDFIRST,
         ALParser.ADDLAST,
+        ALParser.ACTION,
+        ALParser.ACTIONREF,
         ALParser.AND,
         ALParser.BEGIN,
         ALParser.BREAK,
