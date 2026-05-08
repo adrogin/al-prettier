@@ -69,10 +69,11 @@ function print(path, options, print) {
             return printObjectProperty(path, options, print);
 
         case ALParser.RULE_subpageLinkProperty:
+        case ALParser.RULE_runPageLinkProperty:
             return printSubPageLinkProperty(path, options, print);
 
-        case ALParser.RULE_subpageLinkExpression:
-            return printSubPageLinkExpression(path, options, print);
+        case ALParser.RULE_pageLinkExpression:
+            return printPageLinkExpression(path, options, print);
 
         case ALParser.RULE_objectPermissionsList:
             return printObjectPermissionsList(path, options, print);
@@ -374,6 +375,7 @@ function print(path, options, print) {
         case ALParser.RULE_recordDataType:
         case ALParser.RULE_reportDataType:
         case ALParser.RULE_testPageDataType:
+        case ALParser.RULE_xmlPortDataType:
             return join(" ", path.map(print, 'children'));
 
         // Other data types that require special formatting
@@ -960,7 +962,7 @@ function printSubPageLinkProperty(path, options, print) {
     return [keyword, " ", equalSign, group(indent([line, expression]))];
 }
 
-function printSubPageLinkExpression(path, options, print) {
+function printPageLinkExpression(path, options, print) {
     // Grammar: subpageLinkFilter (COMMA subpageLinkFilter)*;
     const children = path.node.children;
     const filters = [];
@@ -1069,34 +1071,44 @@ function printPageExtensionActions(path, options, print) {
 
 function printInterfaceObject(path, options, print) {
     const children = path.node.children;
-    // Grammar: INTERFACE intentifier LBRACE interfacePropertiesList? procedureDeclaration* RBRACE
-    const objectIdx = children.findIndex(c => c.symbol?.type === ALParser.INTERFACE);
-    if (objectIdx === -1) return "";
-
-    const keyword = path.call(print, 'children', objectIdx);
-    const objectName = path.call(print, 'children', objectIdx + 1);
+    // Grammar: INTERFACE identifier (EXTENDS identifierWithNamespace)? LBRACE interfacePropertiesList? procedureDeclaration* RBRACE
+    const keyword = path.call(print, 'children', 0);
+    const objectName = path.call(print, 'children', 1);
 
     let properties = [];
-    if (children[objectIdx + 3].ruleIndex === ALParser.RULE_interfacePropertiesList) {
-        properties = path.call(print, 'children', objectIdx + 3);
+    const propsListIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_interfacePropertiesList);
+    if (propsListIdx > -1) {
+        properties = path.call(print, 'children', propsListIdx);
     }
 
-    const procListStart =
-        children[objectIdx + 3].ruleIndex === ALParser.RULE_interfacePropertiesList
-            ? objectIdx + 4
-            : objectIdx + 3;
-
+    const procListStart = children.findIndex(c => c.ruleIndex === ALParser.RULE_procedureDeclaration);
     const procListEnd = children.length - 1;
     const procDeclDocs = [];
-    for (let i = procListStart; i < procListEnd; i++) {
-        procDeclDocs.push(path.call(print, 'children', i));
+    if (procListStart > -1) {
+        for (let i = procListStart; i < procListEnd; i++) {
+            procDeclDocs.push(path.call(print, 'children', i));
+        }
     }
 
-    const body = procDeclDocs.length > 0 || properties.length > 0
-        ? [indent([hardline, join([hardline], properties), hardline, hardline, join([hardline], procDeclDocs)]), hardline]
-        : [hardline];
+    const declaration = [keyword, " ", objectName];
+    const extendsIdx = children.findIndex(c => c.symbol?.type === ALParser.EXTENDS);
+    if (extendsIdx > -1) {
+        declaration.push([" ", path.call(print, 'children', extendsIdx)]);
+        declaration.push([" ", path.call(print, 'children', extendsIdx + 1)]);
+    }
 
-    return [keyword, " ", objectName, hardline, "{", ...body, "}"];
+    const body = [];
+    if (properties.length > 0) {
+        body.push(hardline, ...properties);
+    }
+    if (procDeclDocs.length > 0) {
+        if (body.length > 0) {
+            body.push(hardline);
+        }
+        body.push(hardline, join([hardline], procDeclDocs));
+    }
+
+    return [...declaration, hardline, "{", indent([...body]), hardline, "}"];
 }
 
 function printInterfacePropertiesList(path, options, print) {
@@ -1258,7 +1270,10 @@ function printVariablesList(path, options, print) {
     for (let i = 1; i < children.length; i++) {
         varDocs.push(path.call(print, 'children', i));
     }
-    return ["var", indent([hardline, join(hardline, varDocs)])];
+
+    return varDocs.length > 0
+        ? ["var", indent([hardline, join(hardline, varDocs)])]
+        : [];
 }
 
 function printTriggersList(path, options, print) {
@@ -1308,7 +1323,7 @@ function printProcedureDefinition(path, options, print) {
 
     const accessModifierIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_procedureAccessModifier);
     const procKeywordIdx = children.findIndex(c => c.symbol?.type === ALParser.PROCEDURE);
-    const varStartIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_variablesList);
+    const varListIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_variablesList);
     const rparenIdx = children.findIndex(c => c.symbol?.type === ALParser.RPAREN);
     const returnTypeIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_procedureReturnType);
     const beginIdx = children.findIndex(c => c.symbol?.type === ALParser.BEGIN);
@@ -1326,12 +1341,7 @@ function printProcedureDefinition(path, options, print) {
     const paramDoc = rparenIdx > procKeywordIdx + 3 ? path.call(print, 'children', procKeywordIdx + 3) : "";
 
     // variablesList: any rule context between RPAREN and BEGIN
-    const varDocs = [];
-
-    if (varStartIdx > 0)
-        for (let i = varStartIdx; i < beginIdx; i++) {
-            varDocs.push(path.call(print, 'children', i));
-        }
+    const varDocs = varListIdx > 0 ? path.call(print, 'children', varListIdx) : [];
 
     let signature = ["procedure ", name, "(", group(indent(paramDoc)), ")"];
 
@@ -1346,7 +1356,7 @@ function printProcedureDefinition(path, options, print) {
         accessModifier = [path.call(print, 'children', accessModifierIdx), " "];
     }
 
-    const vars = varDocs.length > 0 ? [hardline, join(hardline, varDocs)] : [];
+    const vars = varDocs.length > 0 ? [hardline, varDocs] : [];
     const body = statementListId > 0
         ? [hardline, "begin", indent([hardline, path.call(print, 'children', statementListId)]), hardline, "end;"]
         : [hardline, "begin", hardline, "end;"];
