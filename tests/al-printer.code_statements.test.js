@@ -97,6 +97,104 @@ codeunit 50000 MyCodeunit
       expect(formattedCode).to.equal(expected))
   });
 
+  it('Missing semicolon after the expression in conditional statement', () => {
+    const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure Calculate()
+  begin
+    if a = b then
+      exit(a)
+  end;
+}`;
+
+    const expected = `codeunit 50000 MyCodeunit
+{
+  procedure Calculate()
+  begin
+    if a = b then
+      exit(a);
+  end;
+}
+`;
+
+    return alFormat(code).then(formattedCode =>
+      expect(formattedCode).to.equal(expected))
+  });
+
+  it('if..then without body: terminating semicolon is printed in the same line', () => {
+    const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure Calculate()
+  begin
+    if a = b then
+    ;
+  end;
+}`;
+
+    const expected = `codeunit 50000 MyCodeunit
+{
+  procedure Calculate()
+  begin
+    if a = b then;
+  end;
+}
+`;
+
+    return alFormat(code).then(formattedCode =>
+      expect(formattedCode).to.equal(expected))
+  });
+
+  it('Empty begin..end block without statements between', () => {
+    const code = `
+codeunit 50000 MyCodeunit
+{
+  trigger OnRun()
+  begin
+    if a = b then begin end;
+  end;
+}
+`;
+
+    const expected = `codeunit 50000 MyCodeunit
+{
+  trigger OnRun()
+  begin
+    if a = b then begin
+    end;
+  end;
+}
+`;
+
+    return alFormat(code).then(formattedCode =>
+      expect(formattedCode).to.equal(expected))
+  });
+
+  it('Range "if" condition', () => {
+    const code = `
+codeunit 50000 MyCodeunit
+{
+  trigger OnRun()
+  begin
+    if a in [1..10,12,15] then DoSomething();
+  end;
+}
+`;
+
+    const expected = `codeunit 50000 MyCodeunit
+{
+  trigger OnRun()
+  begin
+    if a in [1..10, 12, 15] then
+      DoSomething();
+  end;
+}
+`;
+
+    return alFormat(code).then(formattedCode =>
+      expect(formattedCode).to.equal(expected))
+  });
 });
 
 describe('Case statements', () => {
@@ -209,6 +307,138 @@ codeunit 50000 MyCodeunit
         CallProcedure1();
       else
         CallProcedure3();
+    end;
+  end;
+}
+`;
+
+    return alFormat(code).then(formattedCode =>
+      expect(formattedCode).to.equal(expected))
+  });
+
+  it('Multiple options pointing to one branch', () => {
+    const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure DoSomething()
+  begin
+    case Option of
+    Value1, Value2, Value3:
+      CallProcedure1();
+    Value4: CallProcedure2();
+    end;
+  end;
+}`;
+
+    const expected = `codeunit 50000 MyCodeunit
+{
+  procedure DoSomething()
+  begin
+    case Option of
+      Value1,
+      Value2,
+      Value3:
+        CallProcedure1();
+      Value4:
+        CallProcedure2();
+    end;
+  end;
+}
+`;
+
+    return alFormat(code).then(formattedCode =>
+      expect(formattedCode).to.equal(expected))
+  });
+
+
+  it('Compound else branch without begin..end', () => {
+    const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure DoSomething()
+  begin
+    case Option of
+    Value1:
+      CallProcedure1();
+    else CallProcedure2(); CallProcedure3();
+    end;
+  end;
+}`;
+
+    const expected = `codeunit 50000 MyCodeunit
+{
+  procedure DoSomething()
+  begin
+    case Option of
+      Value1:
+        CallProcedure1();
+      else
+        CallProcedure2();
+        CallProcedure3();
+    end;
+  end;
+}
+`;
+
+    return alFormat(code).then(formattedCode =>
+      expect(formattedCode).to.equal(expected))
+  });
+
+  it('Case branch without body. Line break inserted before semicolon.', () => {
+    const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure DoSomething()
+  begin
+    case Option of
+    Value1:
+      CallProcedure1();
+    Value2:;
+    end;
+  end;
+}`;
+
+    const expected = `codeunit 50000 MyCodeunit
+{
+  procedure DoSomething()
+  begin
+    case Option of
+      Value1:
+        CallProcedure1();
+      Value2:
+        ;
+    end;
+  end;
+}
+`;
+
+    return alFormat(code).then(formattedCode =>
+      expect(formattedCode).to.equal(expected))
+  });
+
+  it('Range case condition', () => {
+    const code = `
+codeunit 50000 MyCodeunit
+{
+  trigger OnRun()
+  begin
+    case a of 1..10: CallProcedure1();
+    12,15: CallProcedure2();
+    end;
+  end;
+}
+`;
+
+    const expected = `codeunit 50000 MyCodeunit
+{
+  trigger OnRun()
+  begin
+    case a of
+      1..10:
+        CallProcedure1();
+      12,
+      15:
+        CallProcedure2();
     end;
   end;
 }
@@ -581,5 +811,31 @@ codeunit 50000 MyCodeunit
     return alFormat(code).then(formattedCode =>
       expect(formattedCode).to.equal(expected))
   });
+});
 
+describe('Statement list', () => {
+  it('Dangling semicolon is printed as a separate statement in a list', () => {
+    const code = `
+codeunit 50000 MyCodeunit
+{
+  trigger OnRun()
+  begin
+    c := a + b;;
+  end;
+}
+`;
+
+    const expected = `codeunit 50000 MyCodeunit
+{
+  trigger OnRun()
+  begin
+    c := a + b;
+    ;
+  end;
+}
+`;
+
+    return alFormat(code).then(formattedCode =>
+      expect(formattedCode).to.equal(expected))
+  });
 });

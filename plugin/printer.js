@@ -1,6 +1,6 @@
 import * as prettier from 'prettier';
 import ALParser from '../../algrammar/JS/ALParser.js';
-import { isParagraphStatement } from "./printerHelpers.js";
+import { isParagraphStatement, isSingleCompundStatement } from "./printerHelpers.js";
 
 const { hardline, join, indent, group, line, softline } = prettier.doc.builders;
 
@@ -344,7 +344,8 @@ function print(path, options, print) {
         case ALParser.RULE_ifStatement:
             return printIfStatement(path, options, print);
 
-        case ALParser.RULE_elseStatement:  // Works for both "if .. else" and "case .. else"
+        case ALParser.RULE_ifElseStatement:
+        case ALParser.RULE_caseElseStatement:
             return printElseStatement(path, options, print);
 
         case ALParser.RULE_forStatement:
@@ -422,6 +423,9 @@ function print(path, options, print) {
         case ALParser.RULE_tableRelationEqualityExpression:
         case ALParser.RULE_subpageLinkFilter:
             return printBinaryExpression(path, options, print);
+
+        case ALParser.RULE_logicalInExpression:
+            return printLogicalInExpression(path, options, print);
 
         case ALParser.RULE_logicalOrExpression:
         case ALParser.RULE_logicalAndExpression:
@@ -1389,10 +1393,17 @@ function printProcReturnType(path, options, print) {
 }
 
 function printStatementList(path, options, print) {
+    const children = path.node.children;
     const stmtDocs = [];
     const paragraphs = [];
-    for (let i = 0; i < path.node.children.length; i++) {
-        const doc = path.call(print, 'children', i);
+    for (let i = 0; i < children.length; i++) {
+        let doc = path.call(print, 'children', i);
+        if (i === children.length - 1 && children[i].ruleIndex === ALParser.RULE_statement) {
+            // The last statement in the list can end without the terminating semicolon. Printer will add it.
+            // To determine whether the semicolon is present or not, we check the parser rule for the node.
+            // Elements of the statement list can be either "statment" or "statementWithSeparator".
+            doc = [doc, ";"];
+        }
         paragraphs.push(isParagraphStatement(path.node.children[i]));
 
         i > 0 && (paragraphs[i] || paragraphs[i - 1])
@@ -1439,7 +1450,8 @@ function printIfStatement(path, options, print) {
     if (children[3]?.children[0]?.ruleIndex === ALParser.RULE_compoundBlock) {
         thenStmt = [" ", thenStmt];
     }
-    else {
+    else if (thenStmt.length > 0) {
+        // If the statement body is missing ("if condition then;"), do not insert the line break: the terminating semicolon sticks to the "then" keyword.
         thenStmt = indent([hardline, thenStmt]);
     }
 
@@ -1459,7 +1471,7 @@ function printElseStatement(path, options, print) {
     // Similar to "then begin" in the if statement above, "else begin" must not break the line.
     const elseKeyword = path.call(print, 'children', 0);
     let elseStmt = path.call(print, 'children', 1);
-    if (path.node.children[1]?.children[0]?.ruleIndex === ALParser.RULE_compoundBlock) {
+    if (isSingleCompundStatement(path.node.children[1]?.children[0])) {
         elseStmt = [" ", elseStmt];
     }
     else {
@@ -1544,14 +1556,8 @@ function printCaseStatement(path, options, print) {
     const ofKeyword = path.call(print, 'children', 2);
     const endKeyword = path.call(print, 'children', path.node.children.length - 1);
 
-    const elseIdx = path.node.children.findIndex(c => c.ruleIndex === ALParser.RULE_elseStatement);
+    const elseIdx = path.node.children.findIndex(c => c.ruleIndex === ALParser.RULE_caseElseStatement);
     let elseBranch = elseIdx > -1 ? path.call(print, 'children', elseIdx) : [];
-    if (elseIdx > -1) {
-        const semicolon = children[elseIdx + 1].symbol?.type === ALParser.SEMICOLON
-            ? path.call(print, 'children', elseIdx + 1)  // If the semicolon is present in the source, print as a code token, since there may be a comment attached to it
-            : ";";  // If the semicolon symbol is missing in source, we need to add it
-        elseBranch = [elseBranch, semicolon];
-    }
 
     const switchExpr = path.call(print, 'children', 1);
     const branches = [];
@@ -1568,11 +1574,34 @@ function printCaseStatement(path, options, print) {
 }
 
 function printCaseBranch(path, options, print) {
-    // Grammar: expression COLON statement SEMICOLON;
+    // Grammar: expression ((COMMA | RANGE_OP) expression)* COLON (statementWithSeparator | SEMICOLON);
 
-    const condition = path.call(print, 'children', 0);
-    const statement = path.call(print, 'children', 2);
-    return [condition, ":", indent([hardline, statement])];
+    const colonIdx = path.node.children.findIndex(c => c.symbol?.type === ALParser.COLON);
+
+    const conditions = [];
+    let i = 0;
+    while (i < colonIdx) {
+        // for (let i = 0; i < colonIdx; i += 2) {
+        let condition = path.call(print, 'children', i);
+        if (i < colonIdx - 1) {
+            condition = [condition, path.call(print, 'children', i + 1)];  // Print the comma or range operator separating the conditions
+        }
+
+        if (path.node.children[i + 1].symbol.type === ALParser.RANGE_OP) {
+            i += 2;
+            condition.push(path.call(print, 'children', i));
+            if (i < colonIdx - 1) {
+                condition = [condition, path.call(print, 'children', i + 1)];
+            }
+        }
+        i += 2;
+
+        conditions.push(condition);
+    }
+
+    const colon = path.call(print, 'children', colonIdx);
+    const statement = path.call(print, 'children', colonIdx + 1);
+    return [join(hardline, conditions), colon, indent([hardline, statement])];
 }
 
 function printProcedureCall(path, options, print) {
@@ -1639,12 +1668,45 @@ function printMultipartExpression(path, options, print) {
     return children.length > 1 ? group(indent(parts)) : parts;
 }
 
+function printLogicalInExpression(path, options, print) {
+    // Grammar: logicalAndExpression IN LBRACKET logicalAndExpression ((COMMA|RANGE_OP) logicalAndExpression)* RBRACKET;
+    const children = path.node.children;
+    const components = [];
+    components.push(path.call(print, 'children', 0));  // Left expression
+    components.push([" ", path.call(print, 'children', 1), " "]);  // "in" keyword
+    components.push(path.call(print, 'children', 2));  // Left bracket
+    components.push(path.call(print, 'children', 3));  // First condition - always present
+
+    for (let i = 4; i < children.length - 1; i += 2) {
+        components.push(path.call(print, 'children', i));  // Operator - comma or range
+        if (children[i].symbol.type === ALParser.COMMA) {
+            components.push(" ");
+        }
+        components.push(path.call(print, 'children', i + 1));  // Condition following the operator
+    }
+
+    components.push(path.call(print, 'children', children.length - 1));  // Right bracket
+    return components;
+}
+
 function printCompoundBlock(path, options, print) {
-    // Grammar: BEGIN statementList END
+    // Grammar: BEGIN statementList? END
+    const statementListIdx = path.node.children.findIndex(c => c.ruleIndex === ALParser.RULE_statementList);
+    const endIdx = path.node.children.findIndex(c => c.symbol?.type === ALParser.END);
+
     const beginKeyword = path.call(print, 'children', 0);
-    const statementList = path.call(print, 'children', 1);
-    const endKeyword = path.call(print, 'children', 2);
-    return [beginKeyword, indent([hardline, statementList]), [hardline, endKeyword]];
+    const statementList = statementListIdx > -1
+        ? path.call(print, 'children', 1)
+        : [];
+    const endKeyword = path.call(print, 'children', endIdx);
+
+    const compoundBlock = [];
+    compoundBlock.push(beginKeyword);
+    if (statementListIdx > -1) {
+        compoundBlock.push(indent([hardline, statementList]));
+    }
+    compoundBlock.push([hardline, endKeyword]);
+    return compoundBlock;
 }
 
 function printALObject(path, options, print, objectType) {

@@ -25,3 +25,17 @@ export function isParagraphStatement(node) {
             return false;
     }
 }
+
+export function isSingleCompundStatement(node) {
+    if (node.ruleIndex === ALParser.RULE_compoundBlock)
+        return true;
+
+    if (!node.children || node.children.length === 0)
+        return false;
+
+    if (node.ruleIndex === ALParser.RULE_statementList && node.children.length > 1) {
+        return false;
+    }
+
+    return isSingleCompundStatement(node.children[0]);
+}
