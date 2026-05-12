@@ -32,9 +32,11 @@ export function mockRuleNode(ruleIndex, children = []) {
 
 export function mockTableProperty(propertyName, propertyValue) {
     return mockRuleNode(ALParser.RULE_tableProperty, [
-        mockTerminalNode(propertyName),
-        mockTerminalNode('='),
-        mockTerminalNode(propertyValue)
+        mockRuleNode(ALParser.RULE_genericObjectProperty, [
+            mockTerminalNode(propertyName),
+            mockTerminalNode('='),
+            mockTerminalNode(propertyValue)
+        ])
     ]);
 }
 
@@ -139,9 +141,11 @@ export function mockTableKeyPropertyItem(propertyName, propertyValue) {
 
 export function mockTableKeyProperty(propertyName, propertyValue) {
     return mockRuleNode(ALParser.RULE_keyProperty, [
-        mockTerminalNode(propertyName),
-        mockTerminalNode('='),
-        mockTerminalNode(propertyValue)
+        mockRuleNode(ALParser.RULE_genericObjectProperty, [
+            mockTerminalNode(propertyName),
+            mockTerminalNode('='),
+            mockTerminalNode(propertyValue)
+        ])
     ]);
 }
 

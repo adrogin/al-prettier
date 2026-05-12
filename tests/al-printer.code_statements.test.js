@@ -811,6 +811,46 @@ codeunit 50000 MyCodeunit
     return alFormat(code).then(formattedCode =>
       expect(formattedCode).to.equal(expected))
   });
+
+  it('Print a label with both Locked and Comment properties', () => {
+    const code = `
+codeunit 50000 MyCodeunit
+{
+  var TextLabel: Label 'Label',Locked=true,Comment='This is a label';
+}
+`;
+
+    const expected = `codeunit 50000 MyCodeunit
+{
+  var
+    TextLabel: Label 'Label', Locked = true, Comment = 'This is a label';
+}
+`;
+
+    return alFormat(code).then(formattedCode =>
+      expect(formattedCode).to.equal(expected))
+  });
+
+  it('Print a multiline verbatim string label', () => {
+    const code = `
+codeunit 50000 MyCodeunit
+{
+  var TextLabel: Label @'Label line 1,
+Label line 2';
+}
+`;
+
+    const expected = `codeunit 50000 MyCodeunit
+{
+  var
+    TextLabel: Label @'Label line 1,
+Label line 2';
+}
+`;
+
+    return alFormat(code).then(formattedCode =>
+      expect(formattedCode).to.equal(expected))
+  });
 });
 
 describe('Statement list', () => {

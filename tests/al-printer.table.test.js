@@ -98,4 +98,68 @@ describe('Basic table structure', () => {
 `
       ));
   });
+
+  it('Caption with Locked property', () => {
+    return alFormat("table 50000 MyTable {Caption='My Table', Locked=true;}").then(formattedCode =>
+      expect(formattedCode).to.equal(
+        `table 50000 MyTable
+{
+  Caption = 'My Table', Locked = true;
+}
+`
+      ));
+  });
+
+  it('Table field with DecimalPlaces property', () => {
+    return alFormat("table 50000 MyTable { fields{field(1; Amount; Decimal){ DecimalPlaces=2; }} }").then(formattedCode =>
+      expect(formattedCode).to.equal(
+        `table 50000 MyTable
+{
+  fields
+  {
+    field(1; Amount; Decimal)
+    {
+      DecimalPlaces = 2;
+    }
+  }
+}
+`
+      ));
+  });
+
+  it('Table field with DecimalPlaces property, values separated with colon', () => {
+    return alFormat("table 50000 MyTable { fields{field(1; Amount; Decimal){ DecimalPlaces=2:4; }} }").then(formattedCode =>
+      expect(formattedCode).to.equal(
+        `table 50000 MyTable
+{
+  fields
+  {
+    field(1; Amount; Decimal)
+    {
+      DecimalPlaces = 2 : 4;
+    }
+  }
+}
+`
+      ));
+  });
+});
+
+describe('Printing of table keys', () => {
+  it('Key with SumIndexFields property', () => {
+    return alFormat("table 50000 MyTable { keys{key(KeyWithView; ID){ SumIndexFields=Amount,Quantity; }} }").then(formattedCode =>
+      expect(formattedCode).to.equal(
+        `table 50000 MyTable
+{
+  keys
+  {
+    key(KeyWithView; ID)
+    {
+      SumIndexFields = Amount, Quantity;
+    }
+  }
+}
+`
+      ));
+  });
 });

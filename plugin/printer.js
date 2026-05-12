@@ -34,6 +34,7 @@ function print(path, options, print) {
             return printObjectDefinition(path, options, print);
 
         case ALParser.RULE_genericObjectProperty:
+        case ALParser.RULE_accessProperty:
             return printGenericObjectProperty(path, options, print);
 
         case ALParser.RULE_tablePropertiesList:
@@ -80,6 +81,9 @@ function print(path, options, print) {
 
         case ALParser.RULE_permissionsPropertyValue:
             return printPermissionsPropertyValue(path, options, print);
+
+        case ALParser.RULE_decimalPlacesPropValue:
+            return printDecimalPlacesPropertyValue(path, options, print);
 
         //#endregion Common object elements
 
@@ -522,7 +526,34 @@ function printObjectPropertyItem(path, options, print) {
 }
 
 function printObjectProperty(path, options, print) {
-    return join(" ", path.map(print, 'children'));
+    // Grammar: identifier EQUAL (identifier | STRING_LITERAL | BOOLEAN_LITERAL | INTEGER_LITERAL | DECIMAL_LITERAL) (COMMA identifier EQUAL literal)*;
+    const children = path.node.children;
+    if (children.length === 1)
+        return path.call(print, 'children', 0);
+
+    const definition = [];
+    definition.push(path.call(print, 'children', 0));  // Property name
+    definition.push(path.call(print, 'children', 1));  // Equal sign
+    definition.push(path.call(print, 'children', 2));  // Property value
+
+    // Comma-separated list of property modifiers (e.g. Caption = 'Caption text', Locked = true)
+    const modifiers = [];
+    for (let i = 3; i < children.length; i += 4) {
+        modifiers.push(
+            join(" ", [
+                path.call(print, 'children', i),  // Comma
+                path.call(print, 'children', i + 1),  // Name
+                path.call(print, 'children', i + 2),  // Equal sign
+                path.call(print, 'children', i + 3)   // Value
+            ]));
+    }
+
+    const property = [];
+    property.push(join(" ", definition));
+    if (modifiers.length > 0)
+        property.push(modifiers);
+
+    return property;
 }
 
 //#region Table functions
@@ -1334,6 +1365,10 @@ function printProcedureDefinition(path, options, print) {
     const endIdx = children.findIndex(c => c.symbol?.type === ALParser.END);
     const statementListId = endIdx > beginIdx + 1 ? beginIdx + 1 : -1;
 
+    const proc = path.call(print, 'children', procKeywordIdx);
+    const begin = path.call(print, 'children', beginIdx);
+    const end = path.call(print, 'children', endIdx);
+
     let attributes = [];
     if (children[0].ruleIndex === ALParser.RULE_procedureAttributesList) {
         attributes = [...path.call(print, "children", 0), hardline];
@@ -1347,7 +1382,7 @@ function printProcedureDefinition(path, options, print) {
     // variablesList: any rule context between RPAREN and BEGIN
     const varDocs = varListIdx > 0 ? path.call(print, 'children', varListIdx) : [];
 
-    let signature = ["procedure ", name, "(", group(indent(paramDoc)), ")"];
+    let signature = [proc, " ", name, "(", group(indent(paramDoc)), ")"];
 
     // If the procedure return type is not defined, returnTypeIdx = -1
     let returnType = [];
@@ -1362,8 +1397,8 @@ function printProcedureDefinition(path, options, print) {
 
     const vars = varDocs.length > 0 ? [hardline, varDocs] : [];
     const body = statementListId > 0
-        ? [hardline, "begin", indent([hardline, path.call(print, 'children', statementListId)]), hardline, "end;"]
-        : [hardline, "begin", hardline, "end;"];
+        ? [hardline, begin, indent([hardline, path.call(print, 'children', statementListId)]), hardline, end, ";"]
+        : [hardline, begin, hardline, end, ";"];
 
     return [...attributes, ...accessModifier, ...signature, ...returnType, ...vars, ...body];
 }
@@ -1840,6 +1875,17 @@ function printPermissionsPropertyValue(path, options, print) {
     const permissions = path.call(print, 'children', 3);
 
     return join(" ", [objectType, objectName, equalSign, permissions]);
+}
+
+function printDecimalPlacesPropertyValue(path, options, print) {
+    // Grammar: INTEGER_LITERAL (COLON INTEGER_LITERAL)?;
+    const intPart = path.call(print, 'children', 0);
+    if (path.node.children.length === 1)
+        return intPart;
+
+    const colon = path.call(print, 'children', 1);
+    const decPart = path.call(print, 'children', 2);
+    return [intPart, " ", colon, " ", decPart];
 }
 
 function printToken(token) {
