@@ -69,6 +69,9 @@ function print(path, options, print) {
         case ALParser.RULE_interfaceProperty:
             return printObjectProperty(path, options, print);
 
+        case ALParser.RULE_objectReference:
+            return printObjectReference(path, options, print);
+
         case ALParser.RULE_subpageLinkProperty:
         case ALParser.RULE_runPageLinkProperty:
             return printSubPageLinkProperty(path, options, print);
@@ -289,6 +292,9 @@ function print(path, options, print) {
 
         case ALParser.RULE_pageExtActionsBlock:
             return printPageExtensionActions(path, options, print);
+
+        case ALParser.RULE_pageExtElementRelocation:
+            return printPageExtElementRelocation(path, options, print);
 
         //#endregion Page extension
 
@@ -554,6 +560,11 @@ function printObjectProperty(path, options, print) {
         property.push(modifiers);
 
     return property;
+}
+
+function printObjectReference(path, options, print) {
+    // Grammar: objectTypeName identifier;
+    return join(" ", path.map(print, 'children'));
 }
 
 //#region Table functions
@@ -862,11 +873,31 @@ function printActionsDefinition(path, options, print) {
 }
 
 function printActionElements(path, options, print) {
-    // Grammar: (actionDefinition | actionGroupDefinition | actionAreaDefinition)*
+    // Grammar: actionPropertiesList? (actionDefinition | actionRefsList | actionGroupDefinition | actionAreaDefinition)*;
     const children = path.node.children;
     if (!children || children.length === 0)
         return "";
-    return join(hardline, path.map(print, 'children'));
+
+    let actionStartIdx = 0;
+    const elements = [];
+    if (children[0].ruleIndex === ALParser.RULE_actionPropertiesList) {
+        elements.push(path.call(print, 'children', 0));
+        actionStartIdx = 1;
+    }
+
+    const actions = [];
+    for (let i = actionStartIdx; i < children.length; i++) {
+        actions.push(path.call(print, 'children', i));
+    }
+
+    if (actions.length > 0) {
+        if (elements.length > 0)
+            elements.push(hardline, hardline);
+
+        elements.push(join(hardline, actions));
+    }
+
+    return elements;
 }
 
 function printActionDefinition(path, options, print) {
@@ -906,7 +937,7 @@ function printActionAreaDefinition(path, options, print) {
 }
 
 function printActionAreaElements(path, options, print) {
-    // Grammar: (actionDefinition | actionGroupDefinition)*
+    // Grammar: actionPropertiesList? (actionDefinition | actionGroupDefinition | actionRefsList)*;
     const children = path.node.children;
     if (!children || children.length === 0) return "";
     return join(hardline, path.map(print, 'children'));
@@ -1087,17 +1118,31 @@ function printPageExtensionActions(path, options, print) {
     const children = path.node.children;
     const lBraceIdx = children.findIndex(c => c.symbol?.type === ALParser.LBRACE);
     const rBraceIdx = children.findIndex(c => c.symbol?.type === ALParser.RBRACE);
-    const mods = rBraceIdx > lBraceIdx + 1 ? path.call(print, "children", lBraceIdx + 1) : [];
+    const mods = [];
+
+    for (let i = lBraceIdx + 1; i < rBraceIdx; i++)
+        mods.push(path.call(print, "children", i));
 
     const result = [];
     result.push(path.call(print, "children", 0), hardline, path.call(print, "children", lBraceIdx));
 
     if (mods.length > 0) {
-        result.push(indent([hardline, mods]));
+        result.push(indent([hardline, join(hardline, mods)]));
     }
     result.push(hardline, path.call(print, "children", rBraceIdx));
 
     return result;
+}
+
+function printPageExtElementRelocation(path, options, print) {
+    // Grammar: pageExtElementRelocationKeyword LPAREN identifier SEMICOLON identifiersList RPAREN;
+    const keyword = path.call(print, 'children', 0);
+    const lparen = path.call(print, 'children', 1);
+    const identifier = path.call(print, 'children', 2);
+    const semicolon = path.call(print, 'children', 3);
+    const idList = path.call(print, 'children', 4);
+    const rparen = path.call(print, 'children', 5);
+    return [keyword, lparen, identifier, semicolon, " ", idList, rparen];
 }
 
 //#endregion Page extension functions
