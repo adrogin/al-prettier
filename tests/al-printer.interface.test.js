@@ -76,4 +76,21 @@ procedure DoSomethingVeryDifferently();
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
+
+    it('Print interface extending multiple base interfaces', () => {
+        const code = `
+interface IFooBar extends IFoo, IBar
+{
+    procedure FooBar();
+}`;
+
+        const expected = `interface IFooBar extends IFoo, IBar
+{
+  procedure FooBar();
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
 });

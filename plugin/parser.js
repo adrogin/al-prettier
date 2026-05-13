@@ -1,6 +1,13 @@
-import { CharStream, CommonTokenStream } from 'antlr4';
+import { CharStream, CommonTokenStream, ErrorListener } from 'antlr4';
 import ALLexer from "../../algrammar/JS/ALLexer.js";
 import ALParser from "../../algrammar/JS/ALParser.js";
+
+class BreakProcessErrorListener extends ErrorListener {
+    syntaxError(recognizer, offendingSymbol, line, column, msg, e) {
+        const errorMessage = `Parsing error at line ${line}, column ${column}: ${msg}`;
+        throw new Error(errorMessage);
+    }
+}
 
 function parse(text, options) {
     const input = text;
@@ -8,6 +15,8 @@ function parse(text, options) {
     const lexer = new ALLexer(chars);
     const tokens = new CommonTokenStream(lexer);
     const parser = new ALParser(tokens);
+
+    parser.addErrorListener(new BreakProcessErrorListener());
 
     const compilationUnit = parser.compilationUnit();
 

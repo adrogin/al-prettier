@@ -197,4 +197,65 @@ page 50001 "Page With One Action"
     return alFormat(code).then(formattedCode =>
       expect(formattedCode).to.equal(expected))
   });
+
+  it('SourceTableView property', () => {
+    const code = `
+page 50001 "Page With One Action"
+{
+SourceTableView = sorting (Name, "No.") order(descending)
+ where ("Balance (LCY)" = filter (>= 50000), "Sales (LCY)" = filter (<> 0));
+}
+`;
+
+    const expected = `page 50001 "Page With One Action"
+{
+  SourceTableView = sorting(Name, "No.")
+    order(descending)
+    where("Balance (LCY)" = filter(>=50000),
+      "Sales (LCY)" = filter(<>0));
+}
+`;
+
+    return alFormat(code).then(formattedCode =>
+      expect(formattedCode).to.equal(expected))
+  });
+
+  it('Page with subpage', () => {
+    const code = `
+page 50001 "Page With Subpage"
+{
+    layout
+    {
+        area(content)
+        {part(Subpage;"Factbox Subpage")
+            {
+            Caption = 'Factbox';
+            UpdatePropagation = Both;
+            SubPageLink="Table No."=Const(Database::"My Table"), "No."=field("No.");
+            }
+        }}}
+`;
+
+    const expected = `page 50001 "Page With Subpage"
+{
+  layout
+  {
+    area(content)
+    {
+      part(Subpage; "Factbox Subpage")
+      {
+        Caption = 'Factbox';
+        UpdatePropagation = Both;
+        SubPageLink =
+          "Table No." = const(Database::"My Table"),
+          "No." = field("No.");
+      }
+    }
+  }
+}
+`;
+
+    return alFormat(code).then(formattedCode =>
+      expect(formattedCode).to.equal(expected))
+  });
 });

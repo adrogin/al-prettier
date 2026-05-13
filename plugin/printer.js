@@ -230,6 +230,9 @@ function print(path, options, print) {
         case ALParser.RULE_actionRef:
             return printActionRef(path, options, print);
 
+        case ALParser.RULE_sourceTableViewExpression:
+            return pintSourceTableViewExpression(path, options, print);
+
         //#endregion Page object
 
         //#region Codeunit object
@@ -297,6 +300,13 @@ function print(path, options, print) {
             return printPageExtElementRelocation(path, options, print);
 
         //#endregion Page extension
+
+        //#region Enum extension
+
+        case ALParser.RULE_enumExtensionObject:
+            return printEnumExtensionObject(path, options, print);
+
+        //#endregion Enum extension
 
         //#region Code statements
 
@@ -995,10 +1005,17 @@ function printTableRelationWhereExpression(path, options, print) {
 }
 
 function printTableRelationFilterRef(path, options, print) {
-    // Grammar: (FIELD | CONST | FILTER) LPAREN tableFieldReference RPAREN
+    const rparenIdx = path.node.children.findIndex(c => c.symbol?.type === ALParser.RPAREN);
+
     const func = path.call(print, 'children', 0);
-    const rParen = path.call(print, 'children', 3);
-    return [func, "(", ...path.call(print, 'children', 2), rParen];
+    const lParen = path.call(print, 'children', 1);
+    const rParen = path.call(print, 'children', rparenIdx);
+    const expression = [];
+
+    for (let i = 2; i < rparenIdx; i++)
+        expression.push(path.call(print, 'children', i));
+
+    return [func, lParen, ...expression, rParen];
 }
 
 function printCalcFormulaExpression(path, options, print) {
@@ -1043,6 +1060,11 @@ function printPageLinkExpression(path, options, print) {
     }
 
     return filters;
+}
+
+function pintSourceTableViewExpression(path, options, print) {
+    // Grammar: sourceTableSortingExpr? sourceTableOrderExpr? tableRelationWhereExpression?;
+    return group(indent(join(line, path.map(print, 'children'))));
 }
 
 //#endregion Page functions
@@ -1304,6 +1326,14 @@ function printImplementationProperty(path, options, print) {
 }
 
 //#endregion Enum functions
+
+//#region Enum extension functions
+
+function printEnumExtensionObject(path, options, print) {
+    return printALObject(path, options, print, ALParser.ENUMEXTENSION);
+}
+
+//#endregion Enum extension functions
 
 //#region Code statements
 
