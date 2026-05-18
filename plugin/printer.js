@@ -44,6 +44,8 @@ function print(path, options, print) {
         case ALParser.RULE_keyPropertiesList:
         case ALParser.RULE_enumPropertiesList:
         case ALParser.RULE_enumValuePropertiesList:
+        case ALParser.RULE_queryPropertiesList:
+        case ALParser.RULE_queryColumnPropertiesList:
             return printObjectPropertiesList(path, options, print);
 
         case ALParser.RULE_tablePropertyItem:
@@ -53,6 +55,8 @@ function print(path, options, print) {
         case ALParser.RULE_keyPropertyItem:
         case ALParser.RULE_enumPropertyItem:
         case ALParser.RULE_enumValuePropertyItem:
+        case ALParser.RULE_queryPropertyItem:
+        case ALParser.RULE_queryColumnPropertyItem:
             return printObjectPropertyItem(path, options, print);
 
         case ALParser.RULE_tableProperty:
@@ -67,6 +71,8 @@ function print(path, options, print) {
         case ALParser.RULE_enumProperty:
         case ALParser.RULE_enumValueProperty:
         case ALParser.RULE_interfaceProperty:
+        case ALParser.RULE_queryProperty:
+        case ALParser.RULE_queryColumnProperty:
             return printObjectProperty(path, options, print);
 
         case ALParser.RULE_objectReference:
@@ -88,6 +94,9 @@ function print(path, options, print) {
         case ALParser.RULE_decimalPlacesPropValue:
             return printDecimalPlacesPropertyValue(path, options, print);
 
+        case ALParser.RULE_accessByPermissionProperty:
+            return printAccessByPermissionPropertyValue(path, options, print);
+
         //#endregion Common object elements
 
         //#region Table object
@@ -106,8 +115,8 @@ function print(path, options, print) {
         case ALParser.RULE_tableRelationExpression:
             return printTableRelationExpression(path, options, print);
 
-        case ALParser.RULE_tableRelationRelatedTableExpr:
-            return printRelatedTableExpression(path, options, print);
+        case ALParser.RULE_tableFieldReference:
+            return printTableFieldReference(path, options, print);
 
         case ALParser.RULE_tableRelationWhereExpression:
             return printTableRelationWhereExpression(path, options, print);
@@ -116,6 +125,9 @@ function print(path, options, print) {
         case ALParser.RULE_tableRelationConstReference:
         case ALParser.RULE_tableRelationFilter:
             return printTableRelationFilterRef(path, options, print);
+
+        case ALParser.RULE_relationFilterExpression:
+            return printRelationFilterExpression(path, options, print);
 
         case ALParser.RULE_calcFormulaExpression:
             return printCalcFormulaExpression(path, options, print);
@@ -308,6 +320,34 @@ function print(path, options, print) {
 
         //#endregion Enum extension
 
+        //#region Query object
+
+        case ALParser.RULE_queryObject:
+            return printQueryObject(path, options, print);
+
+        case ALParser.RULE_queryElements:
+            return printQueryElements(path, options, print);
+
+        case ALParser.RULE_queryDataItemElementsList:
+            return printQueryDataItemElementsList(path, options, print);
+
+        case ALParser.RULE_queryDataItemDefinition:
+            return printQueryDataItemDefinition(path, options, print);
+
+        case ALParser.RULE_dataItemLinkProperty:
+        case ALParser.RULE_dataItemTableFilterProp:
+        case ALParser.RULE_columnFilterProp:
+            return printDataItemLinkProperty(path, options, print);
+
+        case ALParser.RULE_queryColumnDefinition:
+        case ALParser.RULE_queryFilterDefinition:
+            return printQueryColumnDefinition(path, options, print);
+
+        case ALParser.RULE_orderByProperty:
+            return printOrderByProperty(path, options, print);
+
+        //#endregion Query object
+
         //#region Code statements
 
         case ALParser.RULE_namespaceDeclaration:
@@ -397,6 +437,7 @@ function print(path, options, print) {
         case ALParser.RULE_reportDataType:
         case ALParser.RULE_testPageDataType:
         case ALParser.RULE_xmlPortDataType:
+        case ALParser.RULE_dotNetDataType:
             return join(" ", path.map(print, 'children'));
 
         // Other data types that require special formatting
@@ -662,13 +703,23 @@ function printKeyItem(path, options, print) {
 function printFieldGroupsList(path, options, print) {
     // Grammar: FIELDGROUPS LBRACE fieldGroupItem* RBRACE
     const rBraceIdx = path.node.children.findIndex(c => c.symbol?.type === ALParser.RBRACE);
+    const keyword = path.call(print, 'children', 0);
+    const lbrace = path.call(print, 'children', 1);
+    const rbrace = path.call(print, 'children', rBraceIdx);
     const items = [];
 
     for (let i = 2; i < rBraceIdx; i++) {
         items.push(path.call(print, 'children', 2));
     }
 
-    return ["fieldgroups", hardline, "{", indent([hardline, join(hardline, items)]), hardline, "}"];
+    const res = [];
+    res.push(keyword, hardline, lbrace);
+    if (items.length > 0) {
+        res.push(indent([hardline, join(hardline, items)]));
+    }
+    res.push(hardline, rbrace);
+
+    return res;
 }
 
 function printFieldGroupItem(path, options, print) {
@@ -989,7 +1040,7 @@ function printTableRelationExpression(path, options, print) {
     return group(indent(join(line, path.map(print, 'children'))));
 }
 
-function printRelatedTableExpression(path, options, print) {
+function printTableFieldReference(path, options, print) {
     return path.map(print, 'children');
 }
 
@@ -1016,6 +1067,10 @@ function printTableRelationFilterRef(path, options, print) {
         expression.push(path.call(print, 'children', i));
 
     return [func, lParen, ...expression, rParen];
+}
+
+function printRelationFilterExpression(path, options, print) {
+    return join(" ", path.map(print, 'children'));
 }
 
 function printCalcFormulaExpression(path, options, print) {
@@ -1335,6 +1390,141 @@ function printEnumExtensionObject(path, options, print) {
 
 //#endregion Enum extension functions
 
+//#region  Query functions
+
+function printQueryObject(path, options, print) {
+    return printALObject(path, options, print, ALParser.QUERY);
+}
+
+function printQueryDataItemElementsList(path, options, print) {
+    return join(hardline, path.map(print, 'children'));
+}
+
+function printQueryElements(path, options, print) {
+    // Grammar: ELEMENTS LBRACE queryDataItemDefinition* RBRACE;
+    const keyword = path.call(print, 'children', 0);
+    const lbrace = path.call(print, 'children', 1);
+    const rbrace = path.call(print, 'children', path.node.children.length - 1);
+
+    const dataItems = [];
+    for (let i = 2; i < path.node.children.length - 1; i++) {
+        dataItems.push(path.call(print, 'children', i));
+    }
+
+    return [keyword, hardline, lbrace, indent([hardline, join(hardline, dataItems)]), hardline, rbrace];
+}
+
+function printQueryDataItemDefinition(path, options, print) {
+    // Grammar: DATAITEM LPAREN identifier SEMICOLON expression RPAREN LBRACE queryPropertiesList? queryDataItemElementsList? RBRACE;
+    const children = path.node.children;
+    const keyword = path.call(print, 'children', 0);
+    const lparen = path.call(print, 'children', 1);
+    const dataItemId = path.call(print, 'children', 2);
+    const semicolon = path.call(print, 'children', 3);
+    const refExpression = path.call(print, 'children', 4);
+    const rparen = path.call(print, 'children', 5);
+    const lbrace = path.call(print, 'children', 6);
+    const rbrace = path.call(print, 'children', children.length - 1);
+
+    const content = [];
+    const propsIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_queryPropertiesList);
+    if (propsIdx > -1)
+        content.push(path.call(print, 'children', propsIdx));
+
+    const elementsIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_queryDataItemElementsList);
+    if (elementsIdx > -1) {
+        if (content.length > 0)
+            content.push(hardline, hardline);
+        content.push(path.call(print, 'children', elementsIdx));
+    }
+
+    const dataItem = [keyword, lparen, dataItemId, semicolon, " ", refExpression, rparen, hardline, lbrace];
+    if (content.length > 0)
+        dataItem.push(indent([hardline, ...content]));
+
+    dataItem.push(hardline, rbrace);
+    return dataItem;
+}
+
+function printDataItemLinkProperty(path, options, print) {
+    // Grammar: DATAITEMLINK EQUAL identifier EQUAL tableFieldReference (COMMA identifier EQUAL tableFieldReference)*;
+
+    const propertyName = path.call(print, 'children', 0);
+    const equalSign = path.call(print, 'children', 1);
+
+    const colRefs = [];
+    for (let i = 2; i <= path.node.children.length - 3; i += 4) {
+        const colName = path.call(print, 'children', i);
+        const refEqualSign = path.call(print, 'children', i + 1);
+        const referencedColumn = path.call(print, 'children', i + 2);
+        colRefs.push(colName, " ", refEqualSign, " ", referencedColumn);
+
+        if (i < path.node.children.length - 3) {
+            colRefs.push(path.call(print, 'children', i + 3), line);  // Comma
+        }
+    }
+
+    return [propertyName, " ", equalSign, group(indent([line, ...colRefs]))];
+}
+
+function printQueryColumnDefinition(path, options, print) {
+    // Grammar: COLUMN LPAREN identifier (SEMICOLON expression)? RPAREN LBRACE queryColumnPropertiesList? RBRACE;
+    const children = path.node.children;
+    const keyword = path.call(print, 'children', 0);
+    const lparen = path.call(print, 'children', 1);
+    const colId = path.call(print, 'children', 2);
+
+    const semicolonIdx = children.findIndex(c => c.symbol?.type === ALParser.SEMICOLON);
+    const refExpIdx = semicolonIdx > -1 ? semicolonIdx + 1 : -1;
+    const rparenIdx = semicolonIdx > -1 ? 5 : 3;
+    const lbraceIdx = rparenIdx + 1;
+    const propsListIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_queryColumnPropertiesList);
+    const rbraceIdx = children.length - 1;
+
+    const semicolon = semicolonIdx > -1 ? path.call(print, 'children', semicolonIdx) : [];
+    const refExpression = refExpIdx > -1 ? path.call(print, 'children', refExpIdx) : [];
+    const rparen = path.call(print, 'children', rparenIdx);
+    const lbrace = path.call(print, 'children', lbraceIdx);
+    const rbrace = path.call(print, 'children', rbraceIdx);
+    const properties =
+        propsListIdx > -1
+            ? path.call(print, 'children', propsListIdx)
+            : [];
+
+    const content = [keyword, lparen, colId];
+    if (semicolonIdx > -1)
+        content.push(semicolon, " ", refExpression);
+
+    content.push(rparen, hardline, lbrace);
+    if (properties.length > 0)
+        content.push(indent([hardline, ...properties]));
+
+    content.push(hardline, rbrace);
+    return content;
+}
+
+function printOrderByProperty(path, options, print) {
+    // Grammar: ORDERBY EQUAL IDENTIFIER LPAREN identifier RPAREN (COMMA IDENTIFIER LPAREN identifier RPAREN)*;
+    const keyword = path.call(print, 'children', 0);
+    const equalSign = path.call(print, 'children', 1);
+    const expression = [];
+
+    for (let i = 2; i < path.node.children.length; i += 5) {
+        expression.push(path.call(print, 'children', i));  // Order direction: ascending / descending
+        expression.push(path.call(print, 'children', i + 1));  // Left parenthesis
+        expression.push(path.call(print, 'children', i + 2)); // Ordergin column name
+        expression.push(path.call(print, 'children', i + 3));  // Right parenthesis
+
+        if (i < path.node.children.length - 4) {
+            expression.push([path.call(print, 'children', i + 4), " "]);  // Comma separating the next ordering clause
+        }
+    }
+
+    return [keyword, " ", equalSign, " ", ...expression];
+}
+
+//#endregion Query functions
+
 //#region Code statements
 
 function printNamespaceDeclaration(path, options, print) {
@@ -1374,15 +1564,22 @@ function printVariableDeclaration(path, options, print) {
 }
 
 function printVariablesList(path, options, print) {
-    // Grammar: VAR variableDeclaration+
+    // Grammar: PROTECTED? VAR variableDeclaration+;
     const children = path.node.children;
+    const varIdx = children.findIndex(c => c.symbol?.type === ALParser.VAR);
+
+    const keywords = [];
+    for (let i = 0; i <= varIdx; i++) {
+        keywords.push(path.call(print, 'children', i));
+    }
+
     const varDocs = [];
-    for (let i = 1; i < children.length; i++) {
+    for (let i = varIdx + 1; i < children.length; i++) {
         varDocs.push(path.call(print, 'children', i));
     }
 
     return varDocs.length > 0
-        ? ["var", indent([hardline, join(hardline, varDocs)])]
+        ? [join(" ", keywords), indent([hardline, join(hardline, varDocs)])]
         : [];
 }
 
@@ -1754,7 +1951,7 @@ function printUnaryNotExpression(path, options, print) {
 }
 
 function printBinaryExpression(path, options, print) {
-    // All binary expression follow the structure: "operand operator operand".
+    // All binary expressions follow the structure: "operand operator operand".
     // If the line does not fit in the print width, the second operand will be moved to the next line with indent.
 
     return path.node?.children?.length > 1
@@ -1890,8 +2087,6 @@ function printLabelDataType(path, options, print) {
         return ["Label ", labelText];
     }
 
-    // group() tries to fit everything on one line first. When it doesn't fit,
-    // each `line` expands to a newline and the `indent` shifts continuations in.
     return group([
         "Label ", labelText,
         indent(properties.map(prop => [",", line, prop]))
@@ -1963,6 +2158,10 @@ function printDecimalPlacesPropertyValue(path, options, print) {
     return [intPart, " ", colon, " ", decPart];
 }
 
+function printAccessByPermissionPropertyValue(path, options, print) {
+    return join(" ", path.map(print, 'children'));
+}
+
 function printToken(token) {
     const text = token.symbol.text;
     return isLowerCaseToken(token) ? text.toLowerCase() : text;
@@ -1992,6 +2191,8 @@ function isLowerCaseToken(token) {
         ALParser.EXIT,
         ALParser.EXTENDS,
         ALParser.FIELD,
+        ALParser.FIELDGROUP,
+        ALParser.FIELDGROUPS,
         ALParser.FILTER,
         ALParser.FOR,
         ALParser.FOREACH,
@@ -2009,6 +2210,7 @@ function isLowerCaseToken(token) {
         ALParser.OR,
         ALParser.PROCEDURE,
         ALParser.REPEAT,
+        ALParser.SORTING,
         ALParser.THEN,
         ALParser.THIS,
         ALParser.TO,

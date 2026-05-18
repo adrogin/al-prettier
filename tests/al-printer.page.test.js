@@ -7,8 +7,8 @@ import * as prettier from "prettier";
 import { alFormat } from './testUtils.js';
 
 describe('Basic page structure', () => {
-  it('Page with one field', () => {
-    const code = `
+    it('Page with one field', () => {
+        const code = `
 page 50001 "Page With One Field"
 {
   layout
@@ -24,7 +24,7 @@ page 50001 "Page With One Field"
   }
 }`;
 
-    const expected = `page 50001 "Page With One Field"
+        const expected = `page 50001 "Page With One Field"
 {
   layout
   {
@@ -43,12 +43,12 @@ page 50001 "Page With One Field"
 }
 `;
 
-    return alFormat(code).then(formattedCode =>
-      expect(formattedCode).to.equal(expected))
-  });
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
 
-  it('Repeater control with multiple fields', () => {
-    const code = `
+    it('Repeater control with multiple fields', () => {
+        const code = `
 page 50001 "Page With Three Fields"
 {
   layout
@@ -70,7 +70,7 @@ page 50001 "Page With Three Fields"
   }
 }`;
 
-    const expected = `page 50001 "Page With Three Fields"
+        const expected = `page 50001 "Page With Three Fields"
 {
   layout
   {
@@ -96,12 +96,12 @@ page 50001 "Page With Three Fields"
 }
 `;
 
-    return alFormat(code).then(formattedCode =>
-      expect(formattedCode).to.equal(expected))
-  });
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
 
-  it('Page with action', () => {
-    const code = `
+    it('Page with action', () => {
+        const code = `
 page 50001 "Page With One Action"
 {
   actions
@@ -116,7 +116,7 @@ page 50001 "Page With One Action"
   }
 }`;
 
-    const expected = `page 50001 "Page With One Action"
+        const expected = `page 50001 "Page With One Action"
 {
   actions
   {
@@ -137,12 +137,12 @@ page 50001 "Page With One Action"
 }
 `;
 
-    return alFormat(code).then(formattedCode =>
-      expect(formattedCode).to.equal(expected))
-  });
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
 
-  it('Promoted area with actionref', () => {
-    const code = `
+    it('Promoted area with actionref', () => {
+        const code = `
 page 50001 "Page With One Action"
 {
   actions
@@ -164,7 +164,7 @@ page 50001 "Page With One Action"
 }
 `;
 
-    const expected = `page 50001 "Page With One Action"
+        const expected = `page 50001 "Page With One Action"
 {
   actions
   {
@@ -194,12 +194,12 @@ page 50001 "Page With One Action"
 }
 `;
 
-    return alFormat(code).then(formattedCode =>
-      expect(formattedCode).to.equal(expected))
-  });
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
 
-  it('SourceTableView property', () => {
-    const code = `
+    it('SourceTableView property', () => {
+        const code = `
 page 50001 "Page With One Action"
 {
 SourceTableView = sorting (Name, "No.") order(descending)
@@ -207,21 +207,21 @@ SourceTableView = sorting (Name, "No.") order(descending)
 }
 `;
 
-    const expected = `page 50001 "Page With One Action"
+        const expected = `page 50001 "Page With One Action"
 {
   SourceTableView = sorting(Name, "No.")
     order(descending)
-    where("Balance (LCY)" = filter(>=50000),
-      "Sales (LCY)" = filter(<>0));
+    where("Balance (LCY)" = filter(>= 50000),
+      "Sales (LCY)" = filter(<> 0));
 }
 `;
 
-    return alFormat(code).then(formattedCode =>
-      expect(formattedCode).to.equal(expected))
-  });
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
 
-  it('Page with subpage', () => {
-    const code = `
+    it('Page with subpage', () => {
+        const code = `
 page 50001 "Page With Subpage"
 {
     layout
@@ -236,7 +236,7 @@ page 50001 "Page With Subpage"
         }}}
 `;
 
-    const expected = `page 50001 "Page With Subpage"
+        const expected = `page 50001 "Page With Subpage"
 {
   layout
   {
@@ -255,7 +255,48 @@ page 50001 "Page With Subpage"
 }
 `;
 
-    return alFormat(code).then(formattedCode =>
-      expect(formattedCode).to.equal(expected))
-  });
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('RunPageLink with pipe character', () => {
+        const code = `
+page 50001 "Page With One Action"
+{
+  actions
+  {area(navigation)
+    {group("&Action Group")
+      {
+        action(RunAnotherPage)
+        {RunObject = Page "Another Page";
+        RunPageLink = "Source Type" = filter(83|5407),"Source Subtype" = filter("3"|"4"|"5");}
+      }
+    }
+  }
+}`;
+
+        const expected = `page 50001 "Page With One Action"
+{
+  actions
+  {
+    area(navigation)
+    {
+      group("&Action Group")
+      {
+        action(RunAnotherPage)
+        {
+          RunObject = Page "Another Page";
+          RunPageLink =
+            "Source Type" = filter(83 | 5407),
+            "Source Subtype" = filter("3" | "4" | "5");
+        }
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
 });
