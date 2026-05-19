@@ -100,6 +100,26 @@ page 50001 "Page With Three Fields"
             expect(formattedCode).to.equal(expected))
     });
 
+    it('Page with empty actions segment', () => {
+        const code = `
+page 50001 "No Actions Page"
+{
+  actions
+  {}
+}`;
+
+        const expected = `page 50001 "No Actions Page"
+{
+  actions
+  {
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
     it('Page with action', () => {
         const code = `
 page 50001 "Page With One Action"

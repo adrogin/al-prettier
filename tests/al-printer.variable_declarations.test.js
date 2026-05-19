@@ -234,3 +234,62 @@ codeunit 50000 MyCodeunit
             expect(formattedCode).to.equal(expected))
     });
 });
+
+describe('Complex vaiable types', () => {
+    it('Array variable', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  var TextArray: Array[10] of Text[100];
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  var
+    TextArray: array[10] of Text[100];
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('List variable', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  var ListOfText: List of [Text[100]];
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  var
+    ListOfText: List of [Text[100]];
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Dictionary variable', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  var Dict: Dictionary of [Code[20],Text[100]];
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  var
+    Dict: Dictionary of [Code[20], Text[100]];
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+});

@@ -19,6 +19,7 @@ export function isParagraphStatement(node) {
         case ALParser.RULE_forStatement:
         case ALParser.RULE_forEachStatement:
         case ALParser.RULE_whileStatement:
+        case ALParser.RULE_caseStatement:
             return true;
 
         default:
