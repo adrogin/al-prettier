@@ -211,6 +211,9 @@ function print(path, options, print) {
         case ALParser.RULE_pageFieldItem:
             return printPageFieldItem(path, options, print);
 
+        case ALParser.RULE_pageLabelItem:
+            return printPageLabelItem(path, options, print);
+
         case ALParser.RULE_pageFieldPropertiesList:
             return printPageFieldPropertiesList(path, options, print);
 
@@ -752,6 +755,9 @@ function printFieldGroupsList(path, options, print) {
         items.push(path.call(print, 'children', 2));
     }
 
+    if (options.removeEmptyElements && items.length === 0)
+        return "";
+
     const res = [];
     res.push(keyword, hardline, lbrace);
     if (items.length > 0) {
@@ -821,6 +827,9 @@ function printPageObject(path, options, print) {
 function printLayoutDefinition(path, options, print) {
     // Grammar: LAYOUT LBRACE layoutElements RBRACE
     const elements = path.call(print, 'children', 2);
+    if (options.removeEmptyElements && (!Array.isArray(elements) || elements.length === 0))
+        return "";
+
     const pageLayout = [path.call(print, 'children', 0), hardline, path.call(print, 'children', 1)];
 
     if (Array.isArray(elements) && elements.length > 0) {
@@ -944,22 +953,46 @@ function printRepeaterElements(path, options, print) {
 }
 
 function printPageFieldItem(path, options, print) {
-    // Grammar: FIELD LPAREN IDENTIFIER SEMICOLON tableFieldReference RPAREN LBRACE pageFieldPropertiesList* triggersList* RBRACE
+    // Grammar: FIELD LPAREN identifier SEMICOLON expression RPAREN LBRACE pageFieldPropertiesList? triggersList? RBRACE;
     const children = path.node.children;
+    const keyword = path.call(print, 'children', 0);
+    const lparen = path.call(print, 'children', 1);
     const fieldName = path.call(print, 'children', 2);
-    const fieldRef = path.call(print, 'children', 4);
+    const semicolon = path.call(print, 'children', 3);
+    const expression = path.call(print, 'children', 4);
+    const rparen = path.call(print, 'children', 5);
+    const lbrace = path.call(print, 'children', 6);
+    const rbrace = path.call(print, 'children', children.length - 1);
 
-    // pageFieldPropertiesList* and triggersList* occupy children[7..length-2]
     const elementDocs = [];
     for (let i = 7; i < children.length - 1; i++) {
         elementDocs.push(path.call(print, 'children', i));
     }
 
-    const signature = ["field(", fieldName, "; ", fieldRef, ")"];
+    const signature = [keyword, lparen, fieldName, semicolon, " ", expression, rparen];
     const nonEmpty = elementDocs.filter(Boolean);
     const body = nonEmpty.length > 0
-        ? [hardline, "{", indent([hardline, join([hardline, hardline], nonEmpty)]), hardline, "}"]
-        : [hardline, "{", hardline, "}"];
+        ? [hardline, lbrace, indent([hardline, join([hardline, hardline], nonEmpty)]), hardline, rbrace]
+        : [hardline, lbrace, hardline, rbrace];
+
+    return [...signature, ...body];
+}
+
+function printPageLabelItem(path, options, print) {
+    // Grammar: LABEL LPAREN identifier RPAREN LBRACE pageFieldPropertiesList? RBRACE;
+    const children = path.node.children;
+
+    const signature = [];
+    for (let i = 0; i < 4; i++) {
+        signature.push(path.call(print, 'children', i));
+    }
+
+    const lbrace = path.call(print, 'children', 4);
+    const rbrace = path.call(print, 'children', children.length - 1);
+    const properties = children[5].ruleIndex === ALParser.RULE_pageFieldPropertiesList ? path.call(print, 'children', 5) : [];
+    const body = properties.length > 0
+        ? [hardline, lbrace, indent([hardline, properties]), hardline, rbrace]
+        : [hardline, lbrace, hardline, rbrace];
 
     return [...signature, ...body];
 }
@@ -976,9 +1009,12 @@ function printPageFieldPropertyItem(path, options, print) {
 
 function printActionsDefinition(path, options, print) {
     // Grammar: ACTIONS LBRACE actionElements RBRACE
+    const elements = path.call(print, 'children', 2);
+    if (options.removeEmptyElements && (!Array.isArray(elements) || elements.length === 0))
+        return "";
+
     const keyword = path.call(print, 'children', 0);
     const lbrace = path.call(print, 'children', 1);
-    const elements = path.call(print, 'children', 2);
     const rbrace = path.call(print, 'children', 3);
 
     const actionsDef = [keyword, hardline, lbrace];
@@ -1642,14 +1678,19 @@ function printReportRequestPage(path, options, print) {
     // Grammar: REQUESTPAGE LBRACE pagePropertiesList? layoutDefinition? (triggersList | variablesList | proceduresList | actionsDefinition)* RBRACE;
 
     const children = path.node.children;
-    const keyword = path.call(print, 'children', 0);
-    const lbrace = path.call(print, 'children', 1);
-    const rbrace = path.call(print, 'children', children.length - 1);
 
     const elements = [];
     for (let i = 2; i < children.length - 1; i++) {
-        elements.push(path.call(print, 'children', i));
+        const el = path.call(print, 'children', i);
+        if (el !== "")
+            elements.push(el);
     }
+    if (options.removeEmptyElements && elements.length === 0)
+        return "";
+
+    const keyword = path.call(print, 'children', 0);
+    const lbrace = path.call(print, 'children', 1);
+    const rbrace = path.call(print, 'children', children.length - 1);
 
     const pageDocs = [keyword, hardline, lbrace];
     if (elements.length > 0) {
@@ -2265,7 +2306,9 @@ function printALObject(path, options, print, objectType) {
     const elementEnd = children.length - 1;
     const elementDocs = [];
     for (let i = elementStart; i < elementEnd; i++) {
-        elementDocs.push(path.call(print, 'children', i));
+        const el = path.call(print, 'children', i);
+        if (el !== "")
+            elementDocs.push(el);
     }
 
     const body = elementDocs.length > 0

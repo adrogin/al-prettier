@@ -1,9 +1,10 @@
 import * as prettier from "prettier";
 
-export async function alFormat(code) {
+export async function alFormat(code, options = {}) {
     return prettier.format(code, {
         parser: "al-parse",
         plugins: ["./plugin/plugin.js"],
+        ...options
     });
 }
 

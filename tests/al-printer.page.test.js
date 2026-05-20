@@ -47,6 +47,36 @@ page 50001 "Page With One Field"
             expect(formattedCode).to.equal(expected))
     });
 
+    it('Page with label', () => {
+        const code = `
+page 50001 "Page With Label"
+{
+  layout
+  {
+      area(content)
+      { label(Warning) { Caption='Read this warning!'; } }
+  }
+}`;
+
+        const expected = `page 50001 "Page With Label"
+{
+  layout
+  {
+    area(content)
+    {
+      label(Warning)
+      {
+        Caption = 'Read this warning!';
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
     it('Repeater control with multiple fields', () => {
         const code = `
 page 50001 "Page With Three Fields"

@@ -40,6 +40,11 @@
                     "type": "number",
                     "default": 120,
                     "description": "Specify the line length that the printer will wrap on"
+                },
+                "alPrettier.removeEmptyElements": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Remove empty optional element blocks, such as fieldgroups or report labels without content, from AL objects"
                 }
             }
         }

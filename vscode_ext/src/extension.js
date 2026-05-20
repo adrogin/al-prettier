@@ -58,6 +58,7 @@ async function formatDocument(document, options, prettier) {
             tabWidth: config.get('tabWidth') || options.tabSize || 4,
             useTabs: config.get('useTabs') || !options.insertSpaces || false,
             printWidth: config.get('printWidth') || 120,
+            removeEmptyElements: config.get('removeEmptyElements') || false,
         });
 
         // Return a single edit that replaces the entire document
@@ -98,6 +99,7 @@ async function formatRange(document, range, options, prettier) {
             tabWidth: config.get('tabWidth') || options.tabSize || 4,
             useTabs: config.get('useTabs') || !options.insertSpaces || false,
             printWidth: config.get('printWidth') || 120,
+            removeEmptyElements: config.get('removeEmptyElements') || false,
         });
 
         return [
