@@ -1,0 +1,84 @@
+import { describe, it } from 'mocha';
+import { expect } from 'chai';
+import antlr4 from 'antlr4';
+import ALParser from '../../algrammar/JS/ALParser.js';
+import printer from '../plugin/printer.js';
+import * as prettier from "prettier";
+import { alFormat } from './testUtils.js';
+
+describe('Table extension object', () => {
+    it('Table extension adding one field and modifying another', () => {
+        const code = `
+tableextension 55111 "Let's Extend Something" extends "Something Extendable"
+{
+    fields{
+        field(55000; "New Field"; Decimal)
+        {
+            AutoFormatType = 1;
+            AutoFormatExpression = '';
+        }
+        modify("Old Field")
+        {
+            Editable=false;
+        }
+    }
+}`;
+
+        const expected = `tableextension 55111 "Let's Extend Something" extends "Something Extendable"
+{
+  fields
+  {
+    field(55000; "New Field"; Decimal)
+    {
+      AutoFormatType = 1;
+      AutoFormatExpression = '';
+    }
+    modify("Old Field")
+    {
+      Editable = false;
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Table extension adding field property and trigger', () => {
+        const code = `
+tableextension 55111 "Let's Extend Something" extends "Something Extendable"
+{
+    fields{
+        modify("Some Field")
+        {
+            Editable=false;
+            trigger OnValidate()
+            begin
+            ValidateField();
+            end;
+        }
+    }
+}`;
+
+        const expected = `tableextension 55111 "Let's Extend Something" extends "Something Extendable"
+{
+  fields
+  {
+    modify("Some Field")
+    {
+      Editable = false;
+
+      trigger OnValidate()
+      begin
+        ValidateField();
+      end;
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+});

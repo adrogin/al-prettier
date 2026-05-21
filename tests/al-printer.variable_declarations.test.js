@@ -235,7 +235,7 @@ codeunit 50000 MyCodeunit
     });
 });
 
-describe('Complex vaiable types', () => {
+describe('Complex variable types', () => {
     it('Array variable', () => {
         const code = `
 codeunit 50000 MyCodeunit
@@ -248,6 +248,25 @@ codeunit 50000 MyCodeunit
 {
   var
     TextArray: array[10] of Text[100];
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Multidimensional array', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  var Numbers:Array[10,5,3] of Integer;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  var
+    Numbers: array[10, 5, 3] of Integer;
 }
 `;
 
@@ -286,6 +305,86 @@ codeunit 50000 MyCodeunit
 {
   var
     Dict: Dictionary of [Code[20], Text[100]];
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+});
+
+describe('Option variables', () => {
+    it('Generic Option variable without values', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  var OptionVar: Option;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  var
+    OptionVar: Option;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Option with quoted value', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  var OptionVar: Option Option1,"Option 2";
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  var
+    OptionVar: Option Option1, "Option 2";
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Option variable with leading comma', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  var OptionVar: Option ,Option1,Option2,Option3;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  var
+    OptionVar: Option ,Option1, Option2, Option3;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+})
+
+describe('Quoted variable names', () => {
+    it('Quote marks inside a quoted identifier', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  var "This is ""Text""": Text;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  var
+    "This is ""Text""": Text;
 }
 `;
 

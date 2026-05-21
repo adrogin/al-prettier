@@ -777,3 +777,95 @@ codeunit 50000 MyCodeunit
             expect(formattedCode).to.equal(expected))
     });
 });
+
+describe('Codeunit permissions', () => {
+    it('Short permissions string', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+permissions=tabledata "G/LEntry" = r;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  permissions = tabledata "G/LEntry" = r;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Long permissions string breaks line', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+permissions=tabledata "G/LEntry" = rim,tabledata "Dimension Set Entry"=rim, tabledata "Item Ledger Entry"=r,tabledata "Value Entry"=r;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  permissions =
+    tabledata "G/LEntry" = rim,
+    tabledata "Dimension Set Entry" = rim,
+    tabledata "Item Ledger Entry" = r,
+    tabledata "Value Entry" = r;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+});
+
+describe('Array access', () => {
+    it('Accessing value in a single-dimensional array', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+procedure ArrayAccess()
+begin
+ArrayA[i] := ArrayB[i+1];
+end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure ArrayAccess()
+  begin
+    ArrayA[i] := ArrayB[i + 1];
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Accessing value in a multidimensional array', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+procedure ArrayAccess()
+begin
+ArrayA[i,j,k] := ArrayB[1,i+1,Table."Field Name" - CallProcedure()];
+end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure ArrayAccess()
+  begin
+    ArrayA[i, j, k] := ArrayB[1, i + 1, Table."Field Name" - CallProcedure()];
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+});

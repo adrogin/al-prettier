@@ -92,7 +92,7 @@ describe('Table fields definition', () => {
         const printed = printer.print(fieldNode, null, mockPrettyPrint).flat(Infinity);
 
         const expected = [
-            'field(', '1', '; ', 'ID', '; ', 'Integer', ')',
+            'field', '(', '1', ';', ' ', 'ID', ';', ' ', 'Integer', ')',
             hardline,
             '{',
             hardline,
@@ -109,7 +109,7 @@ describe('Table fields definition', () => {
         const printed = printer.print(fieldNode, null, mockPrettyPrint).flat(Infinity);
 
         const expected = [
-            'field(', '2', '; ', 'Description', '; ', 'Text[100]', ')',
+            'field', '(', '2', ';', ' ', 'Description', ';', ' ', 'Text[100]', ')',
             hardline,
             '{',
             hardline,
@@ -173,7 +173,7 @@ describe('Table fields list', () => {
         const expected = [
             "fields", hardline,
             "{", indent([hardline, [
-                'field(', '1', '; ', 'ID', '; ', 'Integer', ')', hardline,
+                'field', '(', '1', ';', ' ', 'ID', ';', ' ', 'Integer', ')', hardline,
                 '{', hardline,
                 '}']
             ]), hardline,
@@ -198,9 +198,9 @@ describe('Table fields list', () => {
             "fields", hardline,
             "{", indent([
                 hardline, [
-                    'field(', '1', '; ', 'ID', '; ', 'Integer', ')', hardline, '{', hardline, '}', hardline,
-                    'field(', '2', '; ', 'Description', '; ', 'Text[100]', ')', hardline, '{', hardline, '}', hardline,
-                    'field(', '3', '; ', 'Amount', '; ', 'Decimal', ')', hardline, '{', hardline, '}']
+                    'field', '(', '1', ';', ' ', 'ID', ';', ' ', 'Integer', ')', hardline, '{', hardline, '}', hardline,
+                    'field', '(', '2', ';', ' ', 'Description', ';', ' ', 'Text[100]', ')', hardline, '{', hardline, '}', hardline,
+                    'field', '(', '3', ';', ' ', 'Amount', ';', ' ', 'Decimal', ')', hardline, '{', hardline, '}']
             ]), hardline,
             "}"
         ].flat();
@@ -242,7 +242,7 @@ describe('Field definitions with properties', () => {
         const printed = printer.print(fieldNode, null, mockPrettyPrint).flat(Infinity);
 
         const expected = [
-            "field(", "1", "; ", "Customer No.", "; ", "Code[20]", ")", hardline,
+            "field", "(", "1", ";", " ", "Customer No.", ";", " ", "Code[20]", ")", hardline,
             "{", indent(
                 [hardline, [
                     "Caption", " ", "=", " ", "'Customer No.'", ";"
@@ -268,7 +268,7 @@ describe('Field definitions with properties', () => {
         const printed = printer.print(fieldNode, null, mockPrettyPrint).flat(Infinity);
 
         const expected = [
-            "field(", "2", "; ", "Invoice Amount", "; ", "Decimal", ")", hardline,
+            "field", "(", "2", ";", " ", "Invoice Amount", ";", " ", "Decimal", ")", hardline,
             "{", indent([hardline,
                 [
                     "Caption", " ", "=", " ", "'Amount'", ";", hardline,

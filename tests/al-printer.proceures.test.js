@@ -77,4 +77,28 @@ codeunit 50000 MyCodeunit
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
+
+    it('Procedure with named return value', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure GetValue() 
+  Value:Text
+  begin
+  Value := 'Value to return';
+  end;
+}`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure GetValue() Value: Text
+  begin
+    Value := 'Value to return';
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
 });

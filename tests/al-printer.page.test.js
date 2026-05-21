@@ -77,6 +77,44 @@ page 50001 "Page With Label"
             expect(formattedCode).to.equal(expected))
     });
 
+    it('Page with field and user control', () => {
+        const code = `
+page 50001 "Page With User Control"
+{
+  layout
+  {
+      area(content)
+      {
+        field("Code"; Rec.Code){}
+        usercontrol(Map;MapControl) {
+          Caption='Map';
+        }
+      }
+  }
+}`;
+
+        const expected = `page 50001 "Page With User Control"
+{
+  layout
+  {
+    area(content)
+    {
+      field("Code"; Rec.Code)
+      {
+      }
+      usercontrol(Map; MapControl)
+      {
+        Caption = 'Map';
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
     it('Repeater control with multiple fields', () => {
         const code = `
 page 50001 "Page With Three Fields"

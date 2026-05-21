@@ -109,6 +109,7 @@ function print(path, options, print) {
             return printTableObject(path, options, print);
 
         case ALParser.RULE_tableFieldsList:
+        case ALParser.RULE_tableExtFieldsList:
             return printTableFieldsList(path, options, print);
 
         case ALParser.RULE_tableFieldDefinition:
@@ -165,6 +166,9 @@ function print(path, options, print) {
         case ALParser.RULE_tableExtensionObject:
             return printTableExtObject(path, options, print);
 
+        case ALParser.RULE_tableExtFieldModification:
+            return printTableExtFieldModification(path, node, print);
+
         //#endregion Table extension object
 
         //#region Page object
@@ -209,6 +213,7 @@ function print(path, options, print) {
             return printRepeaterElements(path, options, print);
 
         case ALParser.RULE_pageFieldItem:
+        case ALParser.RULE_userControlItem:
             return printPageFieldItem(path, options, print);
 
         case ALParser.RULE_pageLabelItem:
@@ -476,6 +481,7 @@ function print(path, options, print) {
         case ALParser.RULE_enumDataType:
         case ALParser.RULE_interfaceDataType:
         case ALParser.RULE_pageDataType:
+        case ALParser.RULE_queryDataType:
         case ALParser.RULE_recordDataType:
         case ALParser.RULE_reportDataType:
         case ALParser.RULE_testPageDataType:
@@ -669,7 +675,9 @@ function printTableObject(path, options, print) {
 
 function printTableFieldsList(path, options, print) {
     const children = path.node.children;
-    // Grammar: FIELDS LBRACE tableFieldDefinition* RBRACE
+    // Invoked for table fields and table extension fields
+    // Table fields grammar: FIELDS LBRACE tableFieldDefinition* RBRACE
+    // Table extension fields grammar: FIELDS LBRACE (tableFieldDefinition | tableExtFieldModification)* RBRACE;
     const fieldDocs = [];
     for (let i = 2; i < children.length - 1; i++) {
         fieldDocs.push(path.call(print, 'children', i));
@@ -680,9 +688,16 @@ function printTableFieldsList(path, options, print) {
 function printTableFieldDefinition(path, options, print) {
     const children = path.node.children;
     // Grammar: FIELD LPAREN INTEGER_LITERAL SEMICOLON identifier SEMICOLON dataType RPAREN LBRACE tableFieldProperties* triggersList* RBRACE;
+    const fieldKeyword = path.call(print, 'children', 0);
+    const lparen = path.call(print, 'children', 1);
     const fieldId = path.call(print, 'children', 2);
+    const semicolon1 = path.call(print, 'children', 3);
     const fieldName = path.call(print, 'children', 4);  // identifier (non-terminal)
+    const semicolon2 = path.call(print, 'children', 5);
     const fieldType = path.call(print, 'children', 6);  // dataType (non-terminal)
+    const rparen = path.call(print, 'children', 7);
+    const lbrace = path.call(print, 'children', 8);
+    const rbrace = path.call(print, 'children', children.length - 1);
 
     // Table field properties and triggers occupy children[9] through children[length-2]; children[length-1] is RBRACE
     const elementDocs = [];
@@ -690,10 +705,10 @@ function printTableFieldDefinition(path, options, print) {
         elementDocs.push(path.call(print, 'children', i));
     }
 
-    const signature = ["field(", fieldId, "; ", fieldName, "; ", fieldType, ")"];
+    const signature = [fieldKeyword, lparen, fieldId, semicolon1, " ", fieldName, semicolon2, " ", fieldType, rparen];
     const body = elementDocs.length > 0
-        ? [hardline, "{", indent([hardline, join([hardline, hardline], elementDocs)]), hardline, "}"]
-        : [hardline, "{", hardline, "}"];
+        ? [hardline, lbrace, indent([hardline, join([hardline, hardline], elementDocs)]), hardline, rbrace]
+        : [hardline, lbrace, hardline, rbrace];
 
     return [...signature, ...body];
 }
@@ -705,8 +720,11 @@ function printTableFieldPropertiesList(path, options, print) {
 
 function printTableKeysSection(path, options, print) {
     // Grammar: KEYS LBRACE keyList RBRACE
+    const keysKeyword = path.call(print, 'children', 0);
+    const lbrace = path.call(print, 'children', 1);
     const keyList = path.call(print, 'children', 2);
-    return ["keys", hardline, "{", indent([hardline, keyList]), hardline, "}"];
+    const rbrace = path.call(print, 'children', 3);
+    return [keysKeyword, hardline, lbrace, indent([hardline, keyList]), hardline, rbrace];
 }
 
 function printKeyList(path, options, print) {
@@ -816,6 +834,30 @@ function printTableExtObject(path, options, print) {
 
     return ["tableextension ", objectId, " ", objectName, " extends ", extendedObjectName, hardline, "{", ...body, "}"];
 }
+
+function printTableExtFieldModification(path, node, print) {
+    // Grammar: MODIFY LPAREN identifier RPAREN LBRACE tableFieldPropertiesList? triggersList? RBRACE;
+    const children = path.node.children;
+    const modifyKeyword = path.call(print, 'children', 0);
+    const lparen = path.call(print, 'children', 1);
+    const fieldName = path.call(print, 'children', 2);
+    const rparen = path.call(print, 'children', 3);
+    const lbrace = path.call(print, 'children', 4);
+    const rbrace = path.call(print, 'children', children.length - 1);
+
+    const elementDocs = [];
+    for (let i = 5; i < children.length - 1; i++) {
+        elementDocs.push(path.call(print, 'children', i));
+    }
+
+    const signature = [modifyKeyword, lparen, fieldName, rparen];
+    const body = elementDocs.length > 0
+        ? [hardline, lbrace, indent([hardline, join([hardline, hardline], elementDocs)]), hardline, rbrace]
+        : [hardline, lbrace, hardline, rbrace];
+
+    return [...signature, ...body];
+}
+
 //#endregion Table extension functions
 
 //#region Page functions
@@ -1944,8 +1986,7 @@ function printProcedureAttributes(path, options, print) {
 
 function printProcedureAttribute(path, options, print) {
     // Grammar: LBRACKET expression RBRACKET
-    const attribute = path.call(print, "children", 1);
-    return ["[", attribute, "]"];
+    return path.map(print, 'children');
 }
 
 function printParameterList(path, options, print) {
@@ -1959,7 +2000,19 @@ function printParameterList(path, options, print) {
 }
 
 function printProcReturnType(path, options, print) {
-    return join(" ", path.map(print, 'children'));
+    // Grammar: identifier? COLON dataType;
+    const elements = [];
+    let nextElNo = 0;
+
+    if (path.node.children[0].symbol?.type !== ALParser.COLON) {
+        elements.push(" ", path.call(print, 'children', 0));
+        nextElNo += 1;
+    }
+
+    elements.push(path.call(print, 'children', nextElNo), " ");  // Colon
+    elements.push(path.call(print, 'children', nextElNo + 1));
+
+    return elements;
 }
 
 function printStatementList(path, options, print) {
@@ -2319,10 +2372,23 @@ function printALObject(path, options, print, objectType) {
 }
 
 function printArrayDataType(path, options, print) {
-    // Grammar: ARRAY LBRACKET INTEGER_LITERAL RBRACKET OF dataType
-    const len = path.call(print, 'children', 2);
-    const type = path.call(print, 'children', 5);
-    return ["array[", len, "] of ", type];
+    // Grammar: ARRAY LBRACKET INTEGER_LITERAL (COMMA INTEGER_LITERAL)* RBRACKET OF dataType;
+    const children = path.node.children;
+    const arrayKeyword = path.call(print, 'children', 0);
+    const lbracket = path.call(print, 'children', 1);
+    const rbracket = path.call(print, 'children', children.length - 3);
+    const ofKeyword = path.call(print, 'children', children.length - 2);
+    const dataType = path.call(print, 'children', children.length - 1);
+
+    const dimensions = [];
+    for (let i = 2; i < children.length - 3; i += 2) {
+        dimensions.push(path.call(print, 'children', i));
+        if (children[i + 1].symbol?.type === ALParser.COMMA) {
+            dimensions.push([path.call(print, 'children', i + 1), " "]);
+        }
+    }
+
+    return [arrayKeyword, lbracket, ...dimensions, rbracket, " ", ofKeyword, " ", dataType];
 }
 
 function printDictionaryDataType(path, options, print) {
@@ -2370,13 +2436,17 @@ function printListDataType(path, options, print) {
 }
 
 function printOptionDataType(path, options, print) {
-    // Grammar: OPTION optionMembersList?
-    const optionValues = path.call(print, 'children', 1);
+    // Grammar: OPTION COMMA? identifiersList?;
+    const typeName = path.call(print, 'children', 0);
 
-    const TypeName = "Option";
+    const optionValues = [];
+    for (let i = 1; i < path.node.children.length; i++) {
+        optionValues.push(path.call(print, 'children', i));
+    }
+
     return optionValues.length > 0
-        ? [TypeName, " ", optionValues]
-        : [TypeName];
+        ? [typeName, " ", optionValues]
+        : [typeName];
 }
 
 function printIdentifiersList(path, options, print) {
@@ -2448,6 +2518,7 @@ function isLowerCaseToken(token) {
         ALParser.ACTION,
         ALParser.ACTIONREF,
         ALParser.AND,
+        ALParser.ARRAY,
         ALParser.BEGIN,
         ALParser.BREAK,
         ALParser.CASE,
