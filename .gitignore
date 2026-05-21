@@ -1,2 +1,10 @@
 /node_modules
 *.vsix
+/coverage
+/vscode_ext/dist
+*.vsix
+.vscode
+.vscode-test
+out
+*.log
+/.nyc_output

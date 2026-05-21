@@ -1,7 +1,4 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
@@ -13,6 +10,39 @@
             ],
             "outFiles": [
                 "${workspaceFolder}/vscode_ext/dist/**/*.js"
+            ],
+            "preLaunchTask": "npm: build"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Mocha Tests",
+            "program": "${workspaceFolder}/node_modules/.bin/mocha",
+            "args": [
+                "--node-option=--experimental-vm-modules"
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "cwd": "${workspaceFolder}",
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Mocha Tests with Coverage",
+            "program": "${workspaceFolder}/node_modules/.bin/c8",
+            "args": [
+                "node",
+                "--experimental-vm-modules",
+                "./node_modules/.bin/mocha"
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "cwd": "${workspaceFolder}",
+            "skipFiles": [
+                "<node_internals>/**"
             ],
             "preLaunchTask": "npm: build"
         }

@@ -4,6 +4,12 @@
     "description": "Prettier formatter for AL language in VS Code",
     "version": "0.1.0",
     "publisher": "al-prettier",
+    "author": {
+        "name": "Alexander Drogin"
+    },
+    "repository": {
+        "url": "https://github.com/adrogin/al-prettier"
+    },
     "icon": "vscode_ext/resources/icon.png",
     "engines": {
         "vscode": "^1.75.0"
@@ -15,8 +21,8 @@
         "al",
         "prettier",
         "formatter",
-        "format",
-        "code"
+        "code",
+        "Business Central"
     ],
     "activationEvents": [
         "onLanguage:al"
@@ -68,6 +74,7 @@
     },
     "devDependencies": {
         "@types/vscode": "^1.75.0",
+        "c8": "^8.0.1",
         "chai": "^6.2.2",
         "esbuild": "^0.25.0",
         "mocha": "^11.7.5",
