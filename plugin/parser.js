@@ -1,6 +1,6 @@
 import { CharStream, CommonTokenStream, ErrorListener } from 'antlr4';
-import ALLexer from "../../algrammar/JS/ALLexer.js";
-import ALParser from "../../algrammar/JS/ALParser.js";
+import ALLexer from "../parser/ALLexer.js";
+import ALParser from "../parser/ALParser.js";
 
 class BreakProcessErrorListener extends ErrorListener {
     syntaxError(recognizer, offendingSymbol, line, column, msg, e) {
