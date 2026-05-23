@@ -15,6 +15,12 @@ const alPrettier = {
         "al-ast": printer
     },
     options: {
+        groupGlobalVars: {
+            type: "string",
+            category: "AL",
+            default: "none",
+            description: "Enables grouping of global variables in table objects. Available options are: none, top, bottom, beforeCode"
+        },
         removeEmptyElements: {
             type: "boolean",
             category: "AL",

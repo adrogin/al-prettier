@@ -59,6 +59,7 @@ async function formatDocument(document, options, prettier) {
             useTabs: config.get('useTabs') || !options.insertSpaces || false,
             printWidth: config.get('printWidth') || 120,
             removeEmptyElements: config.get('removeEmptyElements') || false,
+            groupGlobalVars: config.get('groupGlobalVars') || "none"
         });
 
         // Return a single edit that replaces the entire document

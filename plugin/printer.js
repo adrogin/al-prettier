@@ -2358,10 +2358,39 @@ function printALObject(path, options, print, objectType) {
     const elementStart = lBraceIdx + 1;
     const elementEnd = children.length - 1;
     const elementDocs = [];
-    for (let i = elementStart; i < elementEnd; i++) {
-        const el = path.call(print, 'children', i);
-        if (el !== "")
-            elementDocs.push(el);
+
+    if (!options || options.groupGlobalVars === "none") {
+        for (let i = elementStart; i < elementEnd; i++) {
+            const el = path.call(print, 'children', i);
+            if (el !== "")
+                elementDocs.push(el);
+        }
+    }
+    else {
+        const properties = [];
+        const vars = [];
+        const otherElements = [];
+
+        for (let i = elementStart; i < elementEnd; i++) {
+            switch (children[i].ruleIndex) {
+                case ALParser.RULE_tablePropertiesList:
+                    properties.push(path.call(print, 'children', i));
+                    break;
+                case ALParser.RULE_variablesList:
+                    vars.push(path.call(print, 'children', i));
+                    break;
+                default:
+                    otherElements.push(path.call(print, 'children', i));
+            }
+        }
+
+        elementDocs.push(...properties);
+        if (options.groupGlobalVars === "top")
+            elementDocs.push(...vars);
+
+        elementDocs.push(...otherElements)
+        if (options.groupGlobalVars !== "top")
+            elementDocs.push(...vars);
     }
 
     const body = elementDocs.length > 0
