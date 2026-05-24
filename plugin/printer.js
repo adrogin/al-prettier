@@ -12,7 +12,7 @@ function getVisitorKeys(node) {
     return [];
 }
 
-function print(path, options, print) {
+function print(path, options, print, args) {
     const node = path.node;
 
     if (!node) return "";
@@ -505,15 +505,15 @@ function print(path, options, print) {
             return printIdentifiersList(path, options, print);
 
         case ALParser.RULE_procedureCall:
-            return printProcedureCall(path, options, print);
+            return printProcedureCall(path, options, print, args);
 
         case ALParser.RULE_argumentList:
-            return printArgumentList(path, options, print);
+            return printArgumentList(path, options, print, args);
 
         case ALParser.RULE_unaryExpression:
         case ALParser.RULE_unaryPlusExpression:
         case ALParser.RULE_unaryMinusExpression:
-            return printUnaryExpression(path, options, print);
+            return printUnaryExpression(path, options, print, args);
 
         case ALParser.RULE_unaryNotExpression:
             return printUnaryNotExpression(path, options, print);
@@ -532,7 +532,7 @@ function print(path, options, print) {
         case ALParser.RULE_relationalExpression:
         case ALParser.RULE_tableRelationEqualityExpression:
         case ALParser.RULE_subpageLinkFilter:
-            return printBinaryExpression(path, options, print);
+            return printBinaryExpression(path, options, print, args);
 
         case ALParser.RULE_logicalInExpression:
             return printLogicalInExpression(path, options, print);
@@ -541,13 +541,13 @@ function print(path, options, print) {
         case ALParser.RULE_logicalAndExpression:
         case ALParser.RULE_additiveExpression:
         case ALParser.RULE_multiplicativeExpression:
-            return printMultipartExpression(path, options, print);
+            return printMultipartExpression(path, options, print, args);
 
         //#endregion Code statements
 
         default:
             if (Array.isArray(node.children)) {
-                return path.map(print, 'children');
+                return path.map(() => print(path, args), 'children');
             }
             return "";
     }
@@ -1986,7 +1986,7 @@ function printProcedureAttributes(path, options, print) {
 
 function printProcedureAttribute(path, options, print) {
     // Grammar: LBRACKET expression RBRACKET
-    return path.map(print, 'children');
+    return path.map(() => print(path, { suppressLineBreaks: options.noLineBreaksInAttributes || false }), 'children');
 }
 
 function printParameterList(path, options, print) {
@@ -2227,64 +2227,70 @@ function printCaseBranch(path, options, print) {
     return [join(hardline, conditions), colon, indent([hardline, statement])];
 }
 
-function printProcedureCall(path, options, print) {
+function printProcedureCall(path, options, print, args) {
     // Grammar: identifier (DOT identifier)* LPAREN argumentList? RPAREN
     const children = path.node.children;
-    const lparenIdx = children.findIndex(c => c.symbol?.type === ALParser.LPAREN);
-    const rparenIdx = children.findIndex(c => c.symbol?.type === ALParser.RPAREN);
+    const lParenIdx = children.findIndex(c => c.symbol?.type === ALParser.LPAREN);
+    const rParenIdx = children.findIndex(c => c.symbol?.type === ALParser.RPAREN);
 
     // Name chain before LPAREN: joined without spaces to produce e.g. "Foo.Bar.Baz"
     const nameDocs = [];
-    for (let i = 0; i < lparenIdx; i++) {
+    for (let i = 0; i < lParenIdx; i++) {
         nameDocs.push(path.call(print, 'children', i));
     }
 
     // argumentList is present when there is a child between LPAREN and RPAREN
-    const argDoc = rparenIdx > lparenIdx + 1 ? path.call(print, 'children', lparenIdx + 1) : "";
+    const argDoc = rParenIdx > lParenIdx + 1 ? path.call(() => print(path, args), 'children', lParenIdx + 1) : "";
 
-    return group(indent([...nameDocs, "(", softline, argDoc, ")"]));
+    const result = [...nameDocs, path.call(print, 'children', lParenIdx)];
+    if (argDoc.length > 0 && !args?.suppressLineBreaks)
+        result.push(softline);
+
+    result.push(argDoc, path.call(print, 'children', rParenIdx));
+    return group(indent(result));
 }
 
-function printArgumentList(path, options, print) {
+function printArgumentList(path, options, print, args) {
     // Grammar: expression (COMMA expression)*
     const children = path.node.children;
     const argDocs = [];
     for (let i = 0; i < children.length; i += 2) {
         const argument = path.call(print, 'children', i);
-        const comma = i < children.length - 2 ? [path.call(print, 'children', i + 1), line] : [];
+        const comma = i < children.length - 2 ? [path.call(print, 'children', i + 1), args?.suppressLineBreaks ? " " : line] : [];
         argDocs.push([...argument, ...comma]);
     }
 
     return argDocs;
 }
 
-function printUnaryExpression(path, options, print) {
-    return path.map(print, 'children');
+function printUnaryExpression(path, options, print, args) {
+    return path.map(() => print(path, args), 'children');
 }
 
 function printUnaryNotExpression(path, options, print) {
     return join(" ", path.map(print, 'children'));
 }
 
-function printBinaryExpression(path, options, print) {
+function printBinaryExpression(path, options, print, args) {
     // All binary expressions follow the structure: "operand operator operand".
     // If the line does not fit in the print width, the second operand will be moved to the next line with indent.
+    const printWithArguments = () => print(path, args);
 
     return path.node?.children?.length > 1
-        ? group(indent([path.call(print, 'children', 0), " ", path.call(print, 'children', 1), line, path.call(print, 'children', 2)]))
-        : join(" ", path.map(print, 'children'));
+        ? group(indent([path.call(printWithArguments, 'children', 0), " ", path.call(printWithArguments, 'children', 1), line, path.call(printWithArguments, 'children', 2)]))
+        : join(" ", path.map(printWithArguments, 'children'));
 }
 
-function printMultipartExpression(path, options, print) {
+function printMultipartExpression(path, options, print, args) {
     // Grammar: unaryExpression ((MULTIPLY | DIVIDE | DIV | MOD) unaryExpression)*;
     const children = path.node.children;
 
     const parts = [];
     for (let i = 0; i < children.length; i += 2) {
-        const operand = path.call(print, 'children', i);
+        const operand = path.call(() => print(path, args), 'children', i);
         parts.length === 0 ? parts.push(operand) : parts.push([line, operand]);
         if (i + 1 < children.length) {
-            parts.push([" ", path.call(print, 'children', i + 1)]);
+            parts.push([" ", path.call(() => print(path, args), 'children', i + 1)]);
         }
     }
 
@@ -2357,40 +2363,13 @@ function printALObject(path, options, print, objectType) {
 
     const elementStart = lBraceIdx + 1;
     const elementEnd = children.length - 1;
-    const elementDocs = [];
+    let elementDocs = [];
 
     if (!options || options.groupGlobalVars === "none") {
-        for (let i = elementStart; i < elementEnd; i++) {
-            const el = path.call(print, 'children', i);
-            if (el !== "")
-                elementDocs.push(el);
-        }
+        elementDocs = printAllElements(path, options, print, elementStart, elementEnd);
     }
     else {
-        const properties = [];
-        const vars = [];
-        const otherElements = [];
-
-        for (let i = elementStart; i < elementEnd; i++) {
-            switch (children[i].ruleIndex) {
-                case ALParser.RULE_tablePropertiesList:
-                    properties.push(path.call(print, 'children', i));
-                    break;
-                case ALParser.RULE_variablesList:
-                    vars.push(path.call(print, 'children', i));
-                    break;
-                default:
-                    otherElements.push(path.call(print, 'children', i));
-            }
-        }
-
-        elementDocs.push(...properties);
-        if (options.groupGlobalVars === "top")
-            elementDocs.push(...vars);
-
-        elementDocs.push(...otherElements)
-        if (options.groupGlobalVars !== "top")
-            elementDocs.push(...vars);
+        elementDocs = printElementsInGroups(path, options, print, elementStart, elementEnd);
     }
 
     const body = elementDocs.length > 0
@@ -2597,6 +2576,77 @@ function isLowerCaseToken(token) {
 }
 
 //#endregion Code statements
+
+function printAllElements(path, options, print, elementStart, elementEnd) {
+    const elementDocs = [];
+    for (let i = elementStart; i < elementEnd; i++) {
+        const el = path.call(print, 'children', i);
+        if (el !== "")
+            elementDocs.push(el);
+    }
+
+    return elementDocs;
+}
+
+function printElementsInGroups(path, options, print, elementStart, elementEnd) {
+    const properties = [];
+    let vars = [];
+    let protectedVars = [];
+    const otherElements = [];
+    const elementDocs = [];
+
+    for (let i = elementStart; i < elementEnd; i++) {
+        switch (path.node.children[i].ruleIndex) {
+            case ALParser.RULE_tablePropertiesList:
+                properties.push(path.call(print, 'children', i));
+                break;
+
+            case ALParser.RULE_variablesList:
+                if (path.node.children[i]?.children[0]?.symbol?.type === ALParser.PROTECTED) {
+                    protectedVars.push(path.call(() => printVariablesListExcludingKeywords(path, options, print), 'children', i));
+                }
+                else {
+                    vars.push(path.call(() => printVariablesListExcludingKeywords(path, options, print), 'children', i));
+                }
+                break;
+
+            default:
+                otherElements.push(path.call(print, 'children', i));
+        }
+    }
+
+    if (vars.length > 0) {
+        vars = ["var", indent([hardline, join(hardline, vars)])];
+    }
+    if (protectedVars.length > 0) {
+        if (vars.length > 0)
+            vars.push(hardline, hardline);
+        vars.push("protected var", indent([hardline, join(hardline, protectedVars)]));
+    }
+
+    elementDocs.push(...properties);
+    if (options.groupGlobalVars === "top")
+        elementDocs.push(vars);
+
+    elementDocs.push(...otherElements)
+    if (options.groupGlobalVars !== "top")
+        elementDocs.push(vars);
+
+    return elementDocs;
+}
+
+function printVariablesListExcludingKeywords(path, options, print) {
+    const children = path.node.children;
+    const vars = [];
+
+    for (let i = 0; i < children.length; i++) {
+        if (children[i].ruleIndex === ALParser.RULE_variableDeclaration) {
+            vars.push(path.call(print, 'children', i));
+        }
+    }
+
+    return join(hardline, vars);
+}
 
 export default {
     print,

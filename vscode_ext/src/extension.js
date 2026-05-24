@@ -58,8 +58,9 @@ async function formatDocument(document, options, prettier) {
             tabWidth: config.get('tabWidth') || options.tabSize || 4,
             useTabs: config.get('useTabs') || !options.insertSpaces || false,
             printWidth: config.get('printWidth') || 120,
+            groupGlobalVars: config.get('groupGlobalVars') || "none",
+            noLineBreaksInAttributes: config.get('noLineBreaksInAttributes') || false,
             removeEmptyElements: config.get('removeEmptyElements') || false,
-            groupGlobalVars: config.get('groupGlobalVars') || "none"
         });
 
         // Return a single edit that replaces the entire document

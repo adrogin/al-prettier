@@ -21,6 +21,12 @@ const alPrettier = {
             default: "none",
             description: "Enables grouping of global variables in table objects. Available options are: none, top, bottom, beforeCode"
         },
+        noLineBreaksInAttributes: {
+            type: "boolean",
+            category: "AL",
+            default: false,
+            description: "If set to true, procedure attributes are always printed in a single line, ignoring the max line width"
+        },
         removeEmptyElements: {
             type: "boolean",
             category: "AL",
