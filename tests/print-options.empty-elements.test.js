@@ -94,6 +94,95 @@ page 50000 "Page with empty actions"
             expect(formattedCode).to.equal(expected))
     });
 
+    it('Empty page actions between layout and triggers', () => {
+        const code = `
+page 50000 "Page with empty actions"
+{
+  layout
+  {
+    area(content)
+    {
+      field(SomePageField; Rec.TableField) {}
+    }
+  }
+
+  actions {
+  }
+
+  trigger OnOpenPage()
+  begin
+  end;
+}`;
+
+        const expected = `page 50000 "Page with empty actions"
+{
+  layout
+  {
+    area(content)
+    {
+      field(SomePageField; Rec.TableField)
+      {
+      }
+    }
+  }
+
+  trigger OnOpenPage()
+  begin
+  end;
+}
+`;
+
+        return alFormat(code, {
+            removeEmptyElements: true
+        }).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Empty page actions, both options enabled', () => {
+        const code = `
+page 50000 "Page with empty actions"
+{
+  layout
+  {
+    area(content)
+    {
+      field(SomePageField; Rec.TableField) {}
+    }
+  }
+
+  actions {
+  }
+
+  trigger OnOpenPage()
+  begin
+  end;
+}`;
+
+        const expected = `page 50000 "Page with empty actions"
+{
+  layout
+  {
+    area(content)
+    {
+      field(SomePageField; Rec.TableField)
+      {
+      }
+    }
+  }
+
+  trigger OnOpenPage()
+  begin
+  end;
+}
+`;
+
+        return alFormat(code, {
+            removeEmptyElements: true,
+            groupGlobalVars: "bottom"
+        }).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
     it('Report with empty request page', () => {
         const code = `
 report 50000 "Report with empty request page"

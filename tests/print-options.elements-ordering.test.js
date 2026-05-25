@@ -144,4 +144,102 @@ table 50000 "MyPage"
         }).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
+
+    it('groupGlobalVars enabled, no variables in the object', () => {
+        const code = `
+page 50000 MyPage
+{
+  layout
+  {
+    area(content)
+    {
+      field(SomePageField; Rec.TableField) {}
+    }
+  }
+  trigger OnOpenPage()
+  begin
+  end;
+}`;
+
+        const expected = `page 50000 MyPage
+{
+  layout
+  {
+    area(content)
+    {
+      field(SomePageField; Rec.TableField)
+      {
+      }
+    }
+  }
+
+  trigger OnOpenPage()
+  begin
+  end;
+}
+`;
+
+        return alFormat(code, {
+            groupGlobalVars: "bottom"
+        }).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Group global vars in page before code', () => {
+        const code = `
+page 50000 MyPage
+{
+  layout
+  {
+    area(content)
+    {
+      field(SomePageField; Rec.TableField) {}
+    }
+  }
+  var a: Text;
+
+  trigger OnOpenPage()
+  begin
+  end;
+  var b: Code[10];
+
+  procedure Code()
+  begin
+  end;
+
+  var c: Integer;
+}`;
+
+        const expected = `page 50000 MyPage
+{
+  layout
+  {
+    area(content)
+    {
+      field(SomePageField; Rec.TableField)
+      {
+      }
+    }
+  }
+
+  trigger OnOpenPage()
+  begin
+  end;
+
+  var
+    a: Text;
+    b: Code[10];
+    c: Integer;
+
+  procedure Code()
+  begin
+  end;
+}
+`;
+
+        return alFormat(code, {
+            groupGlobalVars: "beforeCode"
+        }).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
 });

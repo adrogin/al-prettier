@@ -101,4 +101,27 @@ codeunit 50000 MyCodeunit
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
+
+    it('Long procedure declaration wraps the line', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure VeryLongProcedureNameImpossibleToType(ParameterA: Integer; ParameterB: Text[100])
+  begin
+  end;
+}`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure VeryLongProcedureNameImpossibleToType(
+    ParameterA: Integer;
+    ParameterB: Text[100])
+  begin
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
 });

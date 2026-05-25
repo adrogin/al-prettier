@@ -51,6 +51,16 @@
                     "default": 120,
                     "description": "Specify the line length that the printer will wrap on"
                 },
+                "alPrettier.groupGlobalVars": {
+                    "type": "string",
+                    "default": "none",
+                    "description": "Enables grouping of global variables in table objects. Available options are: none, top, bottom, beforeCode"
+                },
+                "alPrettier.noLineBreaksInAttributes": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "If set to true, procedure attributes are always printed in a single line, ignoring the max line width"
+                },
                 "alPrettier.removeEmptyElements": {
                     "type": "boolean",
                     "default": false,

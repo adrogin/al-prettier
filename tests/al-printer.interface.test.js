@@ -93,4 +93,41 @@ interface IFooBar extends IFoo, IBar
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
+
+    it('Missing semicolon after procedure declaration added on print', () => {
+        const code = `
+interface IAmInterface
+{
+    procedure FooBar()
+}`;
+
+        const expected = `interface IAmInterface
+{
+  procedure FooBar();
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Long procedure declaration is wrapped', () => {
+        const code = `
+interface IAmInterface
+{
+    procedure InterfaceProcedure(ParameterA: Integer; ParameterB: Integer; ParameterC: Decimal);
+}`;
+
+        const expected = `interface IAmInterface
+{
+  procedure InterfaceProcedure(
+    ParameterA: Integer;
+    ParameterB: Integer;
+    ParameterC: Decimal);
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
 });

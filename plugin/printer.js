@@ -1411,25 +1411,31 @@ function printProcedureDeclaration(path, options, print) {
     // Grammar: PROCEDURE identifier LPAREN parameterList? RPAREN procedureReturnType? SEMICOLON?
 
     const children = path.node.children;
-    const rparenIdx = children.findIndex(c => c.symbol?.type === ALParser.RPAREN);
+    const rParenIdx = children.findIndex(c => c.symbol?.type === ALParser.RPAREN);
     const returnTypeIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_procedureReturnType);
 
     const name = path.call(print, 'children', 1);
-    const paramDoc = rparenIdx > 3 ? path.call(print, 'children', 3) : "";
+    const paramDoc = rParenIdx > 3 ? path.call(print, 'children', 3) : "";
 
-    let signature = ["procedure ", name, "(", paramDoc, ")"];
+    let signature =
+        [path.call(print, 'children', 0), " ", name, path.call(print, 'children', 2), softline, paramDoc, path.call(print, 'children', rParenIdx)];
 
     if (returnTypeIdx) {
         signature = [...signature, path.call(print, 'children', returnTypeIdx)];
     }
-    signature = group(indent([...signature, ";"]));
+
+    const semicolon =
+        children[children.length - 1].symbol?.type === ALParser.SEMICOLON
+            ? path.call(print, 'children', children.length - 1)
+            : ";";
+    signature = group(indent([...signature, semicolon]));
 
     return signature;
 }
 
 function printInterfacePropertyItem(path, options, print) {
     // Grammar: interfaceProperty SEMICOLON
-    return [path.call(print, 'children', 0), ";"];
+    return path.map(print, 'children');
 }
 
 //#endregion Interface functions
@@ -1936,7 +1942,8 @@ function printProcedureDefinition(path, options, print) {
     const accessModifierIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_procedureAccessModifier);
     const procKeywordIdx = children.findIndex(c => c.symbol?.type === ALParser.PROCEDURE);
     const varListIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_variablesList);
-    const rparenIdx = children.findIndex(c => c.symbol?.type === ALParser.RPAREN);
+    const lParenIdx = children.findIndex(c => c.symbol?.type === ALParser.LPAREN);
+    const rParenIdx = children.findIndex(c => c.symbol?.type === ALParser.RPAREN);
     const returnTypeIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_procedureReturnType);
     const beginIdx = children.findIndex(c => c.symbol?.type === ALParser.BEGIN);
     const endIdx = children.findIndex(c => c.symbol?.type === ALParser.END);
@@ -1954,12 +1961,12 @@ function printProcedureDefinition(path, options, print) {
     const name = path.call(print, 'children', procKeywordIdx + 1);
 
     // parameterList is at index procKeywordIdx + 3 only when RPAREN is not immediately after LPAREN (index procKeywordIdx + 2)
-    const paramDoc = rparenIdx > procKeywordIdx + 3 ? path.call(print, 'children', procKeywordIdx + 3) : "";
+    const paramDoc = rParenIdx > procKeywordIdx + 3 ? path.call(print, 'children', procKeywordIdx + 3) : "";
 
     // variablesList: any rule context between RPAREN and BEGIN
     const varDocs = varListIdx > 0 ? path.call(print, 'children', varListIdx) : [];
 
-    let signature = [proc, " ", name, "(", group(indent(paramDoc)), ")"];
+    let signature = [proc, " ", name, path.call(print, 'children', lParenIdx), group(indent([softline, paramDoc])), path.call(print, 'children', rParenIdx)];
 
     // If the procedure return type is not defined, returnTypeIdx = -1
     let returnType = [];
@@ -2592,6 +2599,7 @@ function printElementsInGroups(path, options, print, elementStart, elementEnd) {
     const properties = [];
     let vars = [];
     let protectedVars = [];
+    const procedures = [];
     const otherElements = [];
     const elementDocs = [];
 
@@ -2599,6 +2607,10 @@ function printElementsInGroups(path, options, print, elementStart, elementEnd) {
         switch (path.node.children[i].ruleIndex) {
             case ALParser.RULE_tablePropertiesList:
                 properties.push(path.call(print, 'children', i));
+                break;
+
+            case ALParser.RULE_proceduresList:
+                procedures.push(path.call(print, 'children', i));
                 break;
 
             case ALParser.RULE_variablesList:
@@ -2611,7 +2623,9 @@ function printElementsInGroups(path, options, print, elementStart, elementEnd) {
                 break;
 
             default:
-                otherElements.push(path.call(print, 'children', i));
+                const el = path.call(print, 'children', i);
+                if (el !== "")
+                    otherElements.push(el);
         }
     }
 
@@ -2625,11 +2639,17 @@ function printElementsInGroups(path, options, print, elementStart, elementEnd) {
     }
 
     elementDocs.push(...properties);
-    if (options.groupGlobalVars === "top")
+    if (options.groupGlobalVars === "top" && vars.length > 0)
         elementDocs.push(vars);
 
     elementDocs.push(...otherElements)
-    if (options.groupGlobalVars !== "top")
+    if (options.groupGlobalVars === "beforeCode" && vars.length > 0)
+        elementDocs.push(vars);
+
+    if (procedures.length > 0)
+        elementDocs.push(procedures);
+
+    if (options.groupGlobalVars === "bottom" && vars.length > 0)
         elementDocs.push(vars);
 
     return elementDocs;
