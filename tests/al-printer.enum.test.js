@@ -1,14 +1,10 @@
 import { describe, it } from 'mocha';
 import { expect } from 'chai';
-import antlr4 from 'antlr4';
-import ALParser from '../../algrammar/JS/ALParser.js';
-import printer from '../plugin/printer.js';
-import * as prettier from "prettier";
 import { alFormat } from './testUtils.js';
 
 describe('Formatting of the Enum object', () => {
-  it('Enum with multiple values', () => {
-    const code = `
+    it('Enum with multiple values', () => {
+        const code = `
 enum 55000 MyEnum
 {
     value(0; Value0) { Caption = 'Value 0'; }
@@ -16,7 +12,7 @@ enum 55000 MyEnum
     value(2; Value2) { Caption = 'Value 2'; }
 }`;
 
-    const expected = `enum 55000 MyEnum
+        const expected = `enum 55000 MyEnum
 {
   value(0; Value0)
   {
@@ -33,11 +29,11 @@ enum 55000 MyEnum
 }
 `;
 
-    return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
-  });
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
 
-  it('Enum with implementation properties', () => {
-    const code = `
+    it('Enum with implementation properties', () => {
+        const code = `
 enum 55000 "Enum with implementation" implements ITestInterface
 {
     Extensible=true;
@@ -45,7 +41,7 @@ enum 55000 "Enum with implementation" implements ITestInterface
     value(0; Value0) { Caption = 'Value 0'; Implementation = ITestInterface = "Option 0 Implementation"; }
 }`;
 
-    const expected = `enum 55000 "Enum with implementation" implements ITestInterface
+        const expected = `enum 55000 "Enum with implementation" implements ITestInterface
 {
   Extensible = true;
   DefaultImplementation = ITestInterface = "Default Impl. Codeunit";
@@ -58,6 +54,6 @@ enum 55000 "Enum with implementation" implements ITestInterface
 }
 `;
 
-    return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
-  });
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
 });

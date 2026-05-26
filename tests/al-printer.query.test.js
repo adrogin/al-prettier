@@ -1,9 +1,5 @@
 import { describe, it } from 'mocha';
 import { expect } from 'chai';
-import antlr4 from 'antlr4';
-import ALParser from '../../algrammar/JS/ALParser.js';
-import printer from '../plugin/printer.js';
-import * as prettier from "prettier";
 import { alFormat } from './testUtils.js';
 
 describe('Query object structure', () => {
