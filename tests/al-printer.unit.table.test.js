@@ -20,7 +20,7 @@ import {
 } from './objectMocks.js';
 import { compareIndentedList } from './testUtils.js';
 import * as prettier from 'prettier';
-import ALParser from '../parser/JS/ALParser.js';
+import ALParser from '../parser/ALParser.js';
 
 const hardline = prettier.doc.builders.hardline;
 const indent = prettier.doc.builders.indent;
