@@ -1,4 +1,4 @@
-import ALParser from "../../algrammar/JS/ALParser.js";
+import ALParser from "../parser/ALParser.js";
 import printer from '../plugin/printer.js';
 
 export function mockPrettyPrint(node) {
