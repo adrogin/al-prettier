@@ -1,4 +1,4 @@
-import ALParser from '../../algrammar/JS/ALParser.js';
+import ALParser from '../parser/JS/ALParser.js';
 
 export function isParagraphStatement(node) {
     if (!node || !node.ruleIndex) {

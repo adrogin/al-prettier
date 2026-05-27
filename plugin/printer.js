@@ -1,5 +1,5 @@
 import * as prettier from 'prettier';
-import ALParser from '../../algrammar/JS/ALParser.js';
+import ALParser from '../parser/JS/ALParser.js';
 import { isParagraphStatement, isSingleCompundStatement } from "./printerHelpers.js";
 
 const { hardline, join, indent, group, line, softline } = prettier.doc.builders;
