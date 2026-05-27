@@ -2604,16 +2604,16 @@ function printElementsInGroups(path, options, print, elementStart, elementEnd) {
     const elementDocs = [];
 
     for (let i = elementStart; i < elementEnd; i++) {
-        switch (path.node.children[i].ruleIndex) {
-            case ALParser.RULE_tablePropertiesList:
+        switch (true) {
+            case isALObjectPropertiesList(path.node.children[i]):
                 properties.push(path.call(print, 'children', i));
                 break;
 
-            case ALParser.RULE_proceduresList:
+            case path.node.children[i].ruleIndex === ALParser.RULE_proceduresList:
                 procedures.push(path.call(print, 'children', i));
                 break;
 
-            case ALParser.RULE_variablesList:
+            case path.node.children[i].ruleIndex === ALParser.RULE_variablesList:
                 if (path.node.children[i]?.children[0]?.symbol?.type === ALParser.PROTECTED) {
                     protectedVars.push(path.call(() => printVariablesListExcludingKeywords(path, options, print), 'children', i));
                 }
@@ -2666,6 +2666,20 @@ function printVariablesListExcludingKeywords(path, options, print) {
     }
 
     return join(hardline, vars);
+}
+
+function isALObjectPropertiesList(node) {
+    if (typeof node.ruleIndex === "undefined")
+        return false;
+
+    return [
+        ALParser.RULE_tablePropertiesList,
+        ALParser.RULE_pagePropertiesList,
+        ALParser.RULE_codeunitPropertiesList,
+        ALParser.RULE_reportPropertiesList,
+        ALParser.RULE_queryPropertiesList,
+        ALParser.RULE_tableExtPropertiesList
+    ].includes(node.ruleIndex);
 }
 
 export default {
