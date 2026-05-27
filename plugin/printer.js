@@ -2606,6 +2606,11 @@ function printElementsInGroups(path, options, print, elementStart, elementEnd) {
     for (let i = elementStart; i < elementEnd; i++) {
         switch (path.node.children[i].ruleIndex) {
             case ALParser.RULE_tablePropertiesList:
+            case ALParser.RULE_pagePropertiesList:
+            case ALParser.RULE_codeunitPropertiesList:
+            case ALParser.RULE_reportPropertiesList:
+            case ALParser.RULE_queryPropertiesList:
+            case ALParser.RULE_tableExtPropertiesList:
                 properties.push(path.call(print, 'children', i));
                 break;
 

@@ -47,7 +47,7 @@ You can customize the formatting behavior in VS Code settings:
 - **tabWidth** (default: 4): Number of spaces per indentation level
 - **useTabs** (default: false): Use tabs instead of spaces for indentation
 - **printWidth** (default: 120): Specify the line length that the printer will wrap on
-- **groupGlobalVars** (default: "none"): Group all global vars in the object. Available options: "none" - keep the variables as is; "top": move all variable declarations to the top of the object, "bottom": move variables to the bottom, "beforeCode": place variables before procedures.
+- **groupGlobalVars** (default: "none"): Group all global vars in the object. Available options: "none" - keep the variables as is; "top": move all variable declarations to the top, after the object properties; "bottom": move variables to the bottom; "beforeCode": place variables before procedures.
 - **noLineBreaksInAttributes** (default: false): Disable wrapping of procedure attributes even if the line exceeds maximum print width. Attributes are always printed in a single line.
 - **removeEmptyElements** (default false): Remove elements without content (this includes table fieldgroups, page actions and layout sections)
 

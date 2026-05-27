@@ -100,9 +100,61 @@ codeunit 50000 "JustSomeCodeunit"
             expect(formattedCode).to.equal(expected))
     });
 
+    it('Group global variables in table, top placement, after properties', () => {
+        const code = `
+table 50000 "MyTable"
+{
+  Editable = false;
+
+  fields {
+    field(1; "Primary Key"; Code[10]){
+    }
+  }
+
+  trigger OnInsert()
+  begin
+  end;
+  protected var pv1: Code[10];
+  var Variable1: Integer;
+
+  var Variable2: Text;
+  protected var pv2: Code[10];
+}`;
+
+        const expected = `table 50000 "MyTable"
+{
+  Editable = false;
+
+  var
+    Variable1: Integer;
+    Variable2: Text;
+
+  protected var
+    pv1: Code[10];
+    pv2: Code[10];
+
+  fields
+  {
+    field(1; "Primary Key"; Code[10])
+    {
+    }
+  }
+
+  trigger OnInsert()
+  begin
+  end;
+}
+`;
+
+        return alFormat(code, {
+            groupGlobalVars: "top"
+        }).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
     it('Group global variables in page, top placement, after properties', () => {
         const code = `
-table 50000 "MyPage"
+page 50000 "MyPage"
 {
   InsertAllowed = false;
   DeleteAllowed = false;
@@ -116,7 +168,7 @@ table 50000 "MyPage"
   protected var pv2: Code[10];
 }`;
 
-        const expected = `table 50000 "MyPage"
+        const expected = `page 50000 "MyPage"
 {
   InsertAllowed = false;
   DeleteAllowed = false;
@@ -130,6 +182,38 @@ table 50000 "MyPage"
     pv2: Code[10];
 
   trigger OnAfterGetRecord()
+  begin
+  end;
+}
+`;
+
+        return alFormat(code, {
+            groupGlobalVars: "top"
+        }).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Group global variables in codeunit, top placement, after properties', () => {
+        const code = `
+codeunit 50000 "MyCodeunit"
+{
+  Access = internal;
+
+  trigger OnRun()
+  begin
+  end;
+
+  var GlobalVar: Text;
+}`;
+
+        const expected = `codeunit 50000 "MyCodeunit"
+{
+  Access = internal;
+
+  var
+    GlobalVar: Text;
+
+  trigger OnRun()
   begin
   end;
 }
