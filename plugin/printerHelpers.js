@@ -28,11 +28,13 @@ export function isParagraphStatement(node) {
 }
 
 export function isSingleCompundStatement(node) {
-    if (node.ruleIndex === ALParser.RULE_compoundBlock)
+    if (node.ruleIndex === ALParser.RULE_compoundBlock) {
         return true;
+    }
 
-    if (!node.children || node.children.length === 0)
+    if (!node.children || node.children.length === 0) {
         return false;
+    }
 
     if (node.ruleIndex === ALParser.RULE_statementList && node.children.length > 1) {
         return false;
