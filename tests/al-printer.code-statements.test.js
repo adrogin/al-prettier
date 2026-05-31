@@ -53,6 +53,41 @@ codeunit 50000 MyCodeunit
             expect(formattedCode).to.equal(expected))
     });
 
+    it('Compound if branch', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure Calculate()
+  begin
+    if a = b then begin
+      a := -a;
+      b := 0;
+      c := a -b; end
+      else
+      c := b;
+    exit(c);
+  end;
+}`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure Calculate()
+  begin
+    if a = b then begin
+      a := -a;
+      b := 0;
+      c := a - b;
+    end else
+      c := b;
+    exit(c);
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
     it('Compound statements in both branches', () => {
         const code = `
 codeunit 50000 MyCodeunit
@@ -62,7 +97,8 @@ codeunit 50000 MyCodeunit
     if a = b then begin
       a := -a;
       b := 0;
-      c := a -b; end else begin
+      c := a -b; end
+      else begin
       c := b;
       CallProcedure(a);
     end;
@@ -78,10 +114,42 @@ codeunit 50000 MyCodeunit
       a := -a;
       b := 0;
       c := a - b;
-    end
-    else begin
+    end else begin
       c := b;
       CallProcedure(a);
+    end;
+
+    exit(c);
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Blank line inserted after compound if without else', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure Calculate()
+  begin
+    if a = b then begin
+      a := -a;
+      b := 0;
+      c := a -b; end;
+    exit(c);
+  end;
+}`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure Calculate()
+  begin
+    if a = b then begin
+      a := -a;
+      b := 0;
+      c := a - b;
     end;
 
     exit(c);
@@ -445,8 +513,8 @@ codeunit 50000 MyCodeunit
     });
 });
 
-describe('Empty lines in statements list', () => {
-    it('Empty lines are not printed at the beginning or end of a procedure', () => {
+describe('Blank lines in statements list', () => {
+    it('Blank lines are not printed at the beginning or end of a procedure', () => {
         const code = `
 codeunit 50000 MyCodeunit
 {
@@ -476,7 +544,7 @@ codeunit 50000 MyCodeunit
             expect(formattedCode).to.equal(expected))
     });
 
-    it('Empty lines are not printed at the beginning or end of a repeat loop', () => {
+    it('Blank lines are not printed at the beginning or end of a repeat loop', () => {
         const code = `
 codeunit 50000 MyCodeunit
 {
@@ -511,7 +579,7 @@ end;
             expect(formattedCode).to.equal(expected))
     });
 
-    it('Empty lines are not printed at the beginning or end of a statement list after an if condition', () => {
+    it('Blank lines are not printed at the beginning or end of a statement list after an if condition', () => {
         const code = `
 codeunit 50000 MyCodeunit
 {
@@ -546,7 +614,7 @@ codeunit 50000 MyCodeunit
             expect(formattedCode).to.equal(expected))
     });
 
-    it('Empty line is printed before a statement list after a previous statement', () => {
+    it('Blank line is not inserted before "if" statement', () => {
         const code = `
 codeunit 50000 MyCodeunit
 {
@@ -568,7 +636,6 @@ codeunit 50000 MyCodeunit
     I: Integer;
   begin
     I := GetValueOfI();
-
     if I > 0 then
       CallSomeProcedure();
   end;
@@ -579,7 +646,7 @@ codeunit 50000 MyCodeunit
             expect(formattedCode).to.equal(expected))
     });
 
-    it('Empty line is printed after a statement list before a following statement', () => {
+    it('Blank line is not inserted after a "for" loop', () => {
         const code = `
 codeunit 50000 MyCodeunit
 {
@@ -602,7 +669,6 @@ codeunit 50000 MyCodeunit
   begin
     for I := 1 to 10 do
       CallSomeProcedure(I);
-
     CallAnotherProcedure();
   end;
 }
@@ -612,7 +678,7 @@ codeunit 50000 MyCodeunit
             expect(formattedCode).to.equal(expected))
     });
 
-    it('Empty line separates two compound statements', () => {
+    it('Blank line separates two compound statements', () => {
         const code = `
 codeunit 50000 MyCodeunit
 {
@@ -655,7 +721,7 @@ codeunit 50000 MyCodeunit
             expect(formattedCode).to.equal(expected))
     });
 
-    it('Empty lines separate two compound statements and a statement block between', () => {
+    it('Blank line is inserted after begin..end block, but not before loop', () => {
         const code = `
 codeunit 50000 MyCodeunit
 {
@@ -691,10 +757,101 @@ codeunit 50000 MyCodeunit
 
     I := 0;
     J := 0;
-
     repeat
       CallProcedureThree(I);
     until I < 0;
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Blank line between two statements is peserved after formatting', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure DoSomething()
+  begin
+    I := 0;
+
+    J := 0;
+  end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure DoSomething()
+  begin
+    I := 0;
+
+    J := 0;
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Blank like is not inserted when original statement is wrapped in two lines', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure DoSomething()
+  begin
+    CallProcedureWithManyArguments(
+    ArgA, ArgB, ArgC, ArgD);
+    I := 0;
+  end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure DoSomething()
+  begin
+    CallProcedureWithManyArguments(ArgA, ArgB, ArgC, ArgD);
+    I := 0;
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Blank line preserved after conditional statement', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure Calculate()
+  begin
+    if a = b then begin
+      a := -a;
+      b := 0;
+      c := a -b; end
+      else
+      c := b;
+
+    exit(c);
+  end;
+}`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure Calculate()
+  begin
+    if a = b then begin
+      a := -a;
+      b := 0;
+      c := a - b;
+    end else
+      c := b;
+
+    exit(c);
   end;
 }
 `;

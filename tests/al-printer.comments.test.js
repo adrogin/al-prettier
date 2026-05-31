@@ -238,6 +238,66 @@ end;
             expect(formattedCode).to.equal(expected))
     });
 
+    it('Region marker around code statement without blank lines', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+#region OnBeforeDoStuff
+[IntegrationEvent(false, false)]
+local procedure OnBeforeDoStuff()
+begin
+end;
+#endregion
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+#region OnBeforeDoStuff
+  [IntegrationEvent(false, false)]
+  local procedure OnBeforeDoStuff()
+  begin
+  end;
+#endregion
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Region marker without blank lines and following variable', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+#region OnBeforeDoStuff
+[IntegrationEvent(false, false)]
+local procedure OnBeforeDoStuff()
+begin
+end;
+#endregion
+var GlobalText: Text;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+#region OnBeforeDoStuff
+  [IntegrationEvent(false, false)]
+  local procedure OnBeforeDoStuff()
+  begin
+  end;
+#endregion
+
+  var
+    GlobalText: Text;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
     it('Two pragmas around code line', () => {
         const code = `
 codeunit 50000 MyCodeunit
@@ -299,6 +359,49 @@ codeunit 50000 MyCodeunit
 `;
 
         return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Blank line is preserved between two procedures with summary comments, variables grouped on top', () => {
+        const code = `
+codeunit 71702044 "ESCA AL Prettier"
+{
+    /// <summary>
+    /// This procedure is used to test the AL Prettier.
+    /// </summary>
+    local procedure MyProcedure()
+    begin
+    end;
+
+    /// <summary>
+    /// This procedure is used to test the AL Prettier.
+    /// </summary>
+    local procedure MyProcedure2()
+    begin
+    end;
+}`;
+
+        const expected = `codeunit 71702044 "ESCA AL Prettier"
+{
+  /// <summary>
+  /// This procedure is used to test the AL Prettier.
+  /// </summary>
+  local procedure MyProcedure()
+  begin
+  end;
+
+  /// <summary>
+  /// This procedure is used to test the AL Prettier.
+  /// </summary>
+  local procedure MyProcedure2()
+  begin
+  end;
+}
+`;
+
+        return alFormat(code, {
+            groupGlobalVars: "top"
+        }).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
 });

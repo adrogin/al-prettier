@@ -1,6 +1,6 @@
 import * as prettier from 'prettier';
 import ALParser from '../parser/ALParser.js';
-import { isParagraphStatement, isSingleCompundStatement } from "./printerHelpers.js";
+import { isParagraphStatement, isCompoundStatement, shouldAddBlankLineAfter } from "./printerHelpers.js";
 
 const { hardline, join, indent, group, line, softline } = prettier.doc.builders;
 
@@ -599,6 +599,20 @@ function isBlockComment(node) {
 }
 
 function handleOwnLineComment(comment, text, options, ast, isLastComment) {
+    if (comment.value.trimStart().startsWith('#region') && comment.followingNode) {
+        prettier.util.addLeadingComment(comment.followingNode, comment);
+        return true;
+    }
+    if (comment.value.trimStart().startsWith('#endregion') && comment.precedingNode) {
+        prettier.util.addTrailingComment(comment.precedingNode, comment);
+
+        if (isLastComment) {
+            insertBlankLinesInNodeComments(ast);
+        }
+        return true;
+    }
+
+    // The last comment is attached explicitly to be able to insert blank lines for the complete set of comments
     if (!isLastComment)
         return false;
 
@@ -609,43 +623,51 @@ function handleOwnLineComment(comment, text, options, ast, isLastComment) {
         prettier.util.addTrailingComment(comment.precedingNode, comment);
     }
 
-    insertBlankLinesInComments(ast);
+    insertBlankLinesInNodeComments(ast);
     return true;
 }
 
-function insertBlankLinesInComments(node) {
+function insertBlankLinesInNodeComments(node) {
     if (node.comments) {
-        // Blank line between the preceding node and the first comment
-        const firstComment = node.comments[0];
-        if (firstComment.precedingNode) {
-            const precedingNodeEndLine = firstComment.precedingNode.symbol
-                ? firstComment.precedingNode.symbol.line
-                : firstComment.precedingNode.stop.line;
-            firstComment.addBlankLineBefore = firstComment.symbol.startLine > precedingNodeEndLine + 1;
-        }
-
-        // Blank line between the last comment and the following node
-        const lastComment = node.comments[node.comments.length - 1];
-        if (lastComment.followingNode) {
-            const followingNodeStartLine = lastComment.followingNode.symbol
-                ? lastComment.followingNode.symbol.line
-                : lastComment.followingNode.start.line;
-
-            lastComment.addBlankLineAfter = lastComment.symbol.stopLine < followingNodeStartLine - 1;
-        }
-
-        // Blank lines between comments
-        for (let i = 1; i < node.comments.length; i++) {
-            if (node.comments[i].symbol.startLine > node.comments[i - 1].symbol.stopLine + 1) {
-                node.comments[i].addBlankLineBefore = true;
-            }
-        }
+        insertBlankLinesInComments(node.comments.filter(comment => comment.leading === true));
+        insertBlankLinesInComments(node.comments.filter(comment => comment.leading === false));
     }
 
     if (!node.children)
         return;
 
-    node.children.map(child => insertBlankLinesInComments(child));
+    node.children.map(child => insertBlankLinesInNodeComments(child));
+}
+
+function insertBlankLinesInComments(comments) {
+    if (!comments || comments.length === 0)
+        return;
+
+    // Blank line between the preceding node and the first comment
+    const firstComment = comments[0];
+    if (comments[0].leading && firstComment.precedingNode) {  // Prettier formatter inserts a blank line before the first trailing comment
+        const precedingNodeEndLine = firstComment.precedingNode.symbol
+            ? firstComment.precedingNode.symbol.line
+            : firstComment.precedingNode.stop.line;
+        firstComment.addBlankLineBefore = firstComment.symbol.startLine > precedingNodeEndLine + 1;
+    }
+
+    // Blank line between the last comment and the following node
+    const lastComment = comments[comments.length - 1];
+    if (lastComment.followingNode) {
+        const followingNodeStartLine = lastComment.followingNode.symbol
+            ? lastComment.followingNode.symbol.line
+            : lastComment.followingNode.start.line;
+
+        lastComment.addBlankLineAfter = lastComment.symbol.stopLine < followingNodeStartLine - 1;
+    }
+
+    // Blank lines between comments
+    for (let i = 1; i < comments.length; i++) {
+        if (comments[i].symbol.startLine > comments[i - 1].symbol.stopLine + 1) {
+            comments[i].addBlankLineBefore = true;
+        }
+    }
 }
 
 function printCompilationUnit(path, options, print) {
@@ -2003,7 +2025,15 @@ function printTriggerDefinition(path, options, print) {
 
 function printProceduresList(path, options, print) {
     // Grammar: procedureDefinition+
-    return join([hardline, hardline], path.map(print, 'children'));
+    const children = path.node.children;
+    const procedures = [];
+    for (let i = 0; i < children.length; i++) {
+        removeBlankLineBeforeLeadingComment(children[i]);
+        removeBlankLineAroundTrailingComment(children[i]);
+        procedures.push(path.call(print, 'children', i));
+    }
+
+    return join([hardline, hardline], procedures);
 }
 
 function printProcedureDefinition(path, options, print) {
@@ -2110,10 +2140,22 @@ function printStatementList(path, options, print) {
         i > 0 && (paragraphs[i] || paragraphs[i - 1])
             ? stmtDocs.push([hardline, doc])
             : stmtDocs.push(doc);
+
+        if (i < children.length - 1) {
+            stmtDocs.push(hardline);
+
+            if (children[i + 1].start.line > children[i].stop.line + 1 ||
+                shouldAddBlankLineAfter(children[i])
+            ) {
+                // Inserting one extra line break if the original code had blank lines between statements
+                // or it is a compound begin..end block
+                stmtDocs.push(hardline);
+            }
+        }
     }
 
     return stmtDocs.length > 0
-        ? [join(hardline, stmtDocs)]
+        ? stmtDocs
         : "";
 }
 
@@ -2156,15 +2198,21 @@ function printIfStatement(path, options, print) {
         thenStmt = indent([hardline, thenStmt]);
     }
 
-    const ifPart = [group([ifKeyword, " ", condition, line, thenKeyword]), thenStmt];
+    const result = [group([ifKeyword, " ", condition, line, thenKeyword]), thenStmt];
 
     // ELSE and its statement are optional — present when children.length > 4
     if (children.length > 4) {
         let elseStmt = path.call(print, 'children', 4);
-        return [ifPart, hardline, elseStmt];
+
+        result.push(
+            children[3]?.children[0]?.ruleIndex === ALParser.RULE_compoundBlock
+                ? " "
+                : hardline
+        );
+        result.push(elseStmt);
     }
 
-    return ifPart;
+    return result;
 }
 
 function printElseStatement(path, options, print) {
@@ -2172,7 +2220,7 @@ function printElseStatement(path, options, print) {
     // Similar to "then begin" in the if statement above, "else begin" must not break the line.
     const elseKeyword = path.call(print, 'children', 0);
     let elseStmt = path.call(print, 'children', 1);
-    if (isSingleCompundStatement(path.node.children[1]?.children[0])) {
+    if (isCompoundStatement(path.node.children[1]?.children[0])) {
         elseStmt = [" ", elseStmt];
     }
     else {
@@ -2659,10 +2707,7 @@ function printAllElements(path, options, print, elementStart, elementEnd) {
     const elementDocs = [];
 
     for (let i = elementStart + 1; i < elementEnd; i++) {
-        const leadingCommentIndex = path.node.children[i].comments?.findIndex(el => el.leading === true);
-        if (leadingCommentIndex > -1) {
-            path.node.children[i].comments[leadingCommentIndex].addBlankLineBefore = false;
-        }
+        removeBlankLineBeforeLeadingComment(path.node.children[i]);
     }
 
     for (let i = elementStart; i < elementEnd; i++) {
@@ -2745,6 +2790,21 @@ function printVariablesListExcludingKeywords(path, options, print) {
     }
 
     return join(hardline, vars);
+}
+
+function removeBlankLineBeforeLeadingComment(node) {
+    const leadingCommentIndex = node.comments?.findIndex(el => el.leading === true);
+    if (leadingCommentIndex > -1) {
+        node.comments[leadingCommentIndex].addBlankLineBefore = false;
+    }
+}
+
+function removeBlankLineAroundTrailingComment(node) {
+    const trailingCommentIndex = node.comments?.findIndex(el => el.leading === false);
+    if (trailingCommentIndex > -1) {
+        node.comments[trailingCommentIndex].addBlankLineBefore = false;
+        node.comments[trailingCommentIndex].addBlankLineAfter = false;
+    }
 }
 
 function isALObjectPropertiesList(node) {

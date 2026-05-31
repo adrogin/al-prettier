@@ -229,6 +229,56 @@ codeunit 50000 MyCodeunit
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
+
+    it('Page with a PageStyle variable', () => {
+        const code = `
+page 50001 "Page with PageStyle"
+{
+layout
+{
+    area(Content)
+    {
+        field(Name; rec.Name)
+        {
+            StyleExpr = nameStyle;
+        }
+    }
+}
+
+var nameStyle : Text;
+
+local procedure ChangeNameStyle(newPageStyle : PageStyle)
+begin
+    nameStyle := format(newPageStyle);
+end;}
+`;
+
+        const expected = `page 50001 "Page with PageStyle"
+{
+  layout
+  {
+    area(Content)
+    {
+      field(Name; rec.Name)
+      {
+        StyleExpr = nameStyle;
+      }
+    }
+  }
+
+  var
+    nameStyle: Text;
+
+  local procedure ChangeNameStyle(newPageStyle: PageStyle)
+  begin
+    nameStyle := format(newPageStyle);
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
 });
 
 describe('Complex variable types', () => {
