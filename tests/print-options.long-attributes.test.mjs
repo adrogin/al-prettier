@@ -1,6 +1,6 @@
 import { describe, it } from 'mocha';
 import { expect } from 'chai';
-import { alFormat } from './testUtils.js';
+import { alFormat } from './testUtils.mjs';
 
 describe('No line breaks in attributes option', () => {
     it('Long attribute breaks line with option disabled', () => {

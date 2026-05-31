@@ -17,8 +17,8 @@ import {
     mockTableKeysList,
     mockTableKeyPropertyItem,
     mockTableKeyPropertiesList
-} from './objectMocks.js';
-import { compareIndentedList } from './testUtils.js';
+} from './objectMocks.mjs';
+import { compareIndentedList } from './testUtils.mjs';
 import * as prettier from 'prettier';
 import ALParser from '../parser/ALParser.js';
 

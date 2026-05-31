@@ -1,6 +1,6 @@
 import { describe, it } from 'mocha';
 import { expect } from 'chai';
-import { alFormat } from './testUtils.js';
+import { alFormat } from './testUtils.mjs';
 
 describe('Page extension elements', () => {
     it('Page extension modifies one action', () => {

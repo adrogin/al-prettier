@@ -1,6 +1,6 @@
 import { describe, it } from 'mocha';
 import { expect } from 'chai';
-import { alFormat } from './testUtils.js';
+import { alFormat } from './testUtils.mjs';
 
 describe('Elements grouping and ordering', () => {
     it('Group global variables in table at the bottom', () => {
