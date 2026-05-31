@@ -1,6 +1,6 @@
 import { describe, it } from 'mocha';
 import { expect } from 'chai';
-import { alFormat } from './testUtils.js';
+import { alFormat } from './testUtils.mjs';
 
 describe('Table extension object', () => {
     it('Table extension adding one field and modifying another', () => {

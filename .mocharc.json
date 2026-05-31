@@ -1,9 +1,12 @@
 {
-  "spec": "**/*.test.js",
-  "ignore": ["node_modules/**", "**/node_modules/**"],
-  "timeout": 5000,
-  "exit": true,
-  "node-option": [
-    "experimental-vm-modules"
-  ]
+    "spec": "**/*.test.mjs",
+    "ignore": [
+        "node_modules/**",
+        "**/node_modules/**"
+    ],
+    "timeout": 5000,
+    "exit": true,
+    "node-option": [
+        "experimental-vm-modules"
+    ]
 }
