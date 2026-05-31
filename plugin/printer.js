@@ -1,6 +1,6 @@
 import * as prettier from 'prettier';
 import ALParser from '../parser/ALParser.js';
-import { isParagraphStatement, isSingleCompundStatement } from "./printerHelpers.js";
+import { isParagraphStatement, isCompoundStatement, shouldAddBlankLineAfter } from "./printerHelpers.js";
 
 const { hardline, join, indent, group, line, softline } = prettier.doc.builders;
 
@@ -389,7 +389,7 @@ function print(path, options, print, args) {
             return printRenderingLayout(path, options, print);
 
         case ALParser.RULE_labelsDefinition:
-            return printLabelsDefinition(path, options, print);
+            return printLabelsDefinition(path, options, () => print(path, args));
 
         case ALParser.RULE_labelDefinition:
             return printLabelDefinition(path, options, print);
@@ -560,7 +560,26 @@ function printComment(path, options) {
         return "";
     }
 
-    return comment.symbol.text.trim();
+    const text = comment.symbol.text.trim();
+    const hasPrecedingSiblings = (path) => {
+        return path.siblings?.findIndex(sibling => sibling.symbol.startLine < path.node.symbol.startLine) > -1
+    };
+
+    const parts = [];
+    if (comment.addBlankLineBefore) {
+        parts.push(hardline);
+    }
+
+    if (text.startsWith('#')) {
+        parts.push(prettier.doc.builders.trim);
+    }
+
+    parts.push(text);
+
+    if (comment.addBlankLineAfter) {
+        parts.push(hardline);
+    }
+    return parts;
 }
 
 function canAttachComment(node) {
@@ -579,12 +598,76 @@ function isBlockComment(node) {
     return text && text.trim().startsWith("/*");
 }
 
-function getCommentType(node) {
-    if (!node || !node.symbol) return "line";
-    const text = node.symbol.text.trim();
-    if (text.startsWith("//")) return "line";
-    if (text.startsWith("/*")) return "block";
-    return "line";
+function handleOwnLineComment(comment, text, options, ast, isLastComment) {
+    if (comment.value.trimStart().startsWith('#region') && comment.followingNode) {
+        prettier.util.addLeadingComment(comment.followingNode, comment);
+        return true;
+    }
+    if (comment.value.trimStart().startsWith('#endregion') && comment.precedingNode) {
+        prettier.util.addTrailingComment(comment.precedingNode, comment);
+
+        if (isLastComment) {
+            insertBlankLinesInNodeComments(ast);
+        }
+        return true;
+    }
+
+    // The last comment is attached explicitly to be able to insert blank lines for the complete set of comments
+    if (!isLastComment)
+        return false;
+
+    if (comment.followingNode) {
+        prettier.util.addLeadingComment(comment.followingNode, comment);
+    }
+    else {
+        prettier.util.addTrailingComment(comment.precedingNode, comment);
+    }
+
+    insertBlankLinesInNodeComments(ast);
+    return true;
+}
+
+function insertBlankLinesInNodeComments(node) {
+    if (node.comments) {
+        insertBlankLinesInComments(node.comments.filter(comment => comment.leading === true));
+        insertBlankLinesInComments(node.comments.filter(comment => comment.leading === false));
+    }
+
+    if (!node.children)
+        return;
+
+    node.children.map(child => insertBlankLinesInNodeComments(child));
+}
+
+function insertBlankLinesInComments(comments) {
+    if (!comments || comments.length === 0)
+        return;
+
+    // Blank line between the preceding node and the first comment
+    const firstComment = comments[0];
+    if (comments[0].leading && firstComment.precedingNode) {  // Prettier formatter inserts a blank line before the first trailing comment
+        const precedingNodeEndLine = firstComment.precedingNode.symbol
+            ? firstComment.precedingNode.symbol.line
+            : firstComment.precedingNode.stop.line;
+        firstComment.addBlankLineBefore = firstComment.symbol.startLine > precedingNodeEndLine + 1;
+    }
+
+    // Blank line between the last comment and the following node
+    const lastComment = comments[comments.length - 1];
+    if (lastComment.followingNode) {
+        const followingNodeStartLine = lastComment.followingNode.symbol
+            ? lastComment.followingNode.symbol.line
+            : lastComment.followingNode.start.line;
+
+        lastComment.addBlankLineAfter = lastComment.symbol.stopLine < followingNodeStartLine - 1;
+    }
+
+    // Blank lines between comments
+    for (let i = 1; i < comments.length; i++) {
+        if (comments[i].symbol.startLine > comments[i - 1].symbol.stopLine + 1) {
+            comments[i].addBlankLineBefore = true;
+        }
+    }
 }
 
 function printCompilationUnit(path, options, print) {
@@ -1799,6 +1882,10 @@ function printLabelsDefinition(path, options, print) {
         labels.push(path.call(print, 'children', i));
     }
 
+    if (options.removeEmptyElements && labels.length === 0) {
+        return "";
+    }
+
     const labelsDocs = [keyword, hardline, lbrace];
     if (labels.length > 0) {
         labelsDocs.push(indent([hardline, join(hardline, labels)]));
@@ -1909,7 +1996,13 @@ function printTriggerDefinition(path, options, print) {
     const varsIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_variablesList);
     const statementListId = endIdx > beginIdx + 1 ? beginIdx + 1 : -1;
 
+    const triggerKeyword = path.call(print, 'children', 0);
     const name = path.call(print, 'children', 1);
+    const lParen = path.call(print, 'children', 2);
+    const rParen = path.call(print, 'children', paramsListIdx > -1 ? paramsListIdx + 1 : 3);
+    const beginKeyword = path.call(print, 'children', beginIdx);
+    const endKeyword = path.call(print, 'children', endIdx);
+    const semicolon = path.call(print, 'children', children.length - 1);
 
     const paramDoc = paramsListIdx > -1 ? path.call(print, 'children', paramsListIdx) : "";
     const returnType = returnTypeIdx > -1 ? path.call(print, 'children', returnTypeIdx) : [];
@@ -1917,22 +2010,30 @@ function printTriggerDefinition(path, options, print) {
     // variablesList: any rule context between RPAREN and BEGIN
     const varDocs = path.call(print, 'children', varsIdx);
 
-    const signature = ["trigger ", name, "(", paramDoc, ")"];
+    const signature = [triggerKeyword, " ", name, lParen, paramDoc, rParen];
     if (returnType.length > 0) {
         signature.push(...returnType);
     }
 
     const vars = varDocs.length > 0 ? [hardline, ...varDocs] : [];
     const body = statementListId > 0
-        ? [hardline, "begin", indent([hardline, path.call(print, 'children', statementListId)]), hardline, "end;"]
-        : [hardline, "begin", hardline, "end;"];
+        ? [hardline, beginKeyword, indent([hardline, path.call(print, 'children', statementListId)]), hardline, endKeyword, semicolon]
+        : [hardline, beginKeyword, hardline, endKeyword, semicolon];
 
     return [...signature, ...vars, ...body];
 }
 
 function printProceduresList(path, options, print) {
     // Grammar: procedureDefinition+
-    return join([hardline, hardline], path.map(print, 'children'));
+    const children = path.node.children;
+    const procedures = [];
+    for (let i = 0; i < children.length; i++) {
+        removeBlankLineBeforeLeadingComment(children[i]);
+        removeBlankLineAroundTrailingComment(children[i]);
+        procedures.push(path.call(print, 'children', i));
+    }
+
+    return join([hardline, hardline], procedures);
 }
 
 function printProcedureDefinition(path, options, print) {
@@ -2039,10 +2140,22 @@ function printStatementList(path, options, print) {
         i > 0 && (paragraphs[i] || paragraphs[i - 1])
             ? stmtDocs.push([hardline, doc])
             : stmtDocs.push(doc);
+
+        if (i < children.length - 1) {
+            stmtDocs.push(hardline);
+
+            if (children[i + 1].start.line > children[i].stop.line + 1 ||
+                shouldAddBlankLineAfter(children[i])
+            ) {
+                // Inserting one extra line break if the original code had blank lines between statements
+                // or it is a compound begin..end block
+                stmtDocs.push(hardline);
+            }
+        }
     }
 
     return stmtDocs.length > 0
-        ? [join(hardline, stmtDocs)]
+        ? stmtDocs
         : "";
 }
 
@@ -2085,15 +2198,21 @@ function printIfStatement(path, options, print) {
         thenStmt = indent([hardline, thenStmt]);
     }
 
-    const ifPart = [group([ifKeyword, " ", condition, line, thenKeyword]), thenStmt];
+    const result = [group([ifKeyword, " ", condition, line, thenKeyword]), thenStmt];
 
     // ELSE and its statement are optional — present when children.length > 4
     if (children.length > 4) {
         let elseStmt = path.call(print, 'children', 4);
-        return [ifPart, hardline, elseStmt];
+
+        result.push(
+            children[3]?.children[0]?.ruleIndex === ALParser.RULE_compoundBlock
+                ? " "
+                : hardline
+        );
+        result.push(elseStmt);
     }
 
-    return ifPart;
+    return result;
 }
 
 function printElseStatement(path, options, print) {
@@ -2101,7 +2220,7 @@ function printElseStatement(path, options, print) {
     // Similar to "then begin" in the if statement above, "else begin" must not break the line.
     const elseKeyword = path.call(print, 'children', 0);
     let elseStmt = path.call(print, 'children', 1);
-    if (isSingleCompundStatement(path.node.children[1]?.children[0])) {
+    if (isCompoundStatement(path.node.children[1]?.children[0])) {
         elseStmt = [" ", elseStmt];
     }
     else {
@@ -2586,6 +2705,11 @@ function isLowerCaseToken(token) {
 
 function printAllElements(path, options, print, elementStart, elementEnd) {
     const elementDocs = [];
+
+    for (let i = elementStart + 1; i < elementEnd; i++) {
+        removeBlankLineBeforeLeadingComment(path.node.children[i]);
+    }
+
     for (let i = elementStart; i < elementEnd; i++) {
         const el = path.call(print, 'children', i);
         if (el !== "")
@@ -2668,6 +2792,21 @@ function printVariablesListExcludingKeywords(path, options, print) {
     return join(hardline, vars);
 }
 
+function removeBlankLineBeforeLeadingComment(node) {
+    const leadingCommentIndex = node.comments?.findIndex(el => el.leading === true);
+    if (leadingCommentIndex > -1) {
+        node.comments[leadingCommentIndex].addBlankLineBefore = false;
+    }
+}
+
+function removeBlankLineAroundTrailingComment(node) {
+    const trailingCommentIndex = node.comments?.findIndex(el => el.leading === false);
+    if (trailingCommentIndex > -1) {
+        node.comments[trailingCommentIndex].addBlankLineBefore = false;
+        node.comments[trailingCommentIndex].addBlankLineAfter = false;
+    }
+}
+
 function isALObjectPropertiesList(node) {
     if (typeof node.ruleIndex === "undefined")
         return false;
@@ -2688,5 +2827,7 @@ export default {
     printComment,
     canAttachComment,
     isBlockComment,
-    getCommentType
+    handleComments: {
+        ownLine: handleOwnLineComment
+    }
 }

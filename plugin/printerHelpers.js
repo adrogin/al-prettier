@@ -14,11 +14,6 @@ export function isParagraphStatement(node) {
 
             return isParagraphStatement(node.children[0]);
         }
-        case ALParser.RULE_ifStatement:
-        case ALParser.RULE_repeatStatement:
-        case ALParser.RULE_forStatement:
-        case ALParser.RULE_forEachStatement:
-        case ALParser.RULE_whileStatement:
         case ALParser.RULE_caseStatement:
             return true;
 
@@ -27,16 +22,48 @@ export function isParagraphStatement(node) {
     }
 }
 
-export function isSingleCompundStatement(node) {
-    if (node.ruleIndex === ALParser.RULE_compoundBlock)
+export function isCompoundStatement(node) {
+    if (node.ruleIndex === ALParser.RULE_compoundBlock) {
         return true;
+    }
 
-    if (!node.children || node.children.length === 0)
+    if (!node.children || node.children.length === 0) {
         return false;
+    }
 
     if (node.ruleIndex === ALParser.RULE_statementList && node.children.length > 1) {
         return false;
     }
 
-    return isSingleCompundStatement(node.children[0]);
+    return isCompoundStatement(node.children[0]);
+}
+
+export function shouldAddBlankLineAfter(node) {
+    if (node.ruleIndex === ALParser.RULE_compoundBlock) {
+        return true;
+    }
+
+    if (!node.children || node.children.length === 0) {
+        return false;
+    }
+
+    if (node.children.length === 1) {
+        return shouldAddBlankLineAfter(node.children[0]);
+    }
+
+    if (node.ruleIndex === ALParser.RULE_statementWithSeparator) {
+        return shouldAddBlankLineAfter(node.children[0]);
+    }
+
+    if (
+        ![ALParser.RULE_forStatement,
+        ALParser.RULE_forEachStatement,
+        ALParser.RULE_whileStatement,
+        ALParser.RULE_ifStatement,
+        ALParser.RULE_ifElseStatement].includes(
+            node.ruleIndex)) {
+        return false;
+    }
+
+    return shouldAddBlankLineAfter(node.children[node.children.length - 1]);
 }

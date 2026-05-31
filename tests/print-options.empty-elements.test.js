@@ -206,4 +206,29 @@ report 50000 "Report with empty request page"
         return alFormat(code, { removeEmptyElements: true }).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
+
+    it('Report with empty labels section', () => {
+        const code = `
+report 50000 "Report with empty labels section"
+{
+  Caption = 'This is a report';
+  labels {}
+    trigger OnPreReport()
+    begin
+    end;
+}`;
+
+        const expected = `report 50000 "Report with empty labels section"
+{
+  Caption = 'This is a report';
+
+  trigger OnPreReport()
+  begin
+  end;
+}
+`;
+
+        return alFormat(code, { removeEmptyElements: true }).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
 });
