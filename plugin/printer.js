@@ -645,7 +645,13 @@ function insertBlankLinesInComments(comments) {
 
     // Blank line between the preceding node and the first comment
     const firstComment = comments[0];
-    if (comments[0].leading && firstComment.precedingNode) {  // Prettier formatter inserts a blank line before the first trailing comment
+    if (comments[0].leading &&
+        firstComment.precedingNode &&
+        !firstComment.followingNode?.ruleIndex === ALParser.RULE_statementWithSeparator &&
+        !firstComment.followingNode?.ruleIndex === ALParser.RULE_statement
+    ) {
+        // Prettier formatter inserts a blank line before the first trailing comment
+        // When printing comments inside a statment list, statement printer takes care of the blank lines between
         const precedingNodeEndLine = firstComment.precedingNode.symbol
             ? firstComment.precedingNode.symbol.line
             : firstComment.precedingNode.stop.line;

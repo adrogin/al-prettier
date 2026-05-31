@@ -364,7 +364,7 @@ codeunit 50000 MyCodeunit
 
     it('Blank line is preserved between two procedures with summary comments, variables grouped on top', () => {
         const code = `
-codeunit 71702044 "ESCA AL Prettier"
+codeunit 70000 TestCodeunit
 {
     /// <summary>
     /// This procedure is used to test the AL Prettier.
@@ -381,7 +381,7 @@ codeunit 71702044 "ESCA AL Prettier"
     end;
 }`;
 
-        const expected = `codeunit 71702044 "ESCA AL Prettier"
+        const expected = `codeunit 70000 TestCodeunit
 {
   /// <summary>
   /// This procedure is used to test the AL Prettier.
@@ -395,6 +395,39 @@ codeunit 71702044 "ESCA AL Prettier"
   /// </summary>
   local procedure MyProcedure2()
   begin
+  end;
+}
+`;
+
+        return alFormat(code, {
+            groupGlobalVars: "top"
+        }).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('One blank line is kept before a comment inside a procedure', () => {
+        const code = `
+codeunit 70000 TestCodeunit
+{
+  local procedure MyProcedure()
+  begin
+    // Calling procedure 1
+    ProcedureOne();
+
+    // Calling procedure 2
+    ProcedureToo();
+  end;
+}`;
+
+        const expected = `codeunit 70000 TestCodeunit
+{
+  local procedure MyProcedure()
+  begin
+    // Calling procedure 1
+    ProcedureOne();
+
+    // Calling procedure 2
+    ProcedureToo();
   end;
 }
 `;
