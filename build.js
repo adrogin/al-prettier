@@ -9,7 +9,7 @@
  *   node build.js --production - Production build (minified)
  */
 
-import esbuild from 'esbuild';
+const esbuild = require('esbuild');
 
 const isWatch = process.argv.includes('--watch');
 const isProduction = process.argv.includes('--production');

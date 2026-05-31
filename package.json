@@ -2,12 +2,11 @@
     "name": "al-prettier-vscode",
     "displayName": "AL Prettier",
     "description": "Prettier formatter for AL language in VS Code",
-    "version": "0.2.2",
+    "version": "0.2.3",
     "publisher": "alexander-drogin",
     "author": {
         "name": "Alexander Drogin"
     },
-    "type": "module",
     "repository": {
         "type": "git",
         "url": "https://github.com/adrogin/al-prettier.git"
