@@ -485,6 +485,7 @@ function print(path, options, print, args) {
         case ALParser.RULE_recordDataType:
         case ALParser.RULE_reportDataType:
         case ALParser.RULE_testPageDataType:
+        case ALParser.RULE_testRequestPageDataType:
         case ALParser.RULE_xmlPortDataType:
         case ALParser.RULE_dotNetDataType:
             return join(" ", path.map(print, 'children'));
