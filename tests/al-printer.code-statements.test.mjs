@@ -971,7 +971,25 @@ permissions=tabledata "G/LEntry" = rim,tabledata "Dimension Set Entry"=rim, tabl
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
-});
+
+    it('Permissions referencing object with namespace', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+permissions=tabledata Microsoft.Finance.GeneralLedger.Ledger."G/LEntry" = r;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  permissions = tabledata Microsoft.Finance.GeneralLedger.Ledger."G/LEntry" = r;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+  });
 
 describe('Array access', () => {
     it('Accessing value in a single-dimensional array', () => {

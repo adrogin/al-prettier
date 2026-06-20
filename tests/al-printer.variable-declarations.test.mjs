@@ -438,3 +438,35 @@ codeunit 50000 MyCodeunit
             expect(formattedCode).to.equal(expected))
     });
 });
+
+describe('Test data types', () => {
+    it('TestRequestPage variable', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  SubType = Test;
+  [Test]
+  procedure LetsTestSomething()
+  var TRP: TestRequestPage MyTest;
+  begin
+  end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  SubType = Test;
+
+  [Test]
+  procedure LetsTestSomething()
+  var
+    TRP: TestRequestPage MyTest;
+  begin
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+});
