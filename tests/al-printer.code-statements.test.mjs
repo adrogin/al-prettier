@@ -511,6 +511,38 @@ codeunit 50000 MyCodeunit
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
+
+    it('Case block without trailing semicolon', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  trigger OnRun()
+  begin
+    case a of 
+    1: CallProcedure1();
+    2: CallProcedure2()
+    end;
+  end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  trigger OnRun()
+  begin
+    case a of
+      1:
+        CallProcedure1();
+      2:
+        CallProcedure2();
+    end;
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
 });
 
 describe('Blank lines in statements list', () => {
