@@ -38,7 +38,8 @@ You can customize the formatting behavior in VS Code settings:
   "alPrettier.printWidth": 120,
   "alPrettier.groupGlobalVars": "none",
   "alPrettier.noLineBreaksInAttributes": false,
-  "alPrettier.removeEmptyElements": false
+  "alPrettier.removeEmptyElements": false,
+  "alPrettier.collapseEmptyBraces": true
 }
 ```
 
@@ -50,6 +51,7 @@ You can customize the formatting behavior in VS Code settings:
 - **groupGlobalVars** (default: "none"): Group all global vars in the object. Available options: "none" - keep the variables as is; "top": move all variable declarations to the top, after the object properties; "bottom": move variables to the bottom; "beforeCode": place variables before procedures.
 - **noLineBreaksInAttributes** (default: false): Disable wrapping of procedure attributes even if the line exceeds maximum print width. Attributes are always printed in a single line.
 - **removeEmptyElements** (default false): Remove elements without content (this includes table fieldgroups, page actions and layout sections)
+- **collapseEmptyBraces** (default true): Place curly braces without content between them on one line. This option applies, for example, to table field or key definitions without properties.
 
 ## Requirements
 

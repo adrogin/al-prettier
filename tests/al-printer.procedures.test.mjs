@@ -120,4 +120,67 @@ codeunit 50000 MyCodeunit
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
+
+    it('Procedure declaration can end in semicolon', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure DoSomething();
+  begin
+  end;
+}`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure DoSomething()
+  begin
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Trigger declaration can end in semicolon', () => {
+        const code = `
+table 50000 MyTable
+{
+  trigger OnInsert();
+  begin
+  end;
+}`;
+
+        const expected = `table 50000 MyTable
+{
+  trigger OnInsert()
+  begin
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Trigger with return type', () => {
+        const code = `
+pageextension 50000 MyPageExt extends SomeExtendedPage
+{
+  trigger OnDeleteRecord(): Boolean;
+  begin
+  end;
+}`;
+
+        const expected = `pageextension 50000 MyPageExt extends SomeExtendedPage
+{
+  trigger OnDeleteRecord(): Boolean
+  begin
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
 });

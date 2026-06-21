@@ -30,9 +30,7 @@ page 50001 "Page With One Field"
       {
         ShowCaption = false;
 
-        field("Code"; Rec.Code)
-        {
-        }
+        field("Code"; Rec.Code) {}
       }
     }
   }
@@ -95,9 +93,7 @@ page 50001 "Page With User Control"
   {
     area(content)
     {
-      field("Code"; Rec.Code)
-      {
-      }
+      field("Code"; Rec.Code) {}
       usercontrol(Map; MapControl)
       {
         Caption = 'Map';
@@ -122,13 +118,9 @@ page 50001 "Page With Three Fields"
           repeater(Control1)
           {
               ShowCaption = false;
-              field("Code"; Rec.Code)
-              {
-              }
+              field("Code"; Rec.Code) {}
               field(Description; Rec.Description){ Caption='Description'; }
-              field(Description2; Rec."Description 2")
-              {
-              }
+              field(Description2; Rec."Description 2") {}
           }
       }
   }
@@ -144,16 +136,12 @@ page 50001 "Page With Three Fields"
       {
         ShowCaption = false;
 
-        field("Code"; Rec.Code)
-        {
-        }
+        field("Code"; Rec.Code) {}
         field(Description; Rec.Description)
         {
           Caption = 'Description';
         }
-        field(Description2; Rec."Description 2")
-        {
-        }
+        field(Description2; Rec."Description 2") {}
       }
     }
   }
@@ -174,9 +162,7 @@ page 50001 "No Actions Page"
 
         const expected = `page 50001 "No Actions Page"
 {
-  actions
-  {
-  }
+  actions {}
 }
 `;
 
@@ -269,9 +255,7 @@ page 50001 "Page With One Action"
     {
       group(PromotedGroup)
       {
-        actionref(AnotherPage_Promoted; RunAnotherPage)
-        {
-        }
+        actionref(AnotherPage_Promoted; RunAnotherPage) {}
       }
     }
   }

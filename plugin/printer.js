@@ -772,7 +772,14 @@ function printTableFieldsList(path, options, print) {
     for (let i = 2; i < children.length - 1; i++) {
         fieldDocs.push(path.call(print, 'children', i));
     }
-    return ["fields", hardline, "{", indent([hardline, join(hardline, fieldDocs)]), hardline, "}"];
+    return [
+        path.call(print, 'children', 0),  // "fields" keyword
+        hardline,
+        path.call(print, 'children', 1),  // left brace
+        indent([hardline, join(hardline, fieldDocs)]),
+        hardline,
+        path.call(print, 'children', children.length - 1)  // right brace
+    ];
 }
 
 function printTableFieldDefinition(path, options, print) {
@@ -796,9 +803,18 @@ function printTableFieldDefinition(path, options, print) {
     }
 
     const signature = [fieldKeyword, lparen, fieldId, semicolon1, " ", fieldName, semicolon2, " ", fieldType, rparen];
-    const body = elementDocs.length > 0
-        ? [hardline, lbrace, indent([hardline, join([hardline, hardline], elementDocs)]), hardline, rbrace]
-        : [hardline, lbrace, hardline, rbrace];
+    let body = [];
+    if (elementDocs.length > 0) {
+        body = [hardline, lbrace, indent([hardline, join([hardline, hardline], elementDocs)]), hardline, rbrace];
+    }
+    else {
+        if (options?.collapseEmptyBraces) {
+            body = [" ", lbrace, rbrace];
+        }
+        else {
+            body = [hardline, lbrace, hardline, rbrace];
+        }
+    }
 
     return [...signature, ...body];
 }
@@ -843,10 +859,23 @@ function printKeyItem(path, options, print) {
         propsList = path.call(print, 'children', propsListIdx);
     }
 
+    const lBrace = propsListIdx > -1 
+        ? path.call(print, 'children', children.length - 3) 
+        : path.call(print, 'children', children.length - 2);
+    const rBrace = path.call(print, 'children', children.length - 1);
     const signature = ["key(", keyName, "; ", join(", ", fieldDocs), ")"];
-    const body = propsListIdx > -1
-        ? [hardline, "{", indent([hardline, propsList]), hardline, "}"]
-        : [hardline, "{", hardline, "}"];
+    let body = [];
+    if (propsListIdx > -1) {
+        body = [hardline, lBrace, indent([hardline, propsList]), hardline, rBrace];
+    }
+    else {
+        if (options.collapseEmptyBraces) {
+            body = [" ", lBrace, rBrace];
+        }
+        else {
+            body = [hardline, lBrace, hardline, rBrace];
+        }
+    }
 
     return [...signature, ...body];
 }
@@ -878,7 +907,22 @@ function printFieldGroupsList(path, options, print) {
 
 function printFieldGroupItem(path, options, print) {
     // Grammar: FIELDGROUP LPAREN fieldGroupDefinition RPAREN LBRACE RBRACE
-    return ["fieldgroup(", path.call(print, 'children', 2), ")", hardline, "{", hardline, "}"];
+    const fieldgroup = [
+        path.call(print, 'children', 0),
+        path.call(print, 'children', 1),
+        path.call(print, 'children', 2),
+        path.call(print, 'children', 3)
+    ];
+
+    fieldgroup.push(options.collapseEmptyBraces ? " " : hardline);
+    fieldgroup.push(path.call(print, 'children', path.node.children.length - 2));
+    
+    if (!options.collapseEmptyBraces) {
+        fieldgroup.push(hardline);
+    }
+
+    fieldgroup.push(path.call(print, 'children', path.node.children.length - 1));
+    return fieldgroup;
 }
 
 function printFieldGroupDefinition(path, options, print) {
@@ -941,9 +985,18 @@ function printTableExtFieldModification(path, node, print) {
     }
 
     const signature = [modifyKeyword, lparen, fieldName, rparen];
-    const body = elementDocs.length > 0
-        ? [hardline, lbrace, indent([hardline, join([hardline, hardline], elementDocs)]), hardline, rbrace]
-        : [hardline, lbrace, hardline, rbrace];
+    let body = [];
+    if (elementDocs.length > 0) {
+        body = [hardline, lbrace, indent([hardline, join([hardline, hardline], elementDocs)]), hardline, rbrace];
+    }
+    else {
+        if (options.collapseEmptyBraces) {
+            body = [" ", lbrace, rbrace];
+        }
+        else {
+            body = [hardline, lbrace, hardline, rbrace];
+        }
+    }
 
     return [...signature, ...body];
 }
@@ -1103,9 +1156,18 @@ function printPageFieldItem(path, options, print) {
 
     const signature = [keyword, lparen, fieldName, semicolon, " ", expression, rparen];
     const nonEmpty = elementDocs.filter(Boolean);
-    const body = nonEmpty.length > 0
-        ? [hardline, lbrace, indent([hardline, join([hardline, hardline], nonEmpty)]), hardline, rbrace]
-        : [hardline, lbrace, hardline, rbrace];
+    let body = [];
+    if (nonEmpty.length > 0) {
+        body = [hardline, lbrace, indent([hardline, join([hardline, hardline], nonEmpty)]), hardline, rbrace];
+    }
+    else {
+        if (options.collapseEmptyBraces) {
+            body = [" ", lbrace, rbrace];
+        }
+        else {
+            body = [hardline, lbrace, hardline, rbrace];
+        }
+    }
 
     return [...signature, ...body];
 }
@@ -1122,9 +1184,18 @@ function printPageLabelItem(path, options, print) {
     const lbrace = path.call(print, 'children', 4);
     const rbrace = path.call(print, 'children', children.length - 1);
     const properties = children[5].ruleIndex === ALParser.RULE_pageFieldPropertiesList ? path.call(print, 'children', 5) : [];
-    const body = properties.length > 0
-        ? [hardline, lbrace, indent([hardline, properties]), hardline, rbrace]
-        : [hardline, lbrace, hardline, rbrace];
+    let body = [];
+    if (properties.length > 0) {
+        body = [hardline, lbrace, indent([hardline, properties]), hardline, rbrace];
+    }
+    else {
+        if (options.collapseEmptyBraces) {
+            body = [" ", lbrace, rbrace];
+        }
+        else {
+            body = [hardline, lbrace, hardline, rbrace];
+        }
+    }
 
     return [...signature, ...body];
 }
@@ -1149,11 +1220,18 @@ function printActionsDefinition(path, options, print) {
     const lbrace = path.call(print, 'children', 1);
     const rbrace = path.call(print, 'children', 3);
 
-    const actionsDef = [keyword, hardline, lbrace];
+    const actionsDef = [keyword];
+    actionsDef.push(((Array.isArray(elements) && elements.length > 0) || !options.collapseEmptyBraces) ? hardline : " ");
+    actionsDef.push(lbrace);
+
     if (Array.isArray(elements) && elements.length > 0) {
         actionsDef.push(indent([hardline, elements]));
     }
-    actionsDef.push(hardline, rbrace);
+
+    if ((Array.isArray(elements) && elements.length > 0) || !options.collapseEmptyBraces) {
+        actionsDef.push(hardline);
+    }
+    actionsDef.push(rbrace);
 
     return actionsDef;
 }
@@ -1197,10 +1275,23 @@ function printActionDefinition(path, options, print) {
         elementDocs.push(path.call(print, 'children', i));
     }
 
+    const lbraceIdx = path.node.children.findIndex(c => c.symbol?.type === ALParser.LBRACE);
+    const lbrace = path.call(print, 'children', lbraceIdx);
+    const rbrace = path.call(print, 'children', children.length - 1);
     const nonEmpty = elementDocs.filter(Boolean);
-    const body = nonEmpty.length > 0
-        ? [hardline, "{", indent([hardline, join([hardline, hardline], nonEmpty)]), hardline, "}"]
-        : [hardline, "{", hardline, "}"];
+    let body = [];
+    
+    if (nonEmpty.length > 0) {
+        body = [hardline, lbrace, indent([hardline, join([hardline, hardline], nonEmpty)]), hardline, rbrace]
+    }
+    else {
+        if (options.collapseEmptyBraces) {
+            body = [" ", lbrace, rbrace];
+        }
+        else {
+            body = [hardline, lbrace, hardline, rbrace];
+        }
+    }
 
     return ["action(", name, ")", ...body];
 }
@@ -1258,7 +1349,15 @@ function printActionRef(path, options, print) {
         properties.push(indent([hardline, path.call(print, 'children', actionPropsIdx)]));
     }
 
-    return [actionRefKeyword, lparen, name, semicolon, " ", actionName, rparen, hardline, lbrace, properties, hardline, rbrace];
+    const actionRef = [actionRefKeyword, lparen, name, semicolon, " ", actionName, rparen];
+    actionRef.push(properties.length > 0 || !options.collapseEmptyBraces ? hardline : " ");
+    actionRef.push(lbrace, properties);
+
+    if (properties.length > 0 || !options.collapseEmptyBraces) {
+        actionRef.push(hardline);
+    }
+    actionRef.push(rbrace);
+    return actionRef;
 }
 
 function printTableRelationExpression(path, options, print) {
@@ -1726,11 +1825,16 @@ function printQueryColumnDefinition(path, options, print) {
     if (semicolonIdx > -1)
         content.push(semicolon, " ", refExpression);
 
-    content.push(rparen, hardline, lbrace);
+    content.push(rparen)
+    content.push(properties.length > 0 || !options.collapseEmptyBraces ? hardline : " ");
+    content.push(lbrace);
     if (properties.length > 0)
         content.push(indent([hardline, ...properties]));
 
-    content.push(hardline, rbrace);
+    if (properties.length > 0 || !options.collapseEmptyBraces) {
+        content.push(hardline)
+    }
+    content.push(rbrace);
     return content;
 }
 
@@ -1893,12 +1997,18 @@ function printLabelsDefinition(path, options, print) {
         return "";
     }
 
-    const labelsDocs = [keyword, hardline, lbrace];
+    const labelsDocs = [keyword];
+    labelsDocs.push(labels.length > 0 || !options.collapseEmptyBraces ? hardline : " ");
+    labelsDocs.push(lbrace);
     if (labels.length > 0) {
         labelsDocs.push(indent([hardline, join(hardline, labels)]));
     }
 
-    labelsDocs.push(hardline, rbrace);
+    if (labels.length > 0 || !options.collapseEmptyBraces) {
+        labelsDocs.push(hardline);
+    }
+
+    labelsDocs.push(rbrace);
     return labelsDocs;
 }
 

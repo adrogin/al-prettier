@@ -81,9 +81,7 @@ query 50000 MyQuery
       {
         DataItemLink = ID = TopLevelDataItem.ID;
 
-        column(Item_No; "Item No.")
-        {
-        }
+        column(Item_No; "Item No.") {}
       }
     }
   }
@@ -119,9 +117,7 @@ query 50000 MyQuery
       {
         DataItemLink = Type = TopLevelDataItem.Type, ID = TopLevelDataItem.ID;
 
-        column(Item_No; "Item No.")
-        {
-        }
+        column(Item_No; "Item No.") {}
       }
     }
   }
@@ -160,9 +156,7 @@ query 50000 MyQuery
           ID = TopLevelDataItem.ID,
           "Line No." = TopLevelDataItem."Line No.";
 
-        column(Item_No; "Item No.")
-        {
-        }
+        column(Item_No; "Item No.") {}
       }
     }
   }

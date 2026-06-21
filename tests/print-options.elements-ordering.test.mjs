@@ -135,9 +135,7 @@ table 50000 "MyTable"
 
   fields
   {
-    field(1; "Primary Key"; Code[10])
-    {
-    }
+    field(1; "Primary Key"; Code[10]) {}
   }
 
   trigger OnInsert()
@@ -247,9 +245,7 @@ page 50000 MyPage
   {
     area(content)
     {
-      field(SomePageField; Rec.TableField)
-      {
-      }
+      field(SomePageField; Rec.TableField) {}
     }
   }
 
@@ -296,9 +292,7 @@ page 50000 MyPage
   {
     area(content)
     {
-      field(SomePageField; Rec.TableField)
-      {
-      }
+      field(SomePageField; Rec.TableField) {}
     }
   }
 

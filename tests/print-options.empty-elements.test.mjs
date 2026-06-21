@@ -78,9 +78,7 @@ page 50000 "Page with empty actions"
   {
     area(content)
     {
-      field(SomePageField; Rec.TableField)
-      {
-      }
+      field(SomePageField; Rec.TableField) {}
     }
   }
 }
@@ -116,9 +114,7 @@ page 50000 "Page with empty actions"
   {
     area(content)
     {
-      field(SomePageField; Rec.TableField)
-      {
-      }
+      field(SomePageField; Rec.TableField) {}
     }
   }
 
@@ -160,9 +156,7 @@ page 50000 "Page with empty actions"
   {
     area(content)
     {
-      field(SomePageField; Rec.TableField)
-      {
-      }
+      field(SomePageField; Rec.TableField) {}
     }
   }
 
