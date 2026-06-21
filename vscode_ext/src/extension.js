@@ -61,6 +61,7 @@ async function formatDocument(document, options, prettier) {
             groupGlobalVars: config.get('groupGlobalVars') || "none",
             noLineBreaksInAttributes: config.get('noLineBreaksInAttributes') || false,
             removeEmptyElements: config.get('removeEmptyElements') || false,
+            collapseEmptyBraces: config.get('collapseEmptyBraces'),
         });
 
         // Return a single edit that replaces the entire document
@@ -101,7 +102,10 @@ async function formatRange(document, range, options, prettier) {
             tabWidth: config.get('tabWidth') || options.tabSize || 4,
             useTabs: config.get('useTabs') || !options.insertSpaces || false,
             printWidth: config.get('printWidth') || 120,
+            groupGlobalVars: config.get('groupGlobalVars') || "none",
+            noLineBreaksInAttributes: config.get('noLineBreaksInAttributes') || false,
             removeEmptyElements: config.get('removeEmptyElements') || false,
+            collapseEmptyBraces: config.get('collapseEmptyBraces') || true,
         });
 
         return [

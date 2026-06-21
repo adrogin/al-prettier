@@ -15,12 +15,8 @@ describe('Basic table structure', () => {
 {
   fields
   {
-    field(1; ID; Integer)
-    {
-    }
-    field(2; Description; Text[100])
-    {
-    }
+    field(1; ID; Integer) {}
+    field(2; Description; Text[100]) {}
   }
 }
 `
@@ -62,9 +58,7 @@ describe('Basic table structure', () => {
       Caption = 'ID';
       Editable = false;
     }
-    field(2; Description; Text[100])
-    {
-    }
+    field(2; Description; Text[100]) {}
   }
 }
 `
@@ -78,9 +72,7 @@ describe('Basic table structure', () => {
 {
   fields
   {
-    field(1; ID; Integer)
-    {
-    }
+    field(1; ID; Integer) {}
   }
 
   keys

@@ -198,7 +198,8 @@ report 50000 "Report with Request page"
                 {
                     Caption = 'Options';
                     Visible = OptionsVisible;
-                    field(FinancialReport; FinancialReportName) {}
+                    field(FinancialReport; FinancialReportName) {
+                    }
             }
         }
     }
@@ -221,9 +222,7 @@ report 50000 "Report with Request page"
           Caption = 'Options';
           Visible = OptionsVisible;
 
-          field(FinancialReport; FinancialReportName)
-          {
-          }
+          field(FinancialReport; FinancialReportName) {}
         }
       }
     }

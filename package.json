@@ -65,6 +65,11 @@
                     "type": "boolean",
                     "default": false,
                     "description": "Remove empty optional element blocks, such as fieldgroups or report labels without content, from AL objects"
+                },
+                "alPrettier.collapseEmptyBraces": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Place curly braces without content between them on one line. This option applies, for example, to table field or key definitions without properties."
                 }
             }
         }

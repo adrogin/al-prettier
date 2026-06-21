@@ -32,6 +32,12 @@ const alPrettier = {
             category: "AL",
             default: false,
             description: "Remove empty element blocks from AL objects"
+        },
+        collapseEmptyBraces: {
+            type: "boolean",
+            category: "AL",
+            default: true,
+            description: "Place curly braces without content between them on one line"
         }
     }
 };
