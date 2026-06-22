@@ -2285,6 +2285,11 @@ function printStatementList(path, options, print) {
     const children = path.node.children;
     const stmtDocs = [];
     const paragraphs = [];
+
+    for (let i = 0; i < children.length; i++) {
+        paragraphs.push(isParagraphStatement(children[i]));
+    }
+
     for (let i = 0; i < children.length; i++) {
         let doc = path.call(print, 'children', i);
         if (i === children.length - 1 && children[i].ruleIndex === ALParser.RULE_statement) {
@@ -2293,7 +2298,6 @@ function printStatementList(path, options, print) {
             // Elements of the statement list can be either "statment" or "statementWithSeparator".
             doc = [doc, ";"];
         }
-        paragraphs.push(isParagraphStatement(path.node.children[i]));
 
         i > 0 && (paragraphs[i] || paragraphs[i - 1])
             ? stmtDocs.push([hardline, doc])
@@ -2302,8 +2306,9 @@ function printStatementList(path, options, print) {
         if (i < children.length - 1) {
             stmtDocs.push(hardline);
 
-            if (children[i + 1].start.line > children[i].stop.line + 1 ||
-                shouldAddBlankLineAfter(children[i])
+            if ((children[i + 1].start.line > children[i].stop.line + 1 ||
+                shouldAddBlankLineAfter(children[i])) &&
+                !paragraphs[i + 1]
             ) {
                 // Inserting one extra line break if the original code had blank lines between statements
                 // or it is a compound begin..end block
