@@ -225,6 +225,9 @@ function print(path, options, print, args) {
         case ALParser.RULE_pageFieldPropertyItem:
             return printPageFieldPropertyItem(path, options, print);
 
+        case ALParser.RULE_separatorDefinition:
+            return printSeparatorElement(path, options, print);
+
         case ALParser.RULE_actionsDefinition:
             return printActionsDefinition(path, options, print);
 
@@ -1210,6 +1213,39 @@ function printPageFieldPropertyItem(path, options, print) {
     return [path.call(print, 'children', 0), ";"];
 }
 
+function printSeparatorElement(path, options, print) {
+    // Grammar: SEPARATOR LPAREN identifier RPAREN LBRACE pageFieldPropertiesList? RBRACE;
+
+    const children = path.node.children;
+    const properties = [];
+    if (children[children.length - 2].ruleIndex === ALParser.RULE_pageFieldPropertiesList) {
+        properties.push(...path.call(print, 'children', children.length - 2));
+    }
+
+    const lbrace = children[children.length - 2].ruleIndex === ALParser.RULE_pageFieldPropertiesList
+        ? path.call(print, 'children', children.length - 3)
+        : path.call(print, 'children', children.length - 2);
+    
+    const separatorDefinition = [];
+    separatorDefinition.push(...path.call(print, 'children', 0));
+    separatorDefinition.push(...path.call(print, 'children', 1));
+    separatorDefinition.push(...path.call(print, 'children', 2));
+    separatorDefinition.push(...path.call(print, 'children', 3));
+
+    separatorDefinition.push(properties.length > 0 || !options.collapseEmptyBraces ? hardline : " ");
+    separatorDefinition.push(...lbrace);
+
+    if (properties.length > 0) {
+        separatorDefinition.push(indent([hardline, properties]));
+    }
+
+    if (properties.length > 0 || !options.collapseEmptyBraces) {
+        separatorDefinition.push(hardline);
+    }
+    separatorDefinition.push(...path.call(print, 'children', children.length - 1));
+    return separatorDefinition
+}
+
 function printActionsDefinition(path, options, print) {
     // Grammar: ACTIONS LBRACE actionElements RBRACE
     const elements = path.call(print, 'children', 2);
@@ -1398,13 +1434,18 @@ function printRelationFilterExpression(path, options, print) {
 }
 
 function printCalcFormulaExpression(path, options, print) {
-    // Grammar: identifier LPAREN tableFieldReference (tableRelationWhereExpression)? RPAREN;
+    // Grammar: (MINUS | PLUS)? identifier LPAREN tableFieldReference (tableRelationWhereExpression)? RPAREN;
     const children = path.node.children;
+    const functionIdx = children[0].symbol?.type === ALParser.MINUS || children[0].symbol?.type === ALParser.PLUS ? 1 : 0;
     const whereExprIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_tableRelationWhereExpression);
     const rparenIdx = children.findIndex(c => c.symbol?.type === ALParser.RPAREN);
     const tableRefIdx = whereExprIdx > 0 ? whereExprIdx - 1 : rparenIdx - 1;
 
-    const calcFormulaFunction = path.call(print, 'children', 0);
+    const calcFormulaFunction = [];
+    calcFormulaFunction.push(path.call(print, 'children', 0));
+    if (functionIdx > 0) {
+        calcFormulaFunction.push(path.call(print, 'children', 1));
+    }
 
     let whereExpr = [];
     if (whereExprIdx > 0) {
@@ -2333,7 +2374,7 @@ function printIfStatement(path, options, print) {
 }
 
 function printElseStatement(path, options, print) {
-    // Grammar: ELSE statementWithSeparator;
+    // Grammar: ELSE statementList;
     // Similar to "then begin" in the if statement above, "else begin" must not break the line.
     const elseKeyword = path.call(print, 'children', 0);
     let elseStmt = path.call(print, 'children', 1);
@@ -2440,7 +2481,7 @@ function printCaseStatement(path, options, print) {
 }
 
 function printCaseBranch(path, options, print) {
-    // Grammar: expression ((COMMA | RANGE_OP) expression)* COLON (statementWithSeparator | SEMICOLON);
+    // Grammar: expression ((COMMA | RANGE_OP) expression)* COLON (statement | statementWithSeparator | SEMICOLON);
 
     const colonIdx = path.node.children.findIndex(c => c.symbol?.type === ALParser.COLON);
 
@@ -2467,6 +2508,10 @@ function printCaseBranch(path, options, print) {
 
     const colon = path.call(print, 'children', colonIdx);
     const statement = path.call(print, 'children', colonIdx + 1);
+    if (path.node.children[colonIdx + 1].ruleIndex === ALParser.RULE_statement) {  // If the statement in a case branch ends with semicolon, its type must be statementWithSeparator
+        statement.push(";");
+    }
+
     return [join(hardline, conditions), colon, indent([hardline, statement])];
 }
 

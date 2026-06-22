@@ -367,4 +367,124 @@ page 50001 "Page With One Action"
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
-});
+
+    it('Page separator element between fields', () => {
+        const code = `
+page 50001 "Page With Separator"
+{
+    layout
+    {
+        area(content)
+        {
+        field(Type; Rec.Type) {}
+        separator(Navigate_Separator) {}
+        field(No_; Rec."No.") {}
+        }
+    }
+}`;
+
+        const expected = `page 50001 "Page With Separator"
+{
+  layout
+  {
+    area(content)
+    {
+      field(Type; Rec.Type) {}
+      separator(Navigate_Separator) {}
+      field(No_; Rec."No.") {}
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Page separator element between actions', () => {
+        const code = `
+page 50001 "Page With Separator"
+{
+  actions
+  {area(navigation)
+    {group("&Action Group")
+      {
+        action(RunAnotherPage)
+        {RunObject = Page "Another Page";
+        RunPageLink = "Source Type";}
+        separator(SeparateActions){}
+        action(AnfAnotherPage)
+        {RunObject = Page "Yet Another Page";
+        RunPageLink = "Source Type";}
+      }
+    }
+  }
+}`;
+
+        const expected = `page 50001 "Page With Separator"
+{
+  actions
+  {
+    area(navigation)
+    {
+      group("&Action Group")
+      {
+        action(RunAnotherPage)
+        {
+          RunObject = Page "Another Page";
+          RunPageLink = "Source Type";
+        }
+        separator(SeparateActions) {}
+        action(AnfAnotherPage)
+        {
+          RunObject = Page "Yet Another Page";
+          RunPageLink = "Source Type";
+        }
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Page separator element with properties', () => {
+        const code = `
+page 50001 "Page With Separator"
+{
+    layout
+    {
+        area(content)
+        {
+        field(Type; Rec.Type) {}
+        separator(Navigate_Separator) {
+          IsHeader=true;
+          Caption='Field Separator';
+        }
+        }
+    }
+}`;
+
+        const expected = `page 50001 "Page With Separator"
+{
+  layout
+  {
+    area(content)
+    {
+      field(Type; Rec.Type) {}
+      separator(Navigate_Separator)
+      {
+        IsHeader = true;
+        Caption = 'Field Separator';
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+  });
