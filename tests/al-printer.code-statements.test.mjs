@@ -859,6 +859,41 @@ codeunit 50000 MyCodeunit
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
+
+    it('No extra line break before case if one existed in source', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  internal procedure ShowDocument()
+  begin
+      if SourceDocumentNo = '' then
+          exit;
+
+      case SourceDocument of
+          SourceDocument::"Sales Return Order":
+              ;
+      end;
+  end;
+}`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  internal procedure ShowDocument()
+  begin
+    if SourceDocumentNo = '' then
+      exit;
+
+    case SourceDocument of
+      SourceDocument::"Sales Return Order":
+        ;
+    end;
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
 });
 
 describe('Statement list', () => {
