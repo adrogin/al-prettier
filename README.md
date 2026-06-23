@@ -62,7 +62,6 @@ You can customize the formatting behavior in VS Code settings:
 
 - Requires valid AL syntax to format correctly. Formatting of an AL statement that cannot be parsed correctly will throw an error.
 - Range formatting is in development and currently not supported.
-- **#pragma**, **#if not CLEANX** and similar precompiler instructions are interpreted as leading comments for the next token and may be unaligned after formatting.
 - Not all AL objects are supported (yet). Currently supported objects:
     - Codeunit
     - Enum
