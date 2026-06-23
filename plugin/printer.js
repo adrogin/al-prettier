@@ -564,10 +564,13 @@ function printComment(path, options) {
         return "";
     }
 
-    const text = comment.symbol.text.trim();
+    let text = comment.symbol.text.trim();
     const hasPrecedingSiblings = (path) => {
         return path.siblings?.findIndex(sibling => sibling.symbol.startLine < path.node.symbol.startLine) > -1
-    };
+    }
+    const padToOrigin = (symbol) => {
+        return symbol.text.trim().padStart(text.length + symbol.startColumn);
+    }
 
     const parts = [];
     if (comment.addBlankLineBefore) {
@@ -575,6 +578,7 @@ function printComment(path, options) {
     }
 
     if (text.startsWith('#')) {
+        text = padToOrigin(comment.symbol);
         parts.push(prettier.doc.builders.trim);
     }
 
@@ -583,6 +587,7 @@ function printComment(path, options) {
     if (comment.addBlankLineAfter) {
         parts.push(hardline);
     }
+
     return parts;
 }
 
@@ -633,8 +638,8 @@ function handleOwnLineComment(comment, text, options, ast, isLastComment) {
 
 function insertBlankLinesInNodeComments(node) {
     if (node.comments) {
-        insertBlankLinesInComments(node.comments.filter(comment => comment.leading === true));
-        insertBlankLinesInComments(node.comments.filter(comment => comment.leading === false));
+        insertBlankLinesInComments(node.comments.filter(comment => comment.leading === true && comment.placement === 'ownLine'));
+        insertBlankLinesInComments(node.comments.filter(comment => comment.leading === false && comment.placement === 'ownLine'));
     }
 
     if (!node.children)
@@ -2239,9 +2244,14 @@ function printProcedureDefinition(path, options, print) {
     }
 
     const vars = varDocs.length > 0 ? [hardline, varDocs] : [];
+    const semicolon = children[children.length - 1].symbol?.type === ALParser.SEMICOLON
+        ? path.call(print, 'children', children.length - 1)
+        : ";";  // Adding the trailing semicolon after the "end" if it is missing.
+                // TODO: This may break comment allocation if a comment is placed after the keyword. Need to reattach the comment in this case.
+
     const body = statementListId > 0
-        ? [hardline, begin, indent([hardline, path.call(print, 'children', statementListId)]), hardline, end, ";"]
-        : [hardline, begin, hardline, end, ";"];
+        ? [hardline, begin, indent([hardline, path.call(print, 'children', statementListId)]), hardline, end, semicolon]
+        : [hardline, begin, hardline, end, semicolon];
 
     return [...attributes, ...accessModifier, ...signature, ...returnType, ...vars, ...body];
 }
@@ -2299,7 +2309,7 @@ function printStatementList(path, options, print) {
             doc = [doc, ";"];
         }
 
-        i > 0 && (paragraphs[i] || paragraphs[i - 1])
+        i > 0 && (paragraphs[i] && !paragraphs[i - 1])
             ? stmtDocs.push([hardline, doc])
             : stmtDocs.push(doc);
 
