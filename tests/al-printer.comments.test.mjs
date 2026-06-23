@@ -521,4 +521,36 @@ codeunit 50000 MyCodeunit
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
+
+    it('Own line comment followed by blank line between code blocks', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  #region Do important stuff here
+  procedure DoSomeStuff()
+  begin
+  end;
+  #endregion
+
+  var
+    GlobalVar: Integer;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  #region Do important stuff here
+  procedure DoSomeStuff()
+  begin
+  end;
+  #endregion
+
+  var
+    GlobalVar: Integer;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
 });
