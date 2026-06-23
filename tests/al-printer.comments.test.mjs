@@ -437,4 +437,88 @@ codeunit 70000 TestCodeunit
         }).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
+
+    it('Formatting preserves original indentation of region markers', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  #region First region
+
+  local procedure ProcedureOne()
+  begin
+  end;
+
+  #endregion
+
+  #region Second region
+
+  local procedure ProcedureToo()
+  begin
+  end;
+
+  #endregion
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  #region First region
+
+  local procedure ProcedureOne()
+  begin
+  end;
+
+  #endregion
+
+  #region Second region
+
+  local procedure ProcedureToo()
+  begin
+  end;
+
+  #endregion
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Own line comment following a trailing comment with blank line between', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure DoSomeStuff()
+  begin
+    CallProcedureOne(); // Calling the first procedure
+
+    // Now calling the second one
+    // And describing it in a very detailed multiline comment
+    CallProcedureTwo();
+
+    CallProcedureThree(); // And this is the third procedure
+    // And the punchline for the whole block
+  end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure DoSomeStuff()
+  begin
+    CallProcedureOne(); // Calling the first procedure
+
+    // Now calling the second one
+    // And describing it in a very detailed multiline comment
+    CallProcedureTwo();
+
+    CallProcedureThree(); // And this is the third procedure
+  // And the punchline for the whole block
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
 });
