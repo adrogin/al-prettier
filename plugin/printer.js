@@ -2337,7 +2337,20 @@ function printStatementWithSeparator(path, options, print) {
 }
 
 function printStatement(path, options, print) {
-    return path.map(print, 'children');
+    // Statement can be prefixed with an error assertion "asserterror"
+    const statement = [];
+    let stmtStartIdx = 0;
+    if (path.node.children[0].symbol?.type == ALParser.ASSERTERROR) {
+        statement.push(path.call(print, 'children', 0));
+        statement.push(" ");
+        stmtStartIdx++;
+    }
+
+    for (let i = stmtStartIdx; i < path.node.children.length; i++) {
+        statement.push(path.call(print, 'children', i));
+    }
+
+    return statement;
 }
 
 function printParameter(path, options, print) {
