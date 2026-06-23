@@ -2196,6 +2196,9 @@ function printProceduresList(path, options, print) {
         procedures.push(path.call(print, 'children', i));
     }
 
+    // To avoid inserting redundant line breaks after the trailing comment attached to the procedures list node
+    removeBlankLineAroundTrailingComment(path.node);
+
     return join([hardline, hardline], procedures);
 }
 
