@@ -279,6 +279,63 @@ end;}
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
+
+    it('RecordRef variable', () => {
+        const code = `
+codeunit 50001 MyCodeunit
+{
+var RecRef: RecordRef;
+}
+`;
+
+        const expected = `codeunit 50001 MyCodeunit
+{
+  var
+    RecRef: RecordRef;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('FieldRef variable', () => {
+        const code = `
+codeunit 50001 MyCodeunit
+{
+var FieldRef: FieldRef;
+}
+`;
+
+        const expected = `codeunit 50001 MyCodeunit
+{
+  var
+    FieldRef: FieldRef;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('KeyRef variable', () => {
+        const code = `
+codeunit 50001 MyCodeunit
+{
+var KeyRef: KeyRef;
+}
+`;
+
+        const expected = `codeunit 50001 MyCodeunit
+{
+  var
+    KeyRef: KeyRef;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
 });
 
 describe('Complex variable types', () => {

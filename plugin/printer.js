@@ -2428,14 +2428,16 @@ function printForLoopStatement(path, options, print) {
     const initialization = path.call(print, 'children', 3);
     const increment = path.call(print, 'children', 4);  // "to" or "downto" keyword
     const condition = path.call(print, 'children', 5);
-    let statement = path.call(print, 'children', 7);
+    let statement = (children.length > 7) ? path.call(print, 'children', 7) : [];
 
     // Statement executed inside the loop. If it's a compond statement "begin..end", do not insert a hardline before the statement.
-    if (children[7].children && children[7].children[0].ruleIndex === ALParser.RULE_compoundBlock) {
-        statement = [" ", statement];
-    }
-    else {
-        statement = indent([hardline, statement]);
+    if (children.length > 7) {
+        if (children[7].children && children[7].children[0].ruleIndex === ALParser.RULE_compoundBlock) {
+            statement = [" ", statement];
+        }
+        else {
+            statement = indent([hardline, statement]);
+        }
     }
 
     return ["for ", iterator, " := ", initialization, ` ${increment} `, condition, " do", statement];
@@ -2447,14 +2449,16 @@ function printForEachStatement(path, options, print) {
     const children = path.node.children;
     const iterator = path.call(print, 'children', 1);
     const condition = path.call(print, 'children', 3);
-    let statement = path.call(print, 'children', 5);
+    let statement = (children.length > 5) ? path.call(print, 'children', 5) : [];
 
     // Statement executed inside the loop. If it's a compond statement "begin..end", do not insert a hardline before the statement.
-    if (children[5]?.children[0]?.ruleIndex === ALParser.RULE_compoundBlock) {
-        statement = [" ", statement];
-    }
-    else {
-        statement = indent([hardline, statement]);
+    if (children.length > 5) {
+        if (children[5].children[0].ruleIndex === ALParser.RULE_compoundBlock) {
+            statement = [" ", statement];
+        }
+        else {
+            statement = indent([hardline, statement]);
+        }
     }
 
     return ["foreach ", iterator, " in ", condition, " do", statement];
@@ -2470,18 +2474,20 @@ function printRepeatStatement(path, options, print) {
 }
 
 function printWhileLoopStatement(path, options, print) {
-    // Grammar: WHILE expression DO statement
+    // Grammar: WHILE expression DO statement?
 
     const children = path.node.children;
     const condition = path.call(print, 'children', 1);
-    let statement = path.call(print, 'children', 3);
+    let statement = children.length > 3 ? path.call(print, 'children', 3) : [];
 
     // Statement executed inside the loop. If it's a compond statement "begin..end", do not insert a hardline before the statement.
-    if (children[3]?.children[0]?.ruleIndex === ALParser.RULE_compoundBlock) {
-        statement = [" ", statement];
-    }
-    else {
-        statement = indent([hardline, statement]);
+    if (children.length > 3) {
+        if (children[3].children[0].ruleIndex === ALParser.RULE_compoundBlock) {
+            statement = [" ", statement];
+        }
+        else {
+            statement = indent([hardline, statement]);
+        }
     }
 
     return ["while ", condition, " do", statement];
