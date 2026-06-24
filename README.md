@@ -2,6 +2,9 @@
 
 A [Prettier](https://prettier.io/) plugin for AL language and a VS Code extension that provides code formatting using this plugin.
 
+<img width="1412" height="868" alt="Code_QmgRFcuCtz" src="https://github.com/user-attachments/assets/ccc4096f-a785-4199-aa7f-abe2ea134885" />
+
+
 ## Installation
 
 1. Install from VS Code Extensions Marketplace (direct link: [AL Prettier](https://marketplace.visualstudio.com/items?itemName=alexander-drogin.al-prettier-vscode) or search for "AL Prettier")
