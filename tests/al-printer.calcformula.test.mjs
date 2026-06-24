@@ -72,4 +72,38 @@ table 50000 TableWithFlowField
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
-  });
+
+    it('Database reference with scope operator', () => {
+        const code = `
+table 50000 TableWithFlowField
+{
+  fields
+  {
+  field(1; PK; Code[10]) {}
+  field(2; CalculatedField; Decimal)
+  {
+    FieldClass=FlowField;
+    CalcFormula = exist("CRM Integration Record" where("Table ID" = const(Database::"Service Item")));
+  }
+  }
+}`;
+
+        const expected = `table 50000 TableWithFlowField
+{
+  fields
+  {
+    field(1; PK; Code[10]) {}
+    field(2; CalculatedField; Decimal)
+    {
+      FieldClass = FlowField;
+      CalcFormula = exist("CRM Integration Record"
+        where("Table ID" = const(Database::"Service Item")));
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+});
