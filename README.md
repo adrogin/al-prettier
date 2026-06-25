@@ -8,7 +8,7 @@ A [Prettier](https://prettier.io/) plugin for AL language and a VS Code extensio
 ## Installation
 
 1. Install from VS Code Extensions Marketplace (direct link: [AL Prettier](https://marketplace.visualstudio.com/items?itemName=alexander-drogin.al-prettier-vscode) or search for "AL Prettier")
-2. Or install manually by downloading the `.vsix` file and running `code --install-extension al-prettier-vscode-0.3.1.vsix`
+2. Or install manually by downloading the `.vsix` file and running `code --install-extension al-prettier-vscode-0.3.2.vsix`
 
 ## Usage
 
