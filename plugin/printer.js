@@ -901,7 +901,7 @@ function printFieldGroupsList(path, options, print) {
     }
 
     if (options.removeEmptyElements && items.length === 0)
-        return "";
+        return [];
 
     const res = [];
     res.push(keyword, hardline, lbrace);
@@ -1021,15 +1021,24 @@ function printLayoutDefinition(path, options, print) {
     // Grammar: LAYOUT LBRACE layoutElements RBRACE
     const elements = path.call(print, 'children', 2);
     if (options.removeEmptyElements && (!Array.isArray(elements) || elements.length === 0))
-        return "";
+        return [];
 
-    const pageLayout = [path.call(print, 'children', 0), hardline, path.call(print, 'children', 1)];
+    const pageLayout = [path.call(print, 'children', 0)];
+    pageLayout.push(
+        !options.collapseEmptyBraces || (Array.isArray(elements) && elements.length > 0) 
+            ? hardline
+            : " ");
+    pageLayout.push(path.call(print, 'children', 1));
 
     if (Array.isArray(elements) && elements.length > 0) {
         pageLayout.push(indent([hardline, elements]));
     }
 
-    pageLayout.push(hardline, path.call(print, 'children', 3));
+    if (!options.collapseEmptyBraces || (Array.isArray(elements) && elements.length > 0)) {
+        pageLayout.push(hardline);
+    }
+
+    pageLayout.push(path.call(print, 'children', 3));
     return pageLayout;
 }
 
@@ -1255,7 +1264,7 @@ function printActionsDefinition(path, options, print) {
     // Grammar: ACTIONS LBRACE actionElements RBRACE
     const elements = path.call(print, 'children', 2);
     if (options.removeEmptyElements && (!Array.isArray(elements) || elements.length === 0))
-        return "";
+        return [];
 
     const keyword = path.call(print, 'children', 0);
     const lbrace = path.call(print, 'children', 1);
@@ -1281,7 +1290,7 @@ function printActionElements(path, options, print) {
     // Grammar: actionPropertiesList? (actionDefinition | actionRefsList | actionGroupDefinition | actionAreaDefinition)*;
     const children = path.node.children;
     if (!children || children.length === 0)
-        return "";
+        return [];
 
     let actionStartIdx = 0;
     const elements = [];
@@ -1970,11 +1979,11 @@ function printReportRequestPage(path, options, print) {
     const elements = [];
     for (let i = 2; i < children.length - 1; i++) {
         const el = path.call(print, 'children', i);
-        if (el !== "")
+        if (Array.isArray(el) && el.length > 0)
             elements.push(el);
     }
     if (options.removeEmptyElements && elements.length === 0)
-        return "";
+        return [];
 
     const keyword = path.call(print, 'children', 0);
     const lbrace = path.call(print, 'children', 1);
@@ -2040,7 +2049,7 @@ function printLabelsDefinition(path, options, print) {
     }
 
     if (options.removeEmptyElements && labels.length === 0) {
-        return "";
+        return [];
     }
 
     const labelsDocs = [keyword];
@@ -2312,22 +2321,20 @@ function printStatementList(path, options, print) {
             doc = [doc, ";"];
         }
 
-        i > 0 && (paragraphs[i] && !paragraphs[i - 1])
-            ? stmtDocs.push([hardline, doc])
-            : stmtDocs.push(doc);
-
-        if (i < children.length - 1) {
+        if (i > 0) {
             stmtDocs.push(hardline);
 
-            if ((children[i + 1].start.line > children[i].stop.line + 1 ||
-                shouldAddBlankLineAfter(children[i])) &&
-                !paragraphs[i + 1]
+            if (
+                paragraphs[i - 1] ||
+                paragraphs[i] ||
+                children[i].start.line > children[i - 1].stop.line + 1 ||
+                shouldAddBlankLineAfter(children[i - 1])
             ) {
-                // Inserting one extra line break if the original code had blank lines between statements
-                // or it is a compound begin..end block
                 stmtDocs.push(hardline);
             }
         }
+        
+        stmtDocs.push(doc);
     }
 
     return stmtDocs.length > 0
@@ -2911,7 +2918,7 @@ function printAllElements(path, options, print, elementStart, elementEnd) {
 
     for (let i = elementStart; i < elementEnd; i++) {
         const el = path.call(print, 'children', i);
-        if (el !== "")
+        if (Array.isArray(el) && el.length > 0)
             elementDocs.push(el);
     }
 
@@ -2919,61 +2926,98 @@ function printAllElements(path, options, print, elementStart, elementEnd) {
 }
 
 function printElementsInGroups(path, options, print, elementStart, elementEnd) {
-    const properties = [];
-    let vars = [];
-    let protectedVars = [];
-    const procedures = [];
-    const otherElements = [];
-    const elementDocs = [];
+    const objectElements = {
+        properties: [],
+        vars: [],
+        protectedVars: [],
+        procedures: [],
+        fields: [],
+        keys: [],
+        layout: [],
+        actions: [],
+        otherElements: []
+    }
 
     for (let i = elementStart; i < elementEnd; i++) {
         switch (true) {
             case isALObjectPropertiesList(path.node.children[i]):
-                properties.push(path.call(print, 'children', i));
+                objectElements.properties = path.call(print, 'children', i);
                 break;
 
             case path.node.children[i].ruleIndex === ALParser.RULE_proceduresList:
-                procedures.push(path.call(print, 'children', i));
+                objectElements.procedures.push(path.call(print, 'children', i));
+                break;
+
+            case path.node.children[i].ruleIndex === ALParser.RULE_layoutDefinition:
+                objectElements.layout = path.call(print, 'children', i);
+                break;
+
+            case path.node.children[i].ruleIndex === ALParser.RULE_tableFieldsList:
+                objectElements.fields = path.call(print, 'children', i);
+                break;
+
+            case path.node.children[i].ruleIndex === ALParser.RULE_tableKeysSection:
+                objectElements.keys = path.call(print, 'children', i);
+                break;
+
+            case path.node.children[i].ruleIndex === ALParser.RULE_actionsDefinition:
+                objectElements.actions = path.call(print, 'children', i);
                 break;
 
             case path.node.children[i].ruleIndex === ALParser.RULE_variablesList:
                 if (path.node.children[i]?.children[0]?.symbol?.type === ALParser.PROTECTED) {
-                    protectedVars.push(path.call(() => printVariablesListExcludingKeywords(path, options, print), 'children', i));
+                    objectElements.protectedVars.push(path.call(() => printVariablesListExcludingKeywords(path, options, print), 'children', i));
                 }
                 else {
-                    vars.push(path.call(() => printVariablesListExcludingKeywords(path, options, print), 'children', i));
+                    objectElements.vars.push(path.call(() => printVariablesListExcludingKeywords(path, options, print), 'children', i));
                 }
                 break;
 
             default:
                 const el = path.call(print, 'children', i);
                 if (el !== "")
-                    otherElements.push(el);
+                    objectElements.otherElements.push(el);
         }
     }
 
-    if (vars.length > 0) {
-        vars = ["var", indent([hardline, join(hardline, vars)])];
+    return buildObjectFromElementGroups(objectElements, options);
+}
+
+function buildObjectFromElementGroups(objectElements, options) {
+    const elementDocs = [];
+
+    if (objectElements.vars.length > 0) {
+        objectElements.vars = ["var", indent([hardline, join(hardline, objectElements.vars)])];
     }
-    if (protectedVars.length > 0) {
-        if (vars.length > 0)
-            vars.push(hardline, hardline);
-        vars.push("protected var", indent([hardline, join(hardline, protectedVars)]));
+    if (objectElements.protectedVars.length > 0) {
+        if (objectElements.vars.length > 0)
+            objectElements.vars.push(hardline, hardline);
+        objectElements.vars.push("protected var", indent([hardline, join(hardline, objectElements.protectedVars)]));
     }
 
-    elementDocs.push(...properties);
-    if (options.groupGlobalVars === "top" && vars.length > 0)
-        elementDocs.push(vars);
+    const pushNonEmpty = (arr, el) => {
+        if (!Array.isArray(el) || el.length > 0) {
+            arr.push(el);
+        };
+    };
 
-    elementDocs.push(...otherElements)
-    if (options.groupGlobalVars === "beforeCode" && vars.length > 0)
-        elementDocs.push(vars);
+    pushNonEmpty(elementDocs, objectElements.properties);
+    pushNonEmpty(elementDocs, objectElements.fields);
+    pushNonEmpty(elementDocs, objectElements.keys);
+    pushNonEmpty(elementDocs, objectElements.layout);
+    pushNonEmpty(elementDocs, objectElements.actions);
+    if (options.groupGlobalVars === "top" && objectElements.vars.length > 0)
+        elementDocs.push(objectElements.vars);
 
-    if (procedures.length > 0)
-        elementDocs.push(procedures);
+    elementDocs.push(...objectElements.otherElements)
+    if (options.groupGlobalVars === "beforeCode" && objectElements.vars.length > 0)
+        elementDocs.push(objectElements.vars);
 
-    if (options.groupGlobalVars === "bottom" && vars.length > 0)
-        elementDocs.push(vars);
+    if (objectElements.procedures.length > 0)
+        elementDocs.push(objectElements.procedures);
+
+    if (options.groupGlobalVars === "bottom" && objectElements.vars.length > 0)
+        elementDocs.push(objectElements.vars);
 
     return elementDocs;
 }

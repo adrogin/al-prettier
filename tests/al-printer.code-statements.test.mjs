@@ -961,6 +961,81 @@ codeunit 50000 MyCodeunit
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
+
+    it('Blank line added between two consecutive case blocks', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+procedure TwoCases()
+begin
+  case a of
+    1: exit;
+  end;
+  case b of
+    2: exit;
+  end;
+end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure TwoCases()
+  begin
+    case a of
+      1:
+        exit;
+    end;
+
+    case b of
+      2:
+        exit;
+    end;
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('No line break added between two consecutive case blocks if one exists in source', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+procedure TwoCases()
+begin
+  case a of
+    1: exit;
+  end;
+
+  case b of
+    2: exit;
+  end;
+end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure TwoCases()
+  begin
+    case a of
+      1:
+        exit;
+    end;
+
+    case b of
+      2:
+        exit;
+    end;
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
 });
 
 describe('Statement list', () => {

@@ -100,7 +100,7 @@ codeunit 50000 "JustSomeCodeunit"
             expect(formattedCode).to.equal(expected))
     });
 
-    it('Group global variables in table, top placement, after properties', () => {
+    it('Group global variables in table, top placement, after properties and fields', () => {
         const code = `
 table 50000 "MyTable"
 {
@@ -125,6 +125,11 @@ table 50000 "MyTable"
 {
   Editable = false;
 
+  fields
+  {
+    field(1; "Primary Key"; Code[10]) {}
+  }
+
   var
     Variable1: Integer;
     Variable2: Text;
@@ -132,11 +137,6 @@ table 50000 "MyTable"
   protected var
     pv1: Code[10];
     pv2: Code[10];
-
-  fields
-  {
-    field(1; "Primary Key"; Code[10]) {}
-  }
 
   trigger OnInsert()
   begin
@@ -170,6 +170,54 @@ page 50000 "MyPage"
 {
   InsertAllowed = false;
   DeleteAllowed = false;
+
+  var
+    Variable1: Integer;
+    Variable2: Text;
+
+  protected var
+    pv1: Code[10];
+    pv2: Code[10];
+
+  trigger OnAfterGetRecord()
+  begin
+  end;
+}
+`;
+
+        return alFormat(code, {
+            groupGlobalVars: "top"
+        }).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Group global variables in page, top placement, after layout and actions', () => {
+        const code = `
+page 50000 "MyPage"
+{
+  InsertAllowed = false;
+  DeleteAllowed = false;
+  layout{
+  }
+  actions{}
+  protected var pv1: Code[10];
+  var Variable1: Integer;
+  trigger OnAfterGetRecord()
+  begin
+  end;
+
+  var Variable2: Text;
+  protected var pv2: Code[10];
+}`;
+
+        const expected = `page 50000 "MyPage"
+{
+  InsertAllowed = false;
+  DeleteAllowed = false;
+
+  layout {}
+
+  actions {}
 
   var
     Variable1: Integer;
