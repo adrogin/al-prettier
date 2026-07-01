@@ -105,7 +105,7 @@ permissions=tabledata Microsoft.Finance.GeneralLedger.Ledger."G/LEntry" = r;
     });
 });
 
-describe('Codeunits with namespaces', () => {
+describe('Access property in codeunits', () => {
     it('Codeunit with internal access property', () => {
         const code = `
 codeunit 55000 "Codeunit with Access Property"
@@ -123,6 +123,7 @@ end;
   trigger OnRun()
   begin
   end;
+}
 `;
 
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
