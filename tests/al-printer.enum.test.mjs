@@ -130,4 +130,28 @@ enum 55000 "Enum with implementation" implements ITestInterface, IAnotherTestInt
 
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
     });
+
+    it('Enum with internal access property', () => {
+        const code = `
+enum 55000 "Just an Enum"
+{
+Access=Internal;
+    value(0; Value0) {
+    Caption = 'Value 0'; 
+    }
+}`;
+
+        const expected = `enum 55000 "Just an Enum"
+{
+  Access = Internal;
+
+  value(0; Value0)
+  {
+    Caption = 'Value 0';
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
 });

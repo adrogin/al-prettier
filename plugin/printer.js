@@ -504,6 +504,8 @@ function print(path, options, print, args) {
             return printListDataType(path, options, print);
         case ALParser.RULE_optionDataType:
             return printOptionDataType(path, options, print);
+        case ALParser.RULE_textConstDataType:
+            return printTextConst(path, options, print);
 
         case ALParser.RULE_identifiersList:
             return printIdentifiersList(path, options, print);
@@ -2832,6 +2834,30 @@ function printOptionDataType(path, options, print) {
     return optionValues.length > 0
         ? [typeName, " ", optionValues]
         : [typeName];
+}
+
+function printTextConst(path, options, print) {
+    // Grammar: TEXTCONST IDENTIFIER EQUAL STRING_LITERAL (COMMA IDENTIFIER EQUAL STRING_LITERAL)*;
+    const children = path.node.children;
+    const decl = [];
+
+
+    decl.push(path.call(print, 'children', 0), " ");
+
+    for (let i = 1; i <= children.length - 3; i += 4) {
+        decl.push(
+            path.call(print, 'children', i),
+            " ",
+            path.call(print, 'children', i + 1),
+            " ",
+            path.call(print, 'children', i + 2));
+
+        if (i < children.length - 4) {
+            decl.push(path.call(print, 'children', i + 3), " "); // Comma before the next language constant
+        }
+    }
+
+    return decl;
 }
 
 function printIdentifiersList(path, options, print) {
