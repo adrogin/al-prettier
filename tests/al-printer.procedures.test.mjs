@@ -183,4 +183,30 @@ pageextension 50000 MyPageExt extends SomeExtendedPage
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
+
+    it('Wrapping long procedure call', () => {
+        const code = `
+codeunit 60000 CodeunitWithProcedure
+{
+  procedure CallSomething()
+  begin
+    InvokeProcedureWithVeryLongNameAndListOfArguments(LongArgumentName1, LongArgumentName2, LongArgumentName3);
+  end;
+}`;
+
+        const expected = `codeunit 60000 CodeunitWithProcedure
+{
+  procedure CallSomething()
+  begin
+    InvokeProcedureWithVeryLongNameAndListOfArguments(
+      LongArgumentName1,
+      LongArgumentName2,
+      LongArgumentName3);
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
 });

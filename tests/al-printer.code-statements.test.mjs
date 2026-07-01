@@ -259,6 +259,34 @@ codeunit 50000 MyCodeunit
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
+
+    it('Mixed "in" and "or" conditions in one statement' , () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure EvaluateConditions(CodeValue: Code[10]; IntegerValue: Integer): Boolean
+  begin
+    exit(CodeValue in ['CodeA', 'CodeB', 'CodeC'] or (IntegerValue < 0 and Integer > -99));
+  end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure EvaluateConditions(
+    CodeValue: Code[10];
+    IntegerValue: Integer): Boolean
+  begin
+    exit(
+      CodeValue in ['CodeA', 'CodeB', 'CodeC'] or
+        (IntegerValue < 0 and Integer > -99));
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
 });
 
 describe('Case statements', () => {
