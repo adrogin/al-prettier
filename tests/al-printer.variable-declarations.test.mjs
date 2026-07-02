@@ -527,3 +527,24 @@ codeunit 50000 MyCodeunit
             expect(formattedCode).to.equal(expected))
     });
 });
+
+describe('TextConst variable', () => {
+    it('TextConst variable with values in two languages', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  var GlobalTextConst: TextConst ENU = 'My text', DAN = 'Min tekst';
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  var
+    GlobalTextConst: TextConst ENU = 'My text', DAN = 'Min tekst';
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+});

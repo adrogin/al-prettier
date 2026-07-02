@@ -504,6 +504,8 @@ function print(path, options, print, args) {
             return printListDataType(path, options, print);
         case ALParser.RULE_optionDataType:
             return printOptionDataType(path, options, print);
+        case ALParser.RULE_textConstDataType:
+            return printTextConst(path, options, print);
 
         case ALParser.RULE_identifiersList:
             return printIdentifiersList(path, options, print);
@@ -546,6 +548,9 @@ function print(path, options, print, args) {
         case ALParser.RULE_additiveExpression:
         case ALParser.RULE_multiplicativeExpression:
             return printMultipartExpression(path, options, print, args);
+
+        case ALParser.RULE_exitStatement:
+            return printExitStatement(path, options, print, args);
 
         //#endregion Code statements
 
@@ -1761,8 +1766,30 @@ function printEnumValueDefinition(path, options, print) {
 }
 
 function printImplementationProperty(path, options, print) {
-    // Grammar: IMPLEMENTATION EQUAL identifierWithNamespace EQUAL identifierWithNamespace
-    return join(" ", path.map(print, 'children'));
+    // Grammar: identifier EQUAL identifierWithNamespace EQUAL identifierWithNamespace (COMMA identifierWithNamespace EQUAL identifierWithNamespace)*;
+    // return join(" ", path.map(print, 'children'));
+    const children = path.node.children;
+    const stmt = [];
+    stmt.push(path.call(print, 'children', 0), " ", path.call(print, 'children', 1));
+
+    const implementations = [];
+    for (let impl = 2; impl <= children.length - 3; impl += 4) {
+        implementations.push(
+            softline,
+            path.call(print, 'children', impl),     // Interface name
+            " ",
+            path.call(print, 'children', impl + 1), // Equal sign
+            " ",
+            path.call(print, 'children', impl + 2)  // Implementation name
+        );
+
+        if (impl < children.length - 4) {
+            implementations.push(path.call(print, 'children', impl + 3));  // Comma before the next implementation
+        }
+    }
+
+    stmt.push(group(indent(implementations)));
+    return stmt;
 }
 
 //#endregion Enum functions
@@ -2670,6 +2697,26 @@ function printCompoundBlock(path, options, print) {
     return compoundBlock;
 }
 
+function printExitStatement(path, options, print, args) {
+    // Grammar: EXIT (LPAREN expression RPAREN)?;
+    const children = path.node.children;
+    const stmt = [];
+    const expressionIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_expression);
+
+    stmt.push(path.call(print, 'children', 0));
+
+    if (children.length > 1) {
+        stmt.push(path.call(print, 'children', 1));
+
+        if (expressionIdx > -1) {
+            stmt.push(group(indent([softline, path.call(print, 'children', expressionIdx)])));
+        }
+        stmt.push(path.call(print, 'children', children.length - 1));
+    }
+
+    return stmt;
+}
+
 function printALObject(path, options, print, objectType) {
     const children = path.node.children;
     // Grammar is similar for most objects.
@@ -2787,6 +2834,30 @@ function printOptionDataType(path, options, print) {
     return optionValues.length > 0
         ? [typeName, " ", optionValues]
         : [typeName];
+}
+
+function printTextConst(path, options, print) {
+    // Grammar: TEXTCONST IDENTIFIER EQUAL STRING_LITERAL (COMMA IDENTIFIER EQUAL STRING_LITERAL)*;
+    const children = path.node.children;
+    const decl = [];
+
+
+    decl.push(path.call(print, 'children', 0), " ");
+
+    for (let i = 1; i <= children.length - 3; i += 4) {
+        decl.push(
+            path.call(print, 'children', i),
+            " ",
+            path.call(print, 'children', i + 1),
+            " ",
+            path.call(print, 'children', i + 2));
+
+        if (i < children.length - 4) {
+            decl.push(path.call(print, 'children', i + 3), " "); // Comma before the next language constant
+        }
+    }
+
+    return decl;
 }
 
 function printIdentifiersList(path, options, print) {

@@ -56,4 +56,102 @@ enum 55000 "Enum with implementation" implements ITestInterface
 
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
     });
+
+    it('Enum value implementing two interfaces', () => {
+        const code = `
+enum 55000 "Enum with implementation" implements ITestInterface, IAnotherTestInterface
+{
+    value(0; Value0) { Caption = 'Value 0'; 
+    Implementation = ITestInterface = InterfaceImplementationCodeunit,IAnotherTestInterface = SomeOtherCodeunit;
+    }
+}`;
+
+        const expected = `enum 55000 "Enum with implementation" implements ITestInterface, IAnotherTestInterface
+{
+  value(0; Value0)
+  {
+    Caption = 'Value 0';
+    Implementation =
+      ITestInterface = InterfaceImplementationCodeunit,
+      IAnotherTestInterface = SomeOtherCodeunit;
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+
+    it('Enum value implementing three interfaces', () => {
+        const code = `
+enum 55000 "Enum with implementation" implements ITestInterface1, ITestInterface2, ITestInterface3
+{
+    value(0; Value0) { Caption = 'Value 0'; 
+    Implementation = ITestInterface1 = InterfaceImplementation1,ITestInterface2 = InterfaceImplementation2,ITestInterface3 = InterfaceImplementation3;
+    }
+}`;
+
+        const expected = `enum 55000 "Enum with implementation" implements ITestInterface1, ITestInterface2, ITestInterface3
+{
+  value(0; Value0)
+  {
+    Caption = 'Value 0';
+    Implementation =
+      ITestInterface1 = InterfaceImplementation1,
+      ITestInterface2 = InterfaceImplementation2,
+      ITestInterface3 = InterfaceImplementation3;
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+
+    it('Enum with default implementation for multiple interfaces', () => {
+        const code = `
+enum 55000 "Enum with implementation" implements ITestInterface, IAnotherTestInterface
+{
+    DefaultImplementation = ITestInterface = InterfaceImplementationCodeunit,IAnotherTestInterface = SomeOtherCodeunit;
+    value(0; Value0) { Caption = 'Value 0'; 
+    }
+}`;
+
+        const expected = `enum 55000 "Enum with implementation" implements ITestInterface, IAnotherTestInterface
+{
+  DefaultImplementation =
+    ITestInterface = InterfaceImplementationCodeunit,
+    IAnotherTestInterface = SomeOtherCodeunit;
+
+  value(0; Value0)
+  {
+    Caption = 'Value 0';
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+
+    it('Enum with internal access property', () => {
+        const code = `
+enum 55000 "Just an Enum"
+{
+Access=Internal;
+    value(0; Value0) {
+    Caption = 'Value 0'; 
+    }
+}`;
+
+        const expected = `enum 55000 "Just an Enum"
+{
+  Access = Internal;
+
+  value(0; Value0)
+  {
+    Caption = 'Value 0';
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
 });

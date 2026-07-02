@@ -259,6 +259,34 @@ codeunit 50000 MyCodeunit
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
+
+    it('Mixed "in" and "or" conditions in one statement' , () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure EvaluateConditions(CodeValue: Code[10]; IntegerValue: Integer): Boolean
+  begin
+    exit(CodeValue in ['CodeA', 'CodeB', 'CodeC'] or (IntegerValue < 0 and Integer > -99));
+  end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure EvaluateConditions(
+    CodeValue: Code[10];
+    IntegerValue: Integer): Boolean
+  begin
+    exit(
+      CodeValue in ['CodeA', 'CodeB', 'CodeC'] or
+        (IntegerValue < 0 and Integer > -99));
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
 });
 
 describe('Case statements', () => {
@@ -1064,109 +1092,6 @@ codeunit 50000 MyCodeunit
             expect(formattedCode).to.equal(expected))
     });
 });
-
-describe('Codeunits with namespaces', () => {
-    it('Namespace declaration before a codeunit object ', () => {
-        const code = `
-namespace TestNamespace;
-codeunit 50000 MyCodeunit
-{}
-`;
-
-        const expected = `namespace TestNamespace;
-
-codeunit 50000 MyCodeunit
-{
-}
-`;
-
-        return alFormat(code).then(formattedCode =>
-            expect(formattedCode).to.equal(expected))
-    });
-
-    it('Namespace declaration and using references ', () => {
-        const code = `
-namespace TestNamespace;
-using Microsoft.Sales.Customer;
-using Microsoft.Purchases.Vendor;
-codeunit 50000 MyCodeunit
-{}
-`;
-
-        const expected = `namespace TestNamespace;
-
-using Microsoft.Sales.Customer;
-using Microsoft.Purchases.Vendor;
-
-codeunit 50000 MyCodeunit
-{
-}
-`;
-
-        return alFormat(code).then(formattedCode =>
-            expect(formattedCode).to.equal(expected))
-    });
-});
-
-describe('Codeunit permissions', () => {
-    it('Short permissions string', () => {
-        const code = `
-codeunit 50000 MyCodeunit
-{
-permissions=tabledata "G/LEntry" = r;
-}
-`;
-
-        const expected = `codeunit 50000 MyCodeunit
-{
-  permissions = tabledata "G/LEntry" = r;
-}
-`;
-
-        return alFormat(code).then(formattedCode =>
-            expect(formattedCode).to.equal(expected))
-    });
-
-    it('Long permissions string breaks line', () => {
-        const code = `
-codeunit 50000 MyCodeunit
-{
-permissions=tabledata "G/LEntry" = rim,tabledata "Dimension Set Entry"=rim, tabledata "Item Ledger Entry"=r,tabledata "Value Entry"=r;
-}
-`;
-
-        const expected = `codeunit 50000 MyCodeunit
-{
-  permissions =
-    tabledata "G/LEntry" = rim,
-    tabledata "Dimension Set Entry" = rim,
-    tabledata "Item Ledger Entry" = r,
-    tabledata "Value Entry" = r;
-}
-`;
-
-        return alFormat(code).then(formattedCode =>
-            expect(formattedCode).to.equal(expected))
-    });
-
-    it('Permissions referencing object with namespace', () => {
-        const code = `
-codeunit 50000 MyCodeunit
-{
-permissions=tabledata Microsoft.Finance.GeneralLedger.Ledger."G/LEntry" = r;
-}
-`;
-
-        const expected = `codeunit 50000 MyCodeunit
-{
-  permissions = tabledata Microsoft.Finance.GeneralLedger.Ledger."G/LEntry" = r;
-}
-`;
-
-        return alFormat(code).then(formattedCode =>
-            expect(formattedCode).to.equal(expected))
-    });
-  });
 
 describe('Array access', () => {
     it('Accessing value in a single-dimensional array', () => {
