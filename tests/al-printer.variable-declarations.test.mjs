@@ -333,6 +333,31 @@ var KeyRef: KeyRef;
 }
 `;
 
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Action procedure parameter and Action::OK reference', () => {
+        const code = `
+page 50001 MyPage
+{
+trigger OnQueryClosePage(CloseAction: action): Boolean
+begin
+    if CloseAction = action::OK then
+        CurrPage.DoPrecloseChecks();
+end;
+}
+`;
+
+        const expected = `page 50001 MyPage
+{
+  trigger OnQueryClosePage(CloseAction: Action): Boolean
+  begin
+    if CloseAction = Action::OK then
+      CurrPage.DoPrecloseChecks();
+  end;
+}
+`;
+
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
@@ -546,5 +571,149 @@ codeunit 50000 MyCodeunit
 
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
+    });
+});
+
+describe('AL object variables', () => {
+    it('Page variable type is printed with capitalized P', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  var PageVar: page "My Page";
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  var
+    PageVar: Page "My Page";
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Codeunit variable type is printed with capitalized C', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  var CodeunitVar: codeunit "My Codeunit";
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  var
+    CodeunitVar: Codeunit "My Codeunit";
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Record variable type is printed with capitalized R', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  var RecordVar: record "My Record";
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  var
+    RecordVar: Record "My Record";
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Enum variable type is printed with capitalized E', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  var EnumVar: enum "My Enum";
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  var
+    EnumVar: Enum "My Enum";
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Interface variable type is printed with capitalized I', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  var InterfaceVar: interface "My Interface";
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  var
+    InterfaceVar: Interface "My Interface";
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Variable and function with name "Field" not changed to lowercase', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  trigger OnRun()
+  var
+    RecRef: RecordRef;
+    Field: FieldRef;
+  begin
+    Field := RecRef.Field(1);
+  end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  trigger OnRun()
+  var
+    RecRef: RecordRef;
+    Field: FieldRef;
+  begin
+    Field := RecRef.Field(1);
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Table field declaration is changed to lowercase', () => {
+        const code = `
+table 50000 MyTable
+{
+  FIELDS
+  {
+    FIELD(1; "Entry No."; Integer) {}
+  }
+}
+`;
+
+        const expected = `table 50000 MyTable
+{
+  fields
+  {
+    field(1; "Entry No."; Integer) {}
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
 });
