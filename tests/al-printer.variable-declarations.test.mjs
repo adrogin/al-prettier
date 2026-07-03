@@ -333,6 +333,31 @@ var KeyRef: KeyRef;
 }
 `;
 
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Action procedure parameter and Action::OK reference', () => {
+        const code = `
+page 50001 MyPage
+{
+trigger OnQueryClosePage(CloseAction: action): Boolean
+begin
+    if CloseAction = action::OK then
+        CurrPage.DoPrecloseChecks();
+end;
+}
+`;
+
+        const expected = `page 50001 MyPage
+{
+  trigger OnQueryClosePage(CloseAction: Action): Boolean
+  begin
+    if CloseAction = Action::OK then
+      CurrPage.DoPrecloseChecks();
+  end;
+}
+`;
+
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });

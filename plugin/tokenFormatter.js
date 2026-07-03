@@ -36,6 +36,9 @@ function actionFormatter(token) {
     if (token.parentCtx.ruleIndex === ALParser.RULE_actionDefinition) {
         return token.symbol.text.toLowerCase();
     }
+    if (token.parentCtx.ruleIndex === ALParser.RULE_simpleDataType) {
+        return "Action";
+    }
 
     return token.symbol.text;
 }
