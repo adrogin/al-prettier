@@ -1,6 +1,7 @@
 import * as prettier from 'prettier';
 import ALParser from '../parser/ALParser.js';
 import { isParagraphStatement, isCompoundStatement, shouldAddBlankLineAfter } from "./printerHelpers.js";
+import { TokenFormatter } from './tokenFormatter.js';
 
 const { hardline, join, indent, group, line, softline } = prettier.doc.builders;
 
@@ -261,6 +262,9 @@ function print(path, options, print, args) {
         case ALParser.RULE_tableViewExpression:
             return pintTableViewExpression(path, options, print);
 
+        case ALParser.RULE_sourceTableViewProperty:
+            return printSourceTableViewExpression(path, options, print);
+
         //#endregion Page object
 
         //#region Codeunit object
@@ -396,6 +400,9 @@ function print(path, options, print, args) {
 
         case ALParser.RULE_labelDefinition:
             return printLabelDefinition(path, options, print);
+
+        case ALParser.RULE_dataItemTableViewProperty:
+            return printDataItemTableViewProperty(path, options, print);
 
         //#endregion Report object
 
@@ -1506,6 +1513,10 @@ function pintTableViewExpression(path, options, print) {
     return group(indent(join(line, path.map(print, 'children'))));
 }
 
+function printSourceTableViewExpression(path, options, print) {
+    return printObjectProperty(path, options, print);
+}
+
 //#endregion Page functions
 
 //#region  Page extension functions
@@ -1767,7 +1778,6 @@ function printEnumValueDefinition(path, options, print) {
 
 function printImplementationProperty(path, options, print) {
     // Grammar: identifier EQUAL identifierWithNamespace EQUAL identifierWithNamespace (COMMA identifierWithNamespace EQUAL identifierWithNamespace)*;
-    // return join(" ", path.map(print, 'children'));
     const children = path.node.children;
     const stmt = [];
     stmt.push(path.call(print, 'children', 0), " ", path.call(print, 'children', 1));
@@ -1775,7 +1785,7 @@ function printImplementationProperty(path, options, print) {
     const implementations = [];
     for (let impl = 2; impl <= children.length - 3; impl += 4) {
         implementations.push(
-            softline,
+            line,
             path.call(print, 'children', impl),     // Interface name
             " ",
             path.call(print, 'children', impl + 1), // Equal sign
@@ -2118,6 +2128,10 @@ function printLabelDefinition(path, options, print) {
 
     parts.push(path.call(print, 'children', children.length - 1)); // semicolon
     return group(indent(parts));
+}
+
+function printDataItemTableViewProperty(path, options, print) {
+    return printObjectProperty(path, options, print);
 }
 
 //#endregion Report functions
@@ -2914,68 +2928,7 @@ function printAccessByPermissionPropertyValue(path, options, print) {
 }
 
 function printToken(token) {
-    const text = token.symbol.text;
-    return isLowerCaseToken(token) ? text.toLowerCase() : text;
-}
-
-function isLowerCaseToken(token) {
-    if (!token.symbol) return false;
-
-    const lowerCaseTokens = new Set([
-        ALParser.ADDAFTER,
-        ALParser.ADDBEFORE,
-        ALParser.ADDFIRST,
-        ALParser.ADDLAST,
-        ALParser.ACTION,
-        ALParser.ACTIONREF,
-        ALParser.AND,
-        ALParser.ARRAY,
-        ALParser.BEGIN,
-        ALParser.BREAK,
-        ALParser.CASE,
-        ALParser.CONST,
-        ALParser.CONTINUE,
-        ALParser.DIV,
-        ALParser.DO,
-        ALParser.DOWNTO,
-        ALParser.ELSE,
-        ALParser.END,
-        ALParser.EXIT,
-        ALParser.EXTENDS,
-        ALParser.FIELD,
-        ALParser.FIELDGROUP,
-        ALParser.FIELDGROUPS,
-        ALParser.FILTER,
-        ALParser.FOR,
-        ALParser.FOREACH,
-        ALParser.IF,
-        ALParser.IN,
-        ALParser.LAYOUT,
-        ALParser.MOD,
-        ALParser.MOVEAFTER,
-        ALParser.MOVEBEFORE,
-        ALParser.MOVEFIRST,
-        ALParser.MOVELAST,
-        ALParser.NAMESPACE,
-        ALParser.NOT,
-        ALParser.OF,
-        ALParser.OR,
-        ALParser.PROCEDURE,
-        ALParser.REPEAT,
-        ALParser.SORTING,
-        ALParser.THEN,
-        ALParser.THIS,
-        ALParser.TO,
-        ALParser.TRIGGER,
-        ALParser.UNTIL,
-        ALParser.USING,
-        ALParser.VAR,
-        ALParser.WHILE,
-        ALParser.WITH,
-        ALParser.XOR,
-    ]);
-
-    return lowerCaseTokens.has(token.symbol.type);
+    return TokenFormatter.format(token);
 }
 
 //#endregion Code statements
