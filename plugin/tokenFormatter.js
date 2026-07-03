@@ -263,6 +263,16 @@ function fieldFormatter(token) {
     return token.symbol.text;
 }
 
+function fieldsFormatter(token) {
+    if (token.parentCtx.ruleIndex === ALParser.RULE_tableFieldsList ||
+        token.parentCtx.ruleIndex === ALParser.RULE_tableExtFieldsList
+    ) {
+        return token.symbol.text.toLowerCase();
+    }
+
+    return token.symbol.text;
+}
+
 function fieldGroupFormatter(token) {
     if (token.parentCtx.ruleIndex === ALParser.RULE_fieldGroupItem) {
         return token.symbol.text.toLowerCase();
@@ -547,6 +557,7 @@ export class TokenFormatter {
         [ALParser.FIELD, fieldFormatter],
         [ALParser.FIELDGROUP, fieldGroupFormatter],
         [ALParser.FIELDGROUPS, fieldGroupsFormatter],
+        [ALParser.FIELDS, fieldsFormatter],
         [ALParser.FILTER, filterFormatter],
         [ALParser.FOR, forFormatter],
         [ALParser.FOREACH, foreachFormatter],

@@ -664,4 +664,56 @@ codeunit 50000 MyCodeunit
 
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
+
+    it('Variable and function with name "Field" not changed to lowercase', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  trigger OnRun()
+  var
+    RecRef: RecordRef;
+    Field: FieldRef;
+  begin
+    Field := RecRef.Field(1);
+  end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  trigger OnRun()
+  var
+    RecRef: RecordRef;
+    Field: FieldRef;
+  begin
+    Field := RecRef.Field(1);
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Table field declaration is changed to lowercase', () => {
+        const code = `
+table 50000 MyTable
+{
+  FIELDS
+  {
+    FIELD(1; "Entry No."; Integer) {}
+  }
+}
+`;
+
+        const expected = `table 50000 MyTable
+{
+  fields
+  {
+    field(1; "Entry No."; Integer) {}
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
 });
