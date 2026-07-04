@@ -503,6 +503,7 @@ elements {
           expect(formattedCode).to.equal(expected))
   });
 
+  describe('Empty labels list', () => {
     it('Empty labels list collapsed with collapse option enabled', () => {
         const code = `
 report 50000 MyReport
@@ -539,9 +540,78 @@ labels
 }
 `;
 
+        return alFormat(code, {
+            collapseEmptyBraces: false
+        }).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+  });
+
+  describe('Empty page part', () => {
+    it('Empty page part collapsed with collapse option enabled', () => {
+        const code = `
+page 50001 "Page with factbox part"
+{
+  layout
+  {
+    area(factboxes)
+    {
+      part(AdditionalInfo; InfoSource)
+      {}
+    }
+  }
+}`;
+
+        const expected = `page 50001 "Page with factbox part"
+{
+  layout
+  {
+    area(factboxes)
+    {
+      part(AdditionalInfo; InfoSource) {}
+    }
+  }
+}
+`;
+
       return alFormat(code, {
-          collapseEmptyBraces: false
+          collapseEmptyBraces: true
       }).then(formattedCode =>
           expect(formattedCode).to.equal(expected))
+  });
+
+    it('Empty page part expanded with collapse option disabled', () => {
+        const code = `
+page 50001 "Page with factbox part"
+{
+  layout
+  {
+    area(factboxes)
+    {
+      part(AdditionalInfo; InfoSource)
+      {}
+    }
+  }
+}`;
+
+        const expected = `page 50001 "Page with factbox part"
+{
+  layout
+  {
+    area(factboxes)
+    {
+      part(AdditionalInfo; InfoSource)
+      {
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code, {
+            collapseEmptyBraces: false
+        }).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
   });
 });

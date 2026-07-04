@@ -1112,14 +1112,37 @@ function printGroupPropertyItem(path, options, print) {
 }
 
 function printPartDefinition(path, options, print) {
-    // Grammar: PART LPAREN IDENTIFIER SEMICOLON IDENTIFIER RPAREN LBRACE partPropertiesList RBRACE
-    const partName = path.call(print, 'children', 2);
-    const pageName = path.call(print, 'children', 4);
-    const props = path.call(print, 'children', 7);
-    const body = props
-        ? [hardline, "{", indent([hardline, props]), hardline, "}"]
-        : [hardline, "{", hardline, "}"];
-    return ["part(", partName, "; ", pageName, ")", ...body];
+    // Grammar: (PART | SYSTEMPART) LPAREN identifier SEMICOLON identifier RPAREN LBRACE partPropertiesList? RBRACE
+    const lBrace = path.call(print, 'children', 6);
+    let props;
+    if (path.node.children[7].ruleIndex === ALParser.RULE_partPropertiesList) {
+        props = path.call(print, 'children', 7);
+    }
+    const rBrace = path.call(print, 'children', path.node.children.length - 1);
+
+    const part = [
+        path.call(print, 'children', 0),  // Part type (part or systempart)
+        path.call(print, 'children', 1),  // Parenthesis
+        path.call(print, 'children', 2),  // Part identifier
+        path.call(print, 'children', 3),  // Semicolon
+        " ",
+        path.call(print, 'children', 4),  // Source
+        path.call(print, 'children', 5)   // Parenthesis
+    ];
+
+    part.push(props || !options.collapseEmptyBraces ? hardline : " ");
+
+    part.push(lBrace);
+
+    if (props) {
+        part.push(indent([hardline, props]), hardline);
+    }
+    else if (!options.collapseEmptyBraces) {
+        part.push(hardline);
+    }
+    part.push(rBrace);
+
+    return part;
 }
 
 function printPartPropertiesList(path, options, print) {

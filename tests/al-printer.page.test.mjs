@@ -487,4 +487,62 @@ page 50001 "Page With Separator"
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
-  });
+});
+
+describe('Page with subpage parts', () => {
+    it('Simple part element', () => {
+        const code = `
+page 50001 "Page with factbox part"
+{
+    layout
+    {
+        area(factboxes)
+        {
+        part(AdditionalInfo; InfoSource) {}
+        }
+    }
+}`;
+
+        const expected = `page 50001 "Page with factbox part"
+{
+  layout
+  {
+    area(factboxes)
+    {
+      part(AdditionalInfo; InfoSource) {}
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Page with systempart', () => {
+        const code = `
+page 50001 "Page with Systempart"
+{
+    layout
+    {
+        area(factboxes)
+        {
+        systempart(Links; Links) {}
+        }
+    }
+}`;
+
+        const expected = `page 50001 "Page with Systempart"
+{
+  layout
+  {
+    area(factboxes)
+    {
+      systempart(Links; Links) {}
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+});
