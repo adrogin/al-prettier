@@ -559,6 +559,9 @@ function print(path, options, print, args) {
         case ALParser.RULE_exitStatement:
             return printExitStatement(path, options, print, args);
 
+        case ALParser.RULE_ternaryExpression:
+            return printTernaryExpression(path, options, print);
+
         //#endregion Code statements
 
         default:
@@ -2729,6 +2732,24 @@ function printExitStatement(path, options, print, args) {
     }
 
     return stmt;
+}
+
+function printTernaryExpression(path, options, print) {
+    // Grammar: (logicalOrExpression | logicalInExpression) QUESTION_MARK (logicalOrExpression | logicalInExpression) COLON (logicalOrExpression | logicalInExpression);
+    return [
+        path.call(print, 'children', 0),  // Evaluated expresion
+        group(
+            indent([
+                line,
+                path.call(print, 'children', 1), // Question mark
+                " ",
+                path.call(print, 'children', 2),
+                line,
+                path.call(print, 'children', 3), // Colon
+                " ",
+                path.call(print, 'children', 4)
+        ]))
+    ];
 }
 
 function printALObject(path, options, print, objectType) {

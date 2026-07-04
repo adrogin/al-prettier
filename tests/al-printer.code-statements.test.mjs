@@ -1142,3 +1142,54 @@ end;
             expect(formattedCode).to.equal(expected))
     });
 });
+
+describe('Ternary operator', () => {
+    it('Simple ternary operator', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure Ternary()
+  begin
+    A := B = C ? D : E;
+  end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure Ternary()
+  begin
+    A := B = C ? D : E;
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+
+    it('Long ternary with line wrapping', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure Ternary()
+  begin
+    VeryLongVariableName := AnotherVeryLongVariable = SomeValueProbablyZero ? AssignSomethingHere : OtherwiseAssignSomethingElse;
+  end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure Ternary()
+  begin
+    VeryLongVariableName :=
+      AnotherVeryLongVariable = SomeValueProbablyZero
+        ? AssignSomethingHere
+        : OtherwiseAssignSomethingElse;
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+});
