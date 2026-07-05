@@ -235,8 +235,9 @@ codeunit 50000 MyCodeunit
             expect(formattedCode).to.equal(expected))
     });
 
-    it('Range "if" condition', () => {
-        const code = `
+    describe('"in" condition', () => {
+        it('Range "if" condition', () => {
+            const code = `
 codeunit 50000 MyCodeunit
 {
   trigger OnRun()
@@ -246,7 +247,7 @@ codeunit 50000 MyCodeunit
 }
 `;
 
-        const expected = `codeunit 50000 MyCodeunit
+            const expected = `codeunit 50000 MyCodeunit
 {
   trigger OnRun()
   begin
@@ -256,12 +257,12 @@ codeunit 50000 MyCodeunit
 }
 `;
 
-        return alFormat(code).then(formattedCode =>
-            expect(formattedCode).to.equal(expected))
-    });
+            return alFormat(code).then(formattedCode =>
+                expect(formattedCode).to.equal(expected))
+        });
 
-    it('Mixed "in" and "or" conditions in one statement' , () => {
-        const code = `
+        it('Mixed "in" and "or" conditions in one statement' , () => {
+            const code = `
 codeunit 50000 MyCodeunit
 {
   procedure EvaluateConditions(CodeValue: Code[10]; IntegerValue: Integer): Boolean
@@ -271,7 +272,7 @@ codeunit 50000 MyCodeunit
 }
 `;
 
-        const expected = `codeunit 50000 MyCodeunit
+            const expected = `codeunit 50000 MyCodeunit
 {
   procedure EvaluateConditions(
     CodeValue: Code[10];
@@ -284,8 +285,38 @@ codeunit 50000 MyCodeunit
 }
 `;
 
-        return alFormat(code).then(formattedCode =>
-            expect(formattedCode).to.equal(expected))
+            return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+        });
+
+        it('"IN" operator with long list of conditions wraps line' , () => {
+            const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure EvaluateConditions(CodeValue: Code[10])
+  begin
+    if CodeValue in ['LongCodeValue1', 'LongCodeValue2', 'LongCodeValue3', 'LongCodeValue4', 'LongCodeValue5'] then;
+  end;
+}
+`;
+
+            const expected = `codeunit 50000 MyCodeunit
+{
+  procedure EvaluateConditions(CodeValue: Code[10])
+  begin
+    if CodeValue in [
+      'LongCodeValue1',
+      'LongCodeValue2',
+      'LongCodeValue3',
+      'LongCodeValue4',
+      'LongCodeValue5']
+    then;
+  end;
+}
+`;
+
+            return alFormat(code).then(formattedCode =>
+                expect(formattedCode).to.equal(expected))
+        });
     });
 });
 

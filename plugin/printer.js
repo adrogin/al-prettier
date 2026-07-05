@@ -2703,17 +2703,23 @@ function printLogicalInExpression(path, options, print) {
     components.push(path.call(print, 'children', 0));  // Left expression
     components.push([" ", path.call(print, 'children', 1), " "]);  // "in" keyword
     components.push(path.call(print, 'children', 2));  // Left bracket
-    components.push(path.call(print, 'children', 3));  // First condition - always present
+
+    const conditions = [];
+    conditions.push(path.call(print, 'children', 3));  // First condition - always present
 
     for (let i = 4; i < children.length - 1; i += 2) {
-        components.push(path.call(print, 'children', i));  // Operator - comma or range
+        conditions.push(path.call(print, 'children', i));  // Operator - comma or range
         if (children[i].symbol.type === ALParser.COMMA) {
-            components.push(" ");
+            conditions.push(line);
         }
-        components.push(path.call(print, 'children', i + 1));  // Condition following the operator
+        conditions.push(path.call(print, 'children', i + 1));  // Condition following the operator
     }
 
-    components.push(path.call(print, 'children', children.length - 1));  // Right bracket
+    components.push(
+        group(indent([
+            softline,
+            conditions,
+            path.call(print, 'children', children.length - 1)])));  // Right bracket
     return components;
 }
 
