@@ -2,7 +2,7 @@
     "name": "al-prettier-vscode",
     "displayName": "AL Prettier",
     "description": "Prettier formatter for AL language in VS Code",
-    "version": "0.3.2",
+    "version": "0.3.3",
     "publisher": "alexander-drogin",
     "author": {
         "name": "Alexander Drogin"
@@ -33,6 +33,16 @@
     ],
     "main": "./vscode_ext/dist/extension.js",
     "contributes": {
+        "commands": [
+            {
+                "command": "al-prettier.formatFilesInWorkspace",
+                "title": "AL-Prettier: Format all files in workspace"
+            },
+            {
+                "command": "al-prettier.formatFilesInFolder",
+                "title": "AL-Prettier: Format all files in project folder"
+            }
+        ],
         "configuration": {
             "title": "AL Prettier",
             "properties": {
