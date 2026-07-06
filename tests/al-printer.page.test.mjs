@@ -545,4 +545,46 @@ page 50001 "Page with Systempart"
 
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
+
+    it('Part element insode a repeater', () => {
+        const code = `
+page 50001 MyPage
+{
+    layout
+    {
+        area(Content)
+        {
+            repeater(General)
+            {
+                field(customerNumber; Rec."No.") { }
+                part(salesPriceItems; "Customer List")
+                {
+                    SubPageLink = "No." = field("No.");
+                }
+            }
+        }
+    }
+}`;
+
+        const expected = `page 50001 MyPage
+{
+  layout
+  {
+    area(Content)
+    {
+      repeater(General)
+      {
+        field(customerNumber; Rec."No.") {}
+        part(salesPriceItems; "Customer List")
+        {
+          SubPageLink = "No." = field("No.");
+        }
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
 });
