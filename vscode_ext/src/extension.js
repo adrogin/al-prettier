@@ -151,7 +151,7 @@ function registerCommands(context, prettier) {
     context.subscriptions.push(formatInFolderCommand, formatInWorkspaceCommand);
 }
 
-function registerFormatters(context) {
+function registerFormatters(context, prettier) {
     // Register the formatter for AL language
     const alFormatter = vscode.languages.registerDocumentFormattingEditProvider('al', {
         async provideDocumentFormattingEdits(document, options, token) {
@@ -175,7 +175,7 @@ export async function activate(context) {
         const prettier = await import('prettier');
         alPrettierPlugin = await import('../../plugin/plugin.js');
 
-        registerFormatters(context);
+        registerFormatters(context, prettier);
         registerCommands(context, prettier);
 
         console.log('AL Prettier extension activated');

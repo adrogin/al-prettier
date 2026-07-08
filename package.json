@@ -2,7 +2,7 @@
     "name": "al-prettier-vscode",
     "displayName": "AL Prettier",
     "description": "Prettier formatter for AL language in VS Code",
-    "version": "0.3.3",
+    "version": "0.3.4",
     "publisher": "alexander-drogin",
     "author": {
         "name": "Alexander Drogin"
@@ -95,7 +95,8 @@
         "vscode:prepublish": "npm run build:prod",
         "package": "vsce package --no-dependencies",
         "package:prod": "npm run build:prod && vsce package --no-dependencies",
-        "package:dev": "npm run build && vsce package --no-dependencies --allow-star-activation"
+        "package:dev": "npm run build && vsce package --no-dependencies --allow-star-activation",
+        "package:pre-release": "npm run build:prod && vsce package --no-dependencies --pre-release"
     },
     "dependencies": {
         "antlr4": "^4.13.2",
