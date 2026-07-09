@@ -50,6 +50,7 @@ function print(path, options, print, args) {
         case ALParser.RULE_queryColumnPropertiesList:
         case ALParser.RULE_reportPropertiesList:
         case ALParser.RULE_reportDataItemPropertiesList:
+        case ALParser.RULE_xmlPortPropertiesList:
             return printObjectPropertiesList(path, options, print);
 
         case ALParser.RULE_tablePropertyItem:
@@ -61,6 +62,7 @@ function print(path, options, print, args) {
         case ALParser.RULE_enumValuePropertyItem:
         case ALParser.RULE_queryPropertyItem:
         case ALParser.RULE_queryColumnPropertyItem:
+        case ALParser.RULE_xmlPortPropertyItem:
             return printObjectPropertyItem(path, options, print);
 
         case ALParser.RULE_tableProperty:
@@ -79,6 +81,7 @@ function print(path, options, print, args) {
         case ALParser.RULE_queryColumnProperty:
         case ALParser.RULE_reportProperty:
         case ALParser.RULE_reportDataItemProperty:
+        case ALParser.RULE_xmlPortProperty:
             return printObjectProperty(path, options, print);
 
         case ALParser.RULE_objectReference:
@@ -406,6 +409,25 @@ function print(path, options, print, args) {
 
         //#endregion Report object
 
+        //#region XMLPort object
+
+        case ALParser.RULE_xmlportObject:
+            return printXmlPortObject(path, options, print);
+
+        case ALParser.RULE_xmlPortSchema:
+            return printXmlPortSchema(path, options, print);
+
+        case ALParser.RULE_xmlPortTextElement:
+            return printXmlPortTextElement(path, options, print);
+
+        case ALParser.RULE_xmlPortTableElement:
+            return printXmlPortTableElement(path, options, print);
+
+        case ALParser.RULE_xmlPortFieldElement:
+            return printXmlPortFieldElement(path, options, print);
+
+        //#endregion XMLPort object
+
         //#region Code statements
 
         case ALParser.RULE_namespaceDeclaration:
@@ -710,7 +732,11 @@ function printCompilationUnit(path, options, print) {
     const namespace = namespaceDescIdx > -1 ? path.call(print, 'children', namespaceDescIdx) : [];
     const usingRefList = usingRefListIdx > -1 ? path.call(print, 'children', usingRefListIdx) : [];
 
-    const objectDef = path.call(print, 'children', objectDefinitionIdx);
+    const objectDefs = [];
+
+    for (let i = objectDefinitionIdx; i < children.length - 1; i++) {
+        objectDefs.push(path.call(print, 'children', i));
+    }
 
     const result = [];
     if (namespace.length > 0) {
@@ -720,8 +746,8 @@ function printCompilationUnit(path, options, print) {
         result.push(...usingRefList, hardline, hardline);
     }
 
-    if (objectDef.length > 0) {
-        result.push(...objectDef, hardline);
+    if (objectDefs.length > 0) {
+        result.push(join([hardline, hardline], objectDefs), hardline);
     }
 
     return result;
@@ -2162,6 +2188,114 @@ function printDataItemTableViewProperty(path, options, print) {
 
 //#endregion Report functions
 
+//#region XMLPort functions
+
+function printXmlPortObject(path, options, print) {
+    return printALObject(path, options, print);
+}
+
+function printXmlPortSchema(path, options, print) {
+    // Grammar: SCHEMA LBRACE (xmlPortTextElement | xmlPortTableElement)? RBRACE;
+    const elements = [];
+    elements.push(
+        path.call(print, 'children', 0),
+        hardline,
+        path.call(print, 'children', 1));
+
+    if (path.node.children[2].ruleIndex !== ALParser.RBRACE) {
+        elements.push(indent([hardline, path.call(print, 'children', 2)]));
+    }
+
+    elements.push(hardline, path.call(print, 'children', path.node.children.length - 1));
+    return elements;
+}
+
+function printXmlPortTextElement(path, options, print) {
+    // Grammar: TEXTELEMENT LPAREN identifier RPAREN LBRACE xmlPortPropertiesList? (xmlPortTableElement | xmlPortFieldElement | xmlPortTextElement | xmlPortTextAttribute)* triggersList? RBRACE;
+
+    return [
+        path.call(print, 'children', 0),
+        path.call(print, 'children', 1),
+        path.call(print, 'children', 2),
+        path.call(print, 'children', 3),
+        printXmlPortElementContent(path, options, print)
+    ];
+}
+
+function printXmlPortTableElement(path, options, print) {
+    // Grammar: TABLEELEMENT LPAREN identifier SEMICOLON identifier RPAREN LBRACE xmlPortPropertiesList? (xmlPortFieldElement | xmlPortFieldAttribute | xmlPortTextElement)* triggersList? RBRACE;
+    return printXmlPortElementWithDataSource(path, options, print);    
+}
+
+function printXmlPortFieldElement(path, options, print) {
+    // Grammar: FIELDELEMENT LPAREN identifier SEMICOLON expression RPAREN LBRACE xmlPortPropertiesList? (xmlPortTableElement | xmlPortFieldElement | xmlPortFieldAttribute | xmlPortTextElement | xmlPortTextAttribute)* triggersList? RBRACE;
+    return printXmlPortElementWithDataSource(path, options, print);
+}
+
+function printXmlPortElementWithDataSource(path, options, print) {
+    return [
+        path.call(print, 'children', 0),
+        path.call(print, 'children', 1),
+        path.call(print, 'children', 2),
+        path.call(print, 'children', 3),
+        " ",
+        path.call(print, 'children', 4),
+        path.call(print, 'children', 5),
+        printXmlPortElementContent(path, options, print)
+    ];
+}
+
+function printXmlPortElementContent(path, options, print) {
+    const lBraceIdx = path.node.children.findIndex(c => c.symbol?.type === ALParser.LBRACE);
+    const content = [];
+
+    content.push(lBraceIdx < path.node.children.length - 2 || !options.collapseEmptyBraces ? hardline : " ");
+    content.push(path.call(print, 'children', lBraceIdx));
+
+    const elements = [];
+    let schemaElementsStart = lBraceIdx + 1;
+    let schemaElementsEnd = path.node.children.length - 2;
+    if (path.node.children[schemaElementsEnd].ruleIndex === ALParser.RULE_triggersList) {
+        schemaElementsEnd--;
+    }
+
+    if (path.node.children[schemaElementsStart].ruleIndex === ALParser.RULE_xmlPortPropertiesList) {
+        const props = path.call(print, 'children', schemaElementsStart++);
+        if (schemaElementsStart < path.node.children.length - 1) {
+            props.push(hardline);
+        }
+        elements.push(props);
+    }
+
+    for (let i = schemaElementsStart; i <= schemaElementsEnd; i++) {
+        elements.push(path.call(print, 'children', i));
+    }
+
+    if (path.node.children[schemaElementsEnd + 1]?.ruleIndex === ALParser.RULE_triggersList) {
+        const triggers = [];
+        if (schemaElementsEnd > lBraceIdx + 1) {
+            triggers.push(hardline);
+        }
+        triggers.push(path.call(print, 'children', schemaElementsEnd + 1));
+        elements.push(triggers);
+    }
+
+    if (lBraceIdx < path.node.children.length - 2) {
+        content.push(
+            indent([hardline, join(hardline, elements)]),
+            hardline
+        );
+    }
+    else if (!options.collapseEmptyBraces) {
+        content.push(hardline);
+    }
+
+    content.push(path.call(print, 'children', path.node.children.length - 1));
+    return content;
+}
+
+//#endregion XMLPort functions
+
 //#region Code statements
 
 function printNamespaceDeclaration(path, options, print) {
@@ -2541,10 +2675,12 @@ function printForEachStatement(path, options, print) {
 function printRepeatStatement(path, options, print) {
     // Grammar: REPEAT statementList UNTIL expression;
 
+    const repeatKeyword = path.call(print, 'children', 0);
     const statementList = path.call(print, 'children', 1);
+    const untilKeyword = path.call(print, 'children', 2);
     const condition = path.call(print, 'children', 3);
 
-    return ["repeat", indent([hardline, statementList]), [hardline, "until ", condition]];
+    return [repeatKeyword, indent([hardline, statementList]), [hardline, untilKeyword, " ", condition]];
 }
 
 function printWhileLoopStatement(path, options, print) {
