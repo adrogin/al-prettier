@@ -1224,3 +1224,97 @@ codeunit 50000 MyCodeunit
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
     });
 });
+
+describe('Shorthand operators', () => {
+    it('Plus assign operator', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure Shorthand()
+  begin
+    A += B;
+  end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure Shorthand()
+  begin
+    A += B;
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Minus assign operator', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure Shorthand()
+  begin
+    A -= B;
+  end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure Shorthand()
+  begin
+    A -= B;
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Multiply assign operator', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure Shorthand()
+  begin
+    A *= B;
+  end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure Shorthand()
+  begin
+    A *= B;
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Divide assign operator', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure Shorthand()
+  begin
+    A /= B;
+  end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure Shorthand()
+  begin
+    A /= B;
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+});
