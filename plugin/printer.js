@@ -51,6 +51,9 @@ function print(path, options, print, args) {
         case ALParser.RULE_reportPropertiesList:
         case ALParser.RULE_reportDataItemPropertiesList:
         case ALParser.RULE_xmlPortPropertiesList:
+        case ALParser.RULE_permissionSetPropertiesList:
+        case ALParser.RULE_entitlementPropertiesList:
+        case ALParser.RULE_controlAddInPropertiesList:
             return printObjectPropertiesList(path, options, print);
 
         case ALParser.RULE_tablePropertyItem:
@@ -427,6 +430,22 @@ function print(path, options, print, args) {
             return printXmlPortFieldElement(path, options, print);
 
         //#endregion XMLPort object
+
+        //#region Other objects
+
+        case ALParser.RULE_permissionSetObject:
+        case ALParser.RULE_permissionSetExtensionObject:
+        case ALParser.RULE_entitlementObject:
+        case ALParser.RULE_controlAddInObject:
+            return printALObject(path, options, print);
+
+        case ALParser.RULE_controlAddInApiDeclarations:
+            return printControlAddInApiDeclarations(path, options, print);
+
+        case ALParser.RULE_eventDeclaration:
+            return printControlAddInEventDeclaration(path, options, print);
+
+        //#endregion
 
         //#region Code statements
 
@@ -2295,6 +2314,28 @@ function printXmlPortElementContent(path, options, print) {
 }
 
 //#endregion XMLPort functions
+
+//#region Other objects
+
+function printControlAddInApiDeclarations(path, options, print) {
+    // Grammar: (procedureDeclaration | eventDeclaration)*;
+    return join(hardline, path.map(print, 'children'));
+}
+
+function printControlAddInEventDeclaration(path, options, print) {
+    // Grammar: EVENT identifier LPAREN parameterList? RPAREN SEMICOLON;
+    return [
+        path.call(print, 'children', 0),
+        " ",
+        path.call(print, 'children', 1),
+        path.call(print, 'children', 2),
+        path.call(print, 'children', 3),
+        path.call(print, 'children', 4),
+        path.call(print, 'children', 5)
+    ];
+}
+
+//#endregion
 
 //#region Code statements
 

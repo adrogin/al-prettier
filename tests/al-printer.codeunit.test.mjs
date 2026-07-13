@@ -103,6 +103,24 @@ permissions=tabledata Microsoft.Finance.GeneralLedger.Ledger."G/LEntry" = r;
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
+
+    it('Permissions property with ID operations', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+permissions=tabledata MyTable = ID;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  permissions = tabledata MyTable = ID;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
 });
 
 describe('Access property in codeunits', () => {

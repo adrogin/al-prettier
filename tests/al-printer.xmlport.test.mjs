@@ -209,4 +209,74 @@ xmlport 50001 MyTestXmlPort
 
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
+
+    it('XmlPort with request page', () => {
+        const code = `
+xmlport 50001 MyTestXmlPort
+{
+    schema{
+        textelement(RootNode){
+            tableelement(TableElement; "TableElement Source")
+            {
+                fieldelement(DocumentType; TableElement."Document Type")
+                {}
+            }}}
+    requestpage {
+    layout{
+            area(content)
+            {
+                group(Control2)
+                {
+                    ShowCaption = false;
+                    field("SalesInvoiceHeader.""No."""; SalesInvoiceHeader."No.")
+                    {
+                        ApplicationArea = Basic, Suite;
+                        Caption = 'Sales Invoice No.';
+                        TableRelation = "Sales Invoice Header";
+                    }
+                }
+            }
+    }
+    }
+}
+`;
+
+        const expected = `xmlport 50001 MyTestXmlPort
+{
+  schema
+  {
+    textelement(RootNode)
+    {
+      tableelement(TableElement; "TableElement Source")
+      {
+        fieldelement(DocumentType; TableElement."Document Type") {}
+      }
+    }
+  }
+
+  requestpage
+  {
+    layout
+    {
+      area(content)
+      {
+        group(Control2)
+        {
+          ShowCaption = false;
+
+          field("SalesInvoiceHeader.""No."""; SalesInvoiceHeader."No.")
+          {
+            ApplicationArea = Basic, Suite;
+            Caption = 'Sales Invoice No.';
+            TableRelation = "Sales Invoice Header";
+          }
+        }
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
 });
