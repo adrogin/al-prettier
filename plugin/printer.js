@@ -54,6 +54,7 @@ function print(path, options, print, args) {
         case ALParser.RULE_permissionSetPropertiesList:
         case ALParser.RULE_entitlementPropertiesList:
         case ALParser.RULE_controlAddInPropertiesList:
+        case ALParser.RULE_profilePropertiesList:
             return printObjectPropertiesList(path, options, print);
 
         case ALParser.RULE_tablePropertyItem:
@@ -433,10 +434,13 @@ function print(path, options, print, args) {
 
         //#region Other objects
 
+        case ALParser.RULE_controlAddInObject:
+        case ALParser.RULE_pageCustomizationObject:
         case ALParser.RULE_permissionSetObject:
         case ALParser.RULE_permissionSetExtensionObject:
         case ALParser.RULE_entitlementObject:
-        case ALParser.RULE_controlAddInObject:
+        case ALParser.RULE_profileObject:
+        case ALParser.RULE_profileExtensionObject:
             return printALObject(path, options, print);
 
         case ALParser.RULE_controlAddInApiDeclarations:
