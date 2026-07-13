@@ -149,6 +149,33 @@ describe('Basic table structure', () => {
             ));
     });
 
+    it('Table relation with multiple filters', () => {
+        const code = `table 50000 MyTable
+        { fields{
+         field(2; "Allowance Posting"; Code[20]){
+            TableRelation = IF ("Allowance Posting Type" = CONST(Item)) Item
+            ELSE
+            IF ("Allowance Posting Type" = CONST("Income Account")) "Income/Expense Account"."No.";
+    }}}`;
+
+        const expected = `table 50000 MyTable
+{
+  fields
+  {
+    field(2; "Allowance Posting"; Code[20])
+    {
+      TableRelation = if("Allowance Posting Type" = const(Item))
+        Item
+        else if("Allowance Posting Type" = const("Income Account"))
+          "Income/Expense Account"."No.";
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
     it('Table field with AccessByPermission property', () => {
         return alFormat(`table 50000 MyTable { fields{field(1; Code; Code[20]){ AccessByPermission = TableData MyOtherTable=R; }} }`).then(formattedCode =>
             expect(formattedCode).to.equal(

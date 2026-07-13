@@ -267,7 +267,7 @@ codeunit 50000 MyCodeunit
 {
   procedure EvaluateConditions(CodeValue: Code[10]; IntegerValue: Integer): Boolean
   begin
-    exit(CodeValue in ['CodeA', 'CodeB', 'CodeC'] or (IntegerValue < 0 and Integer > -99));
+    exit(CodeValue in ['CodeA', 'CodeB', 'CodeC'] or (IntegerValue < 0 and IntegerValue > -99));
   end;
 }
 `;
@@ -280,7 +280,7 @@ codeunit 50000 MyCodeunit
   begin
     exit(
       CodeValue in ['CodeA', 'CodeB', 'CodeC'] or
-        (IntegerValue < 0 and Integer > -99));
+      (IntegerValue < 0 and IntegerValue > -99));
   end;
 }
 `;
@@ -1172,6 +1172,34 @@ end;
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
+
+    it('Get character from an array of strings', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+procedure ArrayAccess()
+var
+  ArrayOfStrings: array[10] of Text[50];
+begin
+Char := ArrayOfStrings[1][20];
+end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure ArrayAccess()
+  var
+    ArrayOfStrings: array[10] of Text[50];
+  begin
+    Char := ArrayOfStrings[1][20];
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
 });
 
 describe('Ternary operator', () => {
@@ -1311,6 +1339,31 @@ codeunit 50000 MyCodeunit
   procedure Shorthand()
   begin
     A /= B;
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+});
+
+describe('Data types and identifiers as object members', () => {
+    it('Record function on FieldRef', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure CallRecord()
+  begin
+    RecRef := FieldRef.Record();
+  end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure CallRecord()
+  begin
+    RecRef := FieldRef.Record();
   end;
 }
 `;

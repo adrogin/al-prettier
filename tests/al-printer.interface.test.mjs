@@ -126,4 +126,51 @@ interface IAmInterface
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
+
+    it('Interface cast', () => {
+        const code = `
+codeunit 505050 SomeCodeunit
+{
+procedure CastInterface(intf: Interface IFoo): Interface IBar
+begin
+    exit(intf as IBar);
+end;
+}`;
+
+        const expected = `codeunit 505050 SomeCodeunit
+{
+  procedure CastInterface(intf: Interface IFoo): Interface IBar
+  begin
+    exit(intf as IBar);
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Interface type test', () => {
+        const code = `
+codeunit 505050 SomeCodeunit
+{
+procedure TestInterface(intf: Interface IFoo)
+begin
+  if intf is IBar then
+    Message('I also support IBar');
+end;}`;
+
+        const expected = `codeunit 505050 SomeCodeunit
+{
+  procedure TestInterface(intf: Interface IFoo)
+  begin
+    if intf is IBar then
+      Message('I also support IBar');
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
 });

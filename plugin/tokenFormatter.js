@@ -212,7 +212,7 @@ function downtoFormatter(token) {
 function elseFormatter(token) {
     if (token.parentCtx.ruleIndex === ALParser.RULE_ifElseStatement ||
         token.parentCtx.ruleIndex === ALParser.RULE_caseElseStatement ||
-        token.parentCtx.ruleIndex === ALParser.RULE_tableRelationExpression
+        token.parentCtx.ruleIndex === ALParser.RULE_tableRelationElseExpression
     ) {
         return token.symbol.text.toLowerCase();
     }

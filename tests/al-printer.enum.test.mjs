@@ -154,4 +154,56 @@ Access=Internal;
 
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
     });
+
+    it('Reserved AL keywords can be unquoted enum values', () => {
+        const code = `
+enum 55000 "Just an Enum"
+{
+Access=Internal;
+    value(0; procedure) {}
+    value(1; and) {}
+    value(2; event) {}
+    value(3; or) {}
+    value(4; trigger) {}
+}`;
+
+        const expected = `enum 55000 "Just an Enum"
+{
+  Access = Internal;
+
+  value(0; procedure) {}
+  value(1; and) {}
+  value(2; event) {}
+  value(3; or) {}
+  value(4; trigger) {}
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+
+    it('Code referencing enum value expressed in a reserved keyword', () => {
+        const code = `
+codeunit 99999 ThisIsCodeunit
+{
+  procedure CheckEnumValue(Value: enum MyEnum): Boolean
+  begin
+    exit((Value = MyEnum::procedure) or (Value = MyEnum::event) or (Value = MyEnum::and));
+  end;
+}`;
+
+        const expected = `codeunit 99999 ThisIsCodeunit
+{
+  procedure CheckEnumValue(Value: Enum MyEnum): Boolean
+  begin
+    exit(
+      (Value = MyEnum::procedure) or
+      (Value = MyEnum::event) or
+      (Value = MyEnum::and));
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
 });

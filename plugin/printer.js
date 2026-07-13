@@ -140,6 +140,9 @@ function print(path, options, print, args) {
         case ALParser.RULE_tableRelationFilter:
             return printTableRelationFilterRef(path, options, print);
 
+        case ALParser.RULE_tableRelationElseExpression:
+            return join(" ", path.map(print, 'children'));
+
         case ALParser.RULE_relationFilterExpression:
             return printRelationFilterExpression(path, options, print);
 
@@ -543,6 +546,7 @@ function print(path, options, print, args) {
         case ALParser.RULE_testRequestPageDataType:
         case ALParser.RULE_xmlPortDataType:
         case ALParser.RULE_dotNetDataType:
+        case ALParser.RULE_controlAddinDataType:
             return join(" ", path.map(print, 'children'));
 
         // Other data types that require special formatting
@@ -606,6 +610,10 @@ function print(path, options, print, args) {
 
         case ALParser.RULE_ternaryExpression:
             return printTernaryExpression(path, options, print);
+
+        case ALParser.RULE_typeTestExpression:
+        case ALParser.RULE_typeCastExpression:
+            return join(" ", path.map(print, 'children'));
 
         //#endregion Code statements
 
@@ -1834,19 +1842,18 @@ function printEnumValueDefinition(path, options, print) {
     }
 
     const result = [];
-    result.push(
-        decl,
-        hardline,
-        path.call(print, 'children', lBraceIdx));
+    result.push(decl);
+    result.push(props.length > 0 || !options.collapseEmptyBraces ? hardline : " ");
+    result.push(path.call(print, 'children', lBraceIdx));
 
     if (props.length > 0) {
         result.push(indent([hardline, props]));
     }
 
-    result.push(
-        hardline,
-        path.call(print, 'children', rBraceIdx)
-    );
+    if (props.length > 0 || !options.collapseEmptyBraces) {
+        result.push(hardline);
+    }
+    result.push(path.call(print, 'children', rBraceIdx));
 
     return result;
 }
@@ -2874,7 +2881,7 @@ function printMultipartExpression(path, options, print, args) {
         }
     }
 
-    return children.length > 1 ? group(indent(parts)) : parts;
+    return children.length > 1 ? group(parts) : parts;
 }
 
 function printLogicalInExpression(path, options, print) {
