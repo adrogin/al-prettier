@@ -194,15 +194,15 @@ function print(path, options, print, args) {
             return printLayoutElements(path, options, print);
 
         case ALParser.RULE_areaDefinition:
-            return printAreaDefinition(path, options, print);
+        case ALParser.RULE_groupDefinition:
+        case ALParser.RULE_cueGroupDefinition:
+            return printPageSegmentDefinition(path, options, print);
 
         case ALParser.RULE_areaElements:
             return printAreaElements(path, options, print);
 
-        case ALParser.RULE_groupDefinition:
-            return printGroupDefinition(path, options, print);
-
         case ALParser.RULE_groupElements:
+        case ALParser.RULE_cueGroupElements:
             return printGroupElements(path, options, print);
 
         case ALParser.RULE_groupPropertyItem:
@@ -562,6 +562,8 @@ function print(path, options, print, args) {
             return printOptionDataType(path, options, print);
         case ALParser.RULE_textConstDataType:
             return printTextConst(path, options, print);
+        case ALParser.RULE_optionValuesList:
+            return printOptionValuesList(path, options, print);
 
         case ALParser.RULE_identifiersList:
             return printIdentifiersList(path, options, print);
@@ -1121,12 +1123,39 @@ function printLayoutElements(path, options, print) {
     return join(hardline, path.map(print, 'children'));
 }
 
-function printAreaDefinition(path, options, print) {
-    // Grammar: AREA LPAREN IDENTIFIER RPAREN LBRACE areaElements RBRACE
-    const name = path.call(print, 'children', 2);
+function printPageSegmentDefinition(path, options, print) {
+    // Grammar: AREA LPAREN identifier RPAREN LBRACE areaElements RBRACE;
+    //          GROUP LPAREN identifier RPAREN LBRACE groupElements RBRACE;
+    //          CUEGROUP LPAREN identifier RPAREN LBRACE cueGroupElements RBRACE;
     const elements = path.call(print, 'children', 5);
-    return ["area(", name, ")", hardline, "{", indent([hardline, elements]), hardline, "}"];
+    
+    const definition = [
+        path.call(print, 'children', 0),
+        path.call(print, 'children', 1),
+        path.call(print, 'children', 2),
+        path.call(print, 'children', 3)
+    ];
+
+    definition.push(elements.length > 0 || !options.collapseEmptyBraces ? hardline : " ");
+    definition.push(path.call(print, 'children', 4));
+
+    if (elements.length > 0) {
+        definition.push(indent([hardline, elements]), hardline);
+    }
+    else if (!options.collapseEmptyBraces) {
+        definition.push(hardline);
+    }
+    definition.push(path.call(print, 'children', path.node.children.length - 1));
+
+    return definition;
 }
+
+// function printAreaDefinition(path, options, print) {
+//     // Grammar: AREA LPAREN IDENTIFIER RPAREN LBRACE areaElements RBRACE
+//     const name = path.call(print, 'children', 2);
+//     const elements = path.call(print, 'children', 5);
+//     return ["area(", name, ")", hardline, "{", indent([hardline, elements]), hardline, "}"];
+// }
 
 function printAreaElements(path, options, print) {
     // Grammar: (groupDefinition | pageFieldItem | partDefinition | repeaterDefinition)*
@@ -1135,12 +1164,12 @@ function printAreaElements(path, options, print) {
     return join(hardline, path.map(print, 'children'));
 }
 
-function printGroupDefinition(path, options, print) {
-    // Grammar: GROUP LPAREN identifier RPAREN LBRACE groupElements RBRACE
-    const name = path.call(print, 'children', 2);
-    const elements = path.call(print, 'children', 5);
-    return ["group(", name, ")", hardline, "{", indent([hardline, elements]), hardline, "}"];
-}
+// function printGroupDefinition(path, options, print) {
+//     // Grammar: GROUP LPAREN identifier RPAREN LBRACE groupElements RBRACE
+//     const name = path.call(print, 'children', 2);
+//     const elements = path.call(print, 'children', 5);
+//     return ["group(", name, ")", hardline, "{", indent([hardline, elements]), hardline, "}"];
+// }
 
 function printGroupElements(path, options, print) {
     // Grammar: groupPropertiesList? (pageFieldItem | groupDefinition | partDefinition)*
@@ -3075,12 +3104,12 @@ function printListDataType(path, options, print) {
 }
 
 function printOptionDataType(path, options, print) {
-    // Grammar: OPTION COMMA? identifiersList?;
+    // Grammar: OPTION optionValuesList;
     const typeName = path.call(print, 'children', 0);
 
-    const optionValues = [];
+    let optionValues = [];
     for (let i = 1; i < path.node.children.length; i++) {
-        optionValues.push(path.call(print, 'children', i));
+        optionValues = path.call(print, 'children', i);
     }
 
     return optionValues.length > 0
@@ -3114,12 +3143,29 @@ function printTextConst(path, options, print) {
 
 function printIdentifiersList(path, options, print) {
     // Grammar: identifier (COMMA identifier)*
-    const optionValues = [];
+    const identifiers = [];
     for (let i = 0; i < path.node.children.length; i += 2) {
-        optionValues.push(path.call(print, 'children', i));
+        identifiers.push(path.call(print, 'children', i));
     }
 
-    return join(", ", optionValues);
+    return join(", ", identifiers);
+}
+
+function printOptionValuesList(path, options, print) {
+    // Grammar: identifier? (COMMA identifier?)*;
+    if (!path.node.children || path.node.children.length === 0) {
+        return [];
+    }
+
+    const res = [];
+    for (let i = 0; i < path.node.children.length; i++) {
+        if (path.node.children[i].ruleIndex === ALParser.RULE_identifier && i > 1) {
+            res.push(" ");
+        }
+        res.push(path.call(print, 'children', i));
+    }
+
+    return res;
 }
 
 function printObjectPermissionsList(path, options, print) {

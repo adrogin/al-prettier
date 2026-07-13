@@ -546,7 +546,7 @@ page 50001 "Page with Systempart"
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
 
-    it('Part element insode a repeater', () => {
+    it('Part element inside a repeater', () => {
         const code = `
 page 50001 MyPage
 {
@@ -578,6 +578,60 @@ page 50001 MyPage
         part(salesPriceItems; "Customer List")
         {
           SubPageLink = "No." = field("No.");
+        }
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+});
+
+describe('Cuegroup', () => {
+    it('Cuegroup with properties and fields', () => {
+        const code = `
+page 60000 "Page with Cuegroup"
+{
+    layout
+    {
+        area(content)
+        {
+            cuegroup(Documents)
+            {
+                Caption = 'Documents';
+                field("Purchase Orders"; Rec."Purchase Orders")
+                {
+                    DrillDown = true;
+                    DrillDownPageID = "Purch. Order";
+                }
+                field("Transfer Orders"; Rec."Transfer Orders")
+                {
+                    DrillDownPageID = "Transfer List";
+                }
+            }
+    }}}
+`;
+
+        const expected = `page 60000 "Page with Cuegroup"
+{
+  layout
+  {
+    area(content)
+    {
+      cuegroup(Documents)
+      {
+        Caption = 'Documents';
+
+        field("Purchase Orders"; Rec."Purchase Orders")
+        {
+          DrillDown = true;
+          DrillDownPageID = "Purch. Order";
+        }
+        field("Transfer Orders"; Rec."Transfer Orders")
+        {
+          DrillDownPageID = "Transfer List";
         }
       }
     }
