@@ -821,7 +821,7 @@ codeunit 55555 MyCodeunit
 {
   procedure GetGLEntry()
   var
-    Helper: Record 17;
+    GLEntry: Record 17;
   begin
   end;
 }
