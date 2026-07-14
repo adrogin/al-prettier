@@ -279,4 +279,41 @@ xmlport 50001 MyTestXmlPort
 
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
+
+    it('TextAttribute node inside a tableelement', () => {
+        const code = `
+xmlport 10012880 "LSC POS Fiscal Transaction"
+{
+    schema
+    {
+        tableelement(SourceTableName; "XML Source Table")
+        {
+            XmlName = 'Transaction';
+            fieldattribute(Payment; SourceTableName.Payment)
+            {
+            }
+            textattribute(CurrencyInfo)
+            {}
+        }
+    }
+}
+`;
+
+        const expected = `xmlport 10012880 "LSC POS Fiscal Transaction"
+{
+  schema
+  {
+    tableelement(SourceTableName; "XML Source Table")
+    {
+      XmlName = 'Transaction';
+
+      fieldattribute(Payment; SourceTableName.Payment) {}
+      textattribute(CurrencyInfo) {}
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
 });

@@ -170,6 +170,9 @@ function print(path, options, print, args) {
         case ALParser.RULE_fieldGroupFieldsList:
             return printFieldGroupFieldsList(path, options, print);
 
+        case ALParser.RULE_optionMembersPropertyValue:
+            return join(" ", path.map(print, 'children'));
+
         //#endregion Table object
 
         //#region Table extension object
@@ -425,12 +428,14 @@ function print(path, options, print, args) {
             return printXmlPortSchema(path, options, print);
 
         case ALParser.RULE_xmlPortTextElement:
+        case ALParser.RULE_xmlPortTextAttribute:
             return printXmlPortTextElement(path, options, print);
 
         case ALParser.RULE_xmlPortTableElement:
             return printXmlPortTableElement(path, options, print);
 
         case ALParser.RULE_xmlPortFieldElement:
+        case ALParser.RULE_xmlPortFieldAttribute:
             return printXmlPortFieldElement(path, options, print);
 
         //#endregion XMLPort object
@@ -563,6 +568,7 @@ function print(path, options, print, args) {
         case ALParser.RULE_textConstDataType:
             return printTextConst(path, options, print);
         case ALParser.RULE_optionValuesList:
+        case ALParser.RULE_optionMembersPropertyValue:
             return printOptionValuesList(path, options, print);
 
         case ALParser.RULE_identifiersList:

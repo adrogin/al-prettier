@@ -212,3 +212,28 @@ describe('Printing of table keys', () => {
             ));
     });
 });
+
+describe('Table field properties', () => {
+    it('Option field with OptionMembers having a leading comma', () => {
+        const code = `table 50000 MyTable
+        { fields{
+          field(1; OptionField; Option){
+          OptionMembers=,Option1,Option2,"Option 3";
+          }
+        }}`;
+
+        const expected = `table 50000 MyTable
+{
+  fields
+  {
+    field(1; OptionField; Option)
+    {
+      OptionMembers = ,Option1, Option2, "Option 3";
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+});
