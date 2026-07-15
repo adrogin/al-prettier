@@ -1371,3 +1371,54 @@ codeunit 50000 MyCodeunit
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
 });
+
+describe('Object definition keywords as AL identifiers', () => {
+    it('Adding value to list', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure AddOne()
+  var NumbersList:List of [Integer];
+  begin
+    NumbersList.Add(1);
+  end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure AddOne()
+  var
+    NumbersList: List of [Integer];
+  begin
+    NumbersList.Add(1);
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Record Modify function', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure ModifyRecord(var Buf: Record "Name/Value Buffer")
+  begin
+    Buf.Modify(true);
+  end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure ModifyRecord(var Buf: Record "Name/Value Buffer")
+  begin
+    Buf.Modify(true);
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+});
