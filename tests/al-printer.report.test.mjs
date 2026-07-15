@@ -40,12 +40,8 @@ dataset{
     {
       RequestFilterFields = "No.";
 
-      column(COMPANYNAME; CompanyName)
-      {
-      }
-      column(FORMAT_TODAY_0_4_; Format(Today, 0, 4))
-      {
-      }
+      column(COMPANYNAME; CompanyName) {}
+      column(FORMAT_TODAY_0_4_; Format(Today, 0, 4)) {}
     }
   }
 }
@@ -81,9 +77,7 @@ dataset{
     {
       RequestFilterFields = "No.";
 
-      column(COMPANYNAME; CompanyName)
-      {
-      }
+      column(COMPANYNAME; CompanyName) {}
     }
   }
 }
@@ -141,10 +135,47 @@ report 50000 "Report with Dataset"
         DataItemTableView = sorting("LSC BOM Component Type");
         PrintOnlyIfDetail = false;
 
-        column(BOM_Component__No__; "No.")
-        {
-        }
+        column(BOM_Component__No__; "No.") {}
       }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Report with two adjacent dataitems', () => {
+        const code = `
+report 50000 "Report with Dataset"
+{
+  dataset
+  {
+    dataitem(Item; Item)
+    {
+    column(Item__No__; "No.")
+    {
+    }}
+    dataitem("BOM Component"; "BOM Component")
+    {
+        column(BOM_Component__No__; "No."){}
+    }
+  }
+}
+`;
+
+        const expected = `report 50000 "Report with Dataset"
+{
+  dataset
+  {
+    dataitem(Item; Item)
+    {
+      column(Item__No__; "No.") {}
+    }
+    dataitem("BOM Component"; "BOM Component")
+    {
+      column(BOM_Component__No__; "No.") {}
     }
   }
 }
@@ -337,5 +368,99 @@ report 50000 "Report with Labels"
 
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
+    });
+});
+
+describe('Report extension object', () => {
+    it('Add one dataset item in report extension', () => {
+        const code = `
+reportextension 50110 MyExtension extends "Customer - Top 10 List"
+{
+    dataset
+    {
+        add(Integer)
+        {
+            column(fromBaseTable; Customer.GLN) { }
+            column(fromBaseTableExt; Customer.MyField) { }
+        }
+    }}
+`;
+
+        const expected = `reportextension 50110 MyExtension extends "Customer - Top 10 List"
+{
+  dataset
+  {
+    add(Integer)
+    {
+      column(fromBaseTable; Customer.GLN) {}
+      column(fromBaseTableExt; Customer.MyField) {}
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Report extension with request page', () => {
+        const code = `
+reportextension 50110 MyExtension extends "Customer - Top 10 List"
+{
+    dataset
+    {
+        add(Customer)
+        {
+            column(netWeight; netWeight) { }
+        }
+
+        modify(Customer)
+        {
+            trigger OnBeforeAfterGetRecord()
+            begin
+            end;
+        }    }
+        requestpage
+    {
+        layout
+        {
+            addafter(Show)
+            {
+                field(fromBaseTableExt; Customer.myField) { }
+            }
+        }
+    }
+}
+`;
+
+        const expected = `reportextension 50110 MyExtension extends "Customer - Top 10 List"
+{
+  dataset
+  {
+    add(Customer)
+    {
+      column(netWeight; netWeight) {}
+    }
+    modify(Customer)
+    {
+      trigger OnBeforeAfterGetRecord()
+      begin
+      end;
+    }
+  }
+
+  requestpage
+  {
+    layout
+    {
+      addafter(Show)
+      {
+        field(fromBaseTableExt; Customer.myField) {}
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
 });

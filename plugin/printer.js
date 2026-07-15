@@ -387,6 +387,7 @@ function print(path, options, print, args) {
             return printReportObject(path, options, print);
 
         case ALParser.RULE_reportDatasetDefinition:
+        case ALParser.RULE_reportDatasetExtDefinition:
             return printReportDatasetDefinition(path, options, print);
 
         case ALParser.RULE_reportDataItemDefinition:
@@ -400,6 +401,7 @@ function print(path, options, print, args) {
             return printDataItemLinkProperty(path, options, print);
 
         case ALParser.RULE_requestpageDefinition:
+        case ALParser.RULE_requestPageExtDefinition:
             return printReportRequestPage(path, options, print);
 
         case ALParser.RULE_renderingOptions:
@@ -449,6 +451,7 @@ function print(path, options, print, args) {
         case ALParser.RULE_entitlementObject:
         case ALParser.RULE_profileObject:
         case ALParser.RULE_profileExtensionObject:
+        case ALParser.RULE_reportExtensionObject:
             return printALObject(path, options, print);
 
         case ALParser.RULE_controlAddInApiDeclarations:
@@ -456,6 +459,9 @@ function print(path, options, print, args) {
 
         case ALParser.RULE_eventDeclaration:
             return printControlAddInEventDeclaration(path, options, print);
+
+        case ALParser.RULE_reportDatasetModification:
+            return printReportDatasetModification(path, options, print);
 
         //#endregion
 
@@ -2089,7 +2095,7 @@ function printReportDatasetDefinition(path, options, print) {
 
     const dataset = [keyword, hardline, lbrace];
     if (dataItems.length > 0)
-        dataset.push(indent([hardline, ...dataItems]));
+        dataset.push(indent([hardline, join(hardline, dataItems)]));
 
     dataset.push(hardline, rbrace);
     return dataset;
@@ -2112,12 +2118,19 @@ function printReportDataItemDefinition(path, options, print) {
         elements.push(path.call(print, 'children', i));
     }
 
-    const dataItem = [keyword, lparen, dataItemName, semicolon, " ", sourceExpression, rparen, hardline, lbrace];
+    const dataItem = [keyword, lparen, dataItemName, semicolon, " ", sourceExpression, rparen];
+    dataItem.push(elements.length > 0 || !options.collapseEmptyBraces ? hardline : " ");
+    dataItem.push(lbrace);
+
     if (elements.length > 0) {
         dataItem.push(indent([hardline, join([hardline, hardline], elements)]));
     }
 
-    dataItem.push(hardline, rbrace);
+    if (elements.length > 0 || !options.collapseEmptyBraces) {
+        dataItem.push(hardline);
+    }
+
+    dataItem.push(rbrace);
     return dataItem;
 }
 
@@ -2379,6 +2392,34 @@ function printControlAddInEventDeclaration(path, options, print) {
         path.call(print, 'children', 4),
         path.call(print, 'children', 5)
     ];
+}
+
+function printReportDatasetModification(path, options, print) {
+    // Grammar: reportExtDatasetModKeyword LPAREN identifier RPAREN LBRACE reportColumnDefinition* RBRACE;
+    const children = path.node.children;
+    const mod = [];
+    for (let i = 0; i < 4; i++) {
+        mod.push(path.call(print, 'children', i));
+    }
+
+    const columns = [];
+    for (let i = 5; i < children.length - 1; i++) {
+        columns.push(path.call(print, 'children', i));
+    }
+
+    mod.push(columns.length > 0 || !options.collapseEmptyBraces ? hardline : " ");
+    mod.push(path.call(print, 'children', 4));
+    if (columns.length > 0) {
+        mod.push(indent([hardline, join(hardline, columns)]));
+    }
+
+    if (columns.length > 0 || !options.collapseEmptyBraces) {
+        mod.push(hardline);
+    }
+
+    mod.push(path.call(print, 'children', children.length - 1));
+
+    return mod;
 }
 
 //#endregion
