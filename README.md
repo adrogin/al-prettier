@@ -65,7 +65,6 @@ You can customize the formatting behavior in VS Code settings:
 
 - Requires valid AL syntax to format correctly. Formatting of an AL statement that cannot be parsed correctly will throw an error.
 - Range formatting is in development and currently not implemented.
-- Formatting of report extensions is coming soon.
 - Report objects with embedded RDLC layout are not supported.
 
 ## Contributing
