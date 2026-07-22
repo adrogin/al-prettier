@@ -144,7 +144,11 @@ function print(path, options, print, args) {
             return join(" ", path.map(print, 'children'));
 
         case ALParser.RULE_relationFilterExpression:
+        case ALParser.RULE_relationalFilterEqalityExpression:
             return printRelationFilterExpression(path, options, print);
+        
+        case ALParser.RULE_relFilterParExpression:
+            return path.map(print, 'children');
 
         case ALParser.RULE_calcFormulaExpression:
             return printCalcFormulaExpression(path, options, print);
@@ -199,6 +203,7 @@ function print(path, options, print, args) {
         case ALParser.RULE_areaDefinition:
         case ALParser.RULE_groupDefinition:
         case ALParser.RULE_cueGroupDefinition:
+        case ALParser.RULE_gridControlDefinition:
             return printPageSegmentDefinition(path, options, print);
 
         case ALParser.RULE_areaElements:
@@ -206,6 +211,7 @@ function print(path, options, print, args) {
 
         case ALParser.RULE_groupElements:
         case ALParser.RULE_cueGroupElements:
+        case ALParser.RULE_gridControlElements:
             return printGroupElements(path, options, print);
 
         case ALParser.RULE_groupPropertyItem:
@@ -1140,6 +1146,7 @@ function printPageSegmentDefinition(path, options, print) {
     // Grammar: AREA LPAREN identifier RPAREN LBRACE areaElements RBRACE;
     //          GROUP LPAREN identifier RPAREN LBRACE groupElements RBRACE;
     //          CUEGROUP LPAREN identifier RPAREN LBRACE cueGroupElements RBRACE;
+    //          GRID LPAREN identifier RPAREN LBRACE gridControlElements RBRACE;
     const elements = path.call(print, 'children', 5);
     
     const definition = [
@@ -1163,29 +1170,17 @@ function printPageSegmentDefinition(path, options, print) {
     return definition;
 }
 
-// function printAreaDefinition(path, options, print) {
-//     // Grammar: AREA LPAREN IDENTIFIER RPAREN LBRACE areaElements RBRACE
-//     const name = path.call(print, 'children', 2);
-//     const elements = path.call(print, 'children', 5);
-//     return ["area(", name, ")", hardline, "{", indent([hardline, elements]), hardline, "}"];
-// }
-
 function printAreaElements(path, options, print) {
-    // Grammar: (groupDefinition | pageFieldItem | partDefinition | repeaterDefinition)*
+    // Grammar: (groupDefinition | pageFieldItem | userControlItem | pageLabelItem | partDefinition | repeaterDefinition | separatorDefinition | cueGroupDefinition | gridControlDefinition)*
     const children = path.node.children;
     if (!children || children.length === 0) return "";
     return join(hardline, path.map(print, 'children'));
 }
 
-// function printGroupDefinition(path, options, print) {
-//     // Grammar: GROUP LPAREN identifier RPAREN LBRACE groupElements RBRACE
-//     const name = path.call(print, 'children', 2);
-//     const elements = path.call(print, 'children', 5);
-//     return ["group(", name, ")", hardline, "{", indent([hardline, elements]), hardline, "}"];
-// }
-
 function printGroupElements(path, options, print) {
     // Grammar: groupPropertiesList? (pageFieldItem | groupDefinition | partDefinition)*
+    //          groupPropertiesList? pageFieldItem*;
+    //          gridPropertiesList? (groupDefinition | pageFieldItem)*;
     const children = path.node.children;
     if (!children || children.length === 0)
         return "";
@@ -1194,7 +1189,10 @@ function printGroupElements(path, options, print) {
     let layoutElementsStartIndex = 0;
 
     // Inserting an empty line after the properties block if there is one
-    if (children[0].ruleIndex === ALParser.RULE_groupPropertiesList) {
+    if ([
+        ALParser.RULE_groupPropertiesList,
+        ALParser.RULE_gridPropertiesList
+    ].includes(children[0].ruleIndex)) {
         layoutElementsStartIndex = 1;
         docs.push([path.call(print, 'children', 0), hardline]);
     }

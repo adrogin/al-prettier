@@ -333,3 +333,96 @@ describe('Table triggers and procedures', () => {
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
 });
+
+describe('Table relation formula', () => {
+    it('Combined filter conditions in CalcFormula property', () => {
+        const code = `table 50000 MyTable
+        { fields{
+        field(100; "Total Amount"; Decimal)
+        {
+            CalcFormula = sum("Posted Customer Order Line".Amount where(Status = filter((<> Shortage) & (<> Canceled)),
+                                                                         "Document ID" = field("Document ID")));
+            FieldClass = FlowField;
+            Editable = false;
+        }
+    }}`;
+
+        const expected = `table 50000 MyTable
+{
+  fields
+  {
+    field(100; "Total Amount"; Decimal)
+    {
+      CalcFormula = sum("Posted Customer Order Line".Amount
+        where(Status = filter((<> Shortage) & (<> Canceled)),
+          "Document ID" = field("Document ID")));
+      FieldClass = FlowField;
+      Editable = false;
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Combined filter conditions in CalcFormula without parenthesis', () => {
+        const code = `table 50000 MyTable
+        { fields{
+        field(100; "Total Amount"; Decimal)
+        {
+            CalcFormula = sum("Posted Customer Order Line".Amount where(Status = filter(<> Shortage & <> Canceled)));
+            FieldClass = FlowField;
+            Editable = false;
+        }
+    }}`;
+
+        const expected = `table 50000 MyTable
+{
+  fields
+  {
+    field(100; "Total Amount"; Decimal)
+    {
+      CalcFormula = sum("Posted Customer Order Line".Amount
+        where(Status = filter(<> Shortage & <> Canceled)));
+      FieldClass = FlowField;
+      Editable = false;
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Combined filter conditions in TableRelation property', () => {
+        const code = `table 50000 MyTable
+        { fields{
+        field(3; "Field No."; Integer)
+        {
+            Caption = 'Field No.';
+            TableRelation = Field."No." where(TableNo = field("Table No."),
+                                             Class = const(Normal),
+                                             "Type Name" = filter(<> 'BLOB' & <> 'Media' & <> 'MediaSet'));
+        }
+    }}`;
+
+        const expected = `table 50000 MyTable
+{
+  fields
+  {
+    field(3; "Field No."; Integer)
+    {
+      Caption = 'Field No.';
+      TableRelation = Field."No."
+        where(TableNo = field("Table No."),
+          Class = const(Normal),
+          "Type Name" = filter(<> 'BLOB' & <> 'Media' & <> 'MediaSet'));
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+});

@@ -317,3 +317,52 @@ xmlport 10012880 "LSC POS Fiscal Transaction"
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
 });
+
+describe('Nested XMLPort elements', () => {
+    it('TableElement inside TableElement', () => {
+        const code = `
+xmlport 50000 ImportExportXml {
+    schema
+    {
+        textelement(Root)
+        {
+            tableelement(DocumentHeader; "Document Header")
+            {
+                tableelement("Document Line"; "Document Line")
+                {
+                    LinkFields = Code = field(Code);
+                    LinkTable = DocumentHeader;
+                    MinOccurs = Zero;
+                    fieldelement(Code; DocumentLine.Code) {}
+                }
+            }
+        }
+    }
+}
+`;
+
+        const expected = `xmlport 50000 ImportExportXml
+{
+  schema
+  {
+    textelement(Root)
+    {
+      tableelement(DocumentHeader; "Document Header")
+      {
+        tableelement("Document Line"; "Document Line")
+        {
+          LinkFields = Code = field(Code);
+          LinkTable = DocumentHeader;
+          MinOccurs = Zero;
+
+          fieldelement(Code; DocumentLine.Code) {}
+        }
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+});

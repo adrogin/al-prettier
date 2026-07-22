@@ -678,3 +678,127 @@ page 60000 "Page with Cuegroup"
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
 });
+
+describe('Grid layout', () => {
+    it('Grid with two groups', () => {
+        const code = `
+page 60000 "Page with Grid"
+{
+    layout
+    {
+        area(content)
+        {
+            grid(Grid)
+            {
+                Caption = 'Grid View';
+                group(Group1) {
+                field("Purchase Orders"; Rec."Purchase Orders")
+                {
+                    DrillDown = true;
+                    DrillDownPageID = "Purch. Order";
+                }}
+                group(Group2) {
+                field("Transfer Orders"; Rec."Transfer Orders")
+                {
+                    DrillDownPageID = "Transfer List";
+            }}
+            }
+    }}}
+`;
+
+        const expected = `page 60000 "Page with Grid"
+{
+  layout
+  {
+    area(content)
+    {
+      grid(Grid)
+      {
+        Caption = 'Grid View';
+
+        group(Group1)
+        {
+          field("Purchase Orders"; Rec."Purchase Orders")
+          {
+            DrillDown = true;
+            DrillDownPageID = "Purch. Order";
+          }
+        }
+        group(Group2)
+        {
+          field("Transfer Orders"; Rec."Transfer Orders")
+          {
+            DrillDownPageID = "Transfer List";
+          }
+        }
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Grid with groups and fields', () => {
+        const code = `
+page 60000 "Page with Grid"
+{
+    layout
+    {
+        area(content)
+        {
+            grid(Grid)
+            {
+                Caption = 'Grid View';
+                group(Group1) {
+                field("Purchase Orders"; Rec."Purchase Orders")
+                {
+                    DrillDown = true;
+                    DrillDownPageID = "Purch. Order";
+                }}
+                field(JustAnotherField; Rec."Source for Another Field") {}
+                group(Group2) {
+                field("Transfer Orders"; Rec."Transfer Orders")
+                {
+                    DrillDownPageID = "Transfer List";
+            }}
+            }
+    }}}
+`;
+
+        const expected = `page 60000 "Page with Grid"
+{
+  layout
+  {
+    area(content)
+    {
+      grid(Grid)
+      {
+        Caption = 'Grid View';
+
+        group(Group1)
+        {
+          field("Purchase Orders"; Rec."Purchase Orders")
+          {
+            DrillDown = true;
+            DrillDownPageID = "Purch. Order";
+          }
+        }
+        field(JustAnotherField; Rec."Source for Another Field") {}
+        group(Group2)
+        {
+          field("Transfer Orders"; Rec."Transfer Orders")
+          {
+            DrillDownPageID = "Transfer List";
+          }
+        }
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+});
