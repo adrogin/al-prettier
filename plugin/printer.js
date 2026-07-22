@@ -276,6 +276,7 @@ function print(path, options, print, args) {
             return pintTableViewExpression(path, options, print);
 
         case ALParser.RULE_sourceTableViewProperty:
+        case ALParser.RULE_subPageViewProperty:
             return printSourceTableViewExpression(path, options, print);
 
         //#endregion Page object

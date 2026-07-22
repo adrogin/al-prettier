@@ -587,6 +587,42 @@ page 50001 MyPage
 
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
+
+    it('SubPageView property', () => {
+        const code = `
+page 50001 MyPage
+{
+    layout
+    {
+        area(Content)
+        {
+            part(AdditionalInfo; "Subpage Source")
+            {
+                SubPageLink = "No." = field("No.");
+                SubPageView = sorting("Customer No.", "Start Date") order(descending);
+            }
+        }
+    }
+}`;
+
+        const expected = `page 50001 MyPage
+{
+  layout
+  {
+    area(Content)
+    {
+      part(AdditionalInfo; "Subpage Source")
+      {
+        SubPageLink = "No." = field("No.");
+        SubPageView = sorting("Customer No.", "Start Date") order(descending);
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
 });
 
 describe('Cuegroup', () => {

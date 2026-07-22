@@ -237,3 +237,99 @@ describe('Table field properties', () => {
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
 });
+
+describe('Table triggers and procedures', () => {
+    it('Procedures list after triggers', () => {
+        const code = `table 50000 MyTable
+        { fields{
+          field(1; "Primary Key"; Code[10]){}}
+
+          trigger OnAfterGetRecord()
+          begin
+            DoSomething();
+          end;
+          procedure DoSomething()
+          begin
+            RelaxAndDoNothing();
+          end;
+        }`;
+
+        const expected = `table 50000 MyTable
+{
+  fields
+  {
+    field(1; "Primary Key"; Code[10]) {}
+  }
+
+  trigger OnAfterGetRecord()
+  begin
+    DoSomething();
+  end;
+
+  procedure DoSomething()
+  begin
+    RelaxAndDoNothing();
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Triggers and procedures mixed', () => {
+        const code = `table 50000 MyTable
+        { fields{
+          field(1; "Primary Key"; Code[10]){}}
+
+          procedure DoSomething()
+          begin
+            RelaxAndDoNothing();
+          end;
+          var RelaxTimeMs: Integer;
+          trigger OnAfterGetRecord()
+          begin
+            DoSomething();
+          end;
+          procedure DoNothing()
+          begin
+          Sleep(RelaxTimeMs);
+          end;
+          trigger OnModify()
+          begin
+          end;
+        }`;
+
+        const expected = `table 50000 MyTable
+{
+  fields
+  {
+    field(1; "Primary Key"; Code[10]) {}
+  }
+
+  procedure DoSomething()
+  begin
+    RelaxAndDoNothing();
+  end;
+
+  var
+    RelaxTimeMs: Integer;
+
+  trigger OnAfterGetRecord()
+  begin
+    DoSomething();
+  end;
+
+  procedure DoNothing()
+  begin
+    Sleep(RelaxTimeMs);
+  end;
+
+  trigger OnModify()
+  begin
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+});

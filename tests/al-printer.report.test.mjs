@@ -464,3 +464,40 @@ reportextension 50110 MyExtension extends "Customer - Top 10 List"
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
 });
+
+describe('Report code statements', () => {
+    it('CurrReport.break can be parsed without errors', () => {
+        const code = `
+report 50110 "Breaking Report"
+{
+    dataset
+    {
+        dataitem(SomeTableItem; "DataItem Source Table")
+        {
+            trigger OnAfterGetRecord()
+            begin
+                CurrReport.Break();
+            end;
+        }
+    }
+}
+`;
+
+        const expected = `report 50110 "Breaking Report"
+{
+  dataset
+  {
+    dataitem(SomeTableItem; "DataItem Source Table")
+    {
+      trigger OnAfterGetRecord()
+      begin
+        CurrReport.Break();
+      end;
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+});
