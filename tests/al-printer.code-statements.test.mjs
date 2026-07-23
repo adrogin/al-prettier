@@ -1197,8 +1197,30 @@ end;
 }
 `;
 
-        return alFormat(code).then(formattedCode =>
-            expect(formattedCode).to.equal(expected))
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+
+    it('Get character from a text function return value', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+    internal procedure GetDecimalSeparator(): Text
+    begin
+        exit(Format(5.5) [2]);
+    end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  internal procedure GetDecimalSeparator(): Text
+  begin
+    exit(Format(5.5)[2]);
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
     });
 });
 
@@ -1415,6 +1437,29 @@ codeunit 50000 MyCodeunit
   procedure ModifyRecord(var Buf: Record "Name/Value Buffer")
   begin
     Buf.Modify(true);
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('OptionMembers function', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure GetOptionMembers(FieldRef: FieldRef): Text
+  begin
+    exit(FieldRef.OptionMembers());
+  end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure GetOptionMembers(FieldRef: FieldRef): Text
+  begin
+    exit(FieldRef.OptionMembers());
   end;
 }
 `;

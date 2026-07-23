@@ -1022,9 +1022,10 @@ function printFieldGroupItem(path, options, print) {
     fieldgroup.push(options.collapseEmptyBraces && propsIdx === -1 ? " " : hardline);
     fieldgroup.push(path.call(print, 'children', 4));
     
-    if (!options.collapseEmptyBraces || propsIdx > -1) {
+    if (!options.collapseEmptyBraces && propsIdx === -1) {
         fieldgroup.push(hardline);
-    } else if (propsIdx > -1) {
+    }
+    if (propsIdx > -1) {
         fieldgroup.push(indent([hardline, path.call(print, 'children', propsIdx)]), hardline);
     }
 
@@ -1803,17 +1804,27 @@ function printInterfacePropertiesList(path, options, print) {
 }
 
 function printProcedureDeclaration(path, options, print) {
-    // Grammar: PROCEDURE identifier LPAREN parameterList? RPAREN procedureReturnType? SEMICOLON?
+    // Grammar: procedureAccessModifier? PROCEDURE identifier LPAREN parameterList? RPAREN procedureReturnType? SEMICOLON?;
 
     const children = path.node.children;
+    const accessModifier = children[0].ruleIndex === ALParser.RULE_procedureAccessModifier ? [path.call(print, 'children', 0), " "] : "";
     const rParenIdx = children.findIndex(c => c.symbol?.type === ALParser.RPAREN);
     const returnTypeIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_procedureReturnType);
+    const procKeyword = children.findIndex(c => c.symbol?.type === ALParser.PROCEDURE);
 
-    const name = path.call(print, 'children', 1);
-    const paramDoc = rParenIdx > 3 ? path.call(print, 'children', 3) : "";
+    const name = path.call(print, 'children', procKeyword + 1);
+    const paramDoc = rParenIdx > procKeyword + 3 ? path.call(print, 'children', procKeyword + 3) : "";
 
-    let signature =
-        [path.call(print, 'children', 0), " ", name, path.call(print, 'children', 2), softline, paramDoc, path.call(print, 'children', rParenIdx)];
+    let signature = [
+        accessModifier,
+        path.call(print, 'children', procKeyword),
+        " ",
+        name,
+        path.call(print, 'children', procKeyword + 2),
+        softline,
+        paramDoc,
+        path.call(print, 'children', rParenIdx)
+    ];
 
     if (returnTypeIdx) {
         signature = [...signature, path.call(print, 'children', returnTypeIdx)];

@@ -425,9 +425,38 @@ describe('Table relation formula', () => {
 
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
+
+    it('Empty const value in formula', () => {
+        const code = `table 50000 MyTable
+        { fields{
+        field(3; "Field No."; Integer)
+        {
+            Caption = 'Field No.';
+            TableRelation = Field."No." where(TableNo = field("Table No."),
+                                             Class = const());
+        }
+    }}`;
+
+        const expected = `table 50000 MyTable
+{
+  fields
+  {
+    field(3; "Field No."; Integer)
+    {
+      Caption = 'Field No.';
+      TableRelation = Field."No."
+        where(TableNo = field("Table No."),
+          Class = const());
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
 });
 
-describe('FielgGroups', () => {
+describe('FieldGroups', () => {
     it('Properties of fieldgroup', () => {
         const code = `table 50000 MyTable
         { fields{

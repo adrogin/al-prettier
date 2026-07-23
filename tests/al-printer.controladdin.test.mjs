@@ -52,4 +52,20 @@ controladdin "NiceUIControl"
 
         return alFormat(code, { removeEmptyElements: true }).then(formattedCode => expect(formattedCode).to.equal(expected))
     });
+
+    it('Internal procedure in addin', () => {
+        const code = `
+controladdin "NiceUIControl"
+{
+internal procedure PaintItBlack();
+}`;
+
+        const expected = `controladdin "NiceUIControl"
+{
+  internal procedure PaintItBlack();
+}
+`;
+
+        return alFormat(code, { removeEmptyElements: true }).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
 });
