@@ -266,28 +266,6 @@ page 50001 "Page With One Action"
             expect(formattedCode).to.equal(expected))
     });
 
-    it('SourceTableView property', () => {
-        const code = `
-page 50001 "Page With One Action"
-{
-SourceTableView = sorting (Name, "No.") order(descending)
- where ("Balance (LCY)" = filter (>= 50000), "Sales (LCY)" = filter (<> 0));
-}
-`;
-
-        const expected = `page 50001 "Page With One Action"
-{
-  SourceTableView = sorting(Name, "No.")
-    order(descending)
-    where("Balance (LCY)" = filter(>= 50000),
-      "Sales (LCY)" = filter(<> 0));
-}
-`;
-
-        return alFormat(code).then(formattedCode =>
-            expect(formattedCode).to.equal(expected))
-    });
-
     it('Page with subpage', () => {
         const code = `
 page 50001 "Page With Subpage"
@@ -800,5 +778,62 @@ page 60000 "Page with Grid"
 `;
 
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+});
+
+describe('SourceTableView property', () => {
+    it('SourceTableView property', () => {
+        const code = `
+page 50001 "Page With One Action"
+{
+SourceTableView = sorting (Name, "No.") order(descending)
+ where ("Balance (LCY)" = filter (>= 50000), "Sales (LCY)" = filter (<> 0));
+}
+`;
+
+        const expected = `page 50001 "Page With One Action"
+{
+  SourceTableView = sorting(Name, "No.")
+    order(descending)
+    where("Balance (LCY)" = filter(>= 50000),
+      "Sales (LCY)" = filter(<> 0));
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+
+    it('Open left range in filter', () => {
+        const code = `
+page 50001 "Page With Filtered Source"
+{
+SourceTableView = where(Status = filter(.. "In Process"));
+}
+`;
+
+        const expected = `page 50001 "Page With Filtered Source"
+{
+  SourceTableView = where(Status = filter(.."In Process"));
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+
+    it('Open right range in filter', () => {
+        const code = `
+page 50001 "Page With Filtered Source"
+{
+SourceTableView = where(Status = filter("In Process"..));
+}
+`;
+
+        const expected = `page 50001 "Page With Filtered Source"
+{
+  SourceTableView = where(Status = filter("In Process"..));
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
     });
 });

@@ -72,6 +72,29 @@ codeunit 55000 MyCodeunit
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
     });
 
+    it('Time literal with milliseconds', () => {
+        const code = `
+codeunit 55000 MyCodeunit
+{
+  trigger OnRun()
+  begin
+    TimeVar := 235959.999T;
+  end;
+}
+`;
+
+        const expected = `codeunit 55000 MyCodeunit
+{
+  trigger OnRun()
+  begin
+    TimeVar := 235959.999T;
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+
     it('DateTime literal', () => {
         const code = `
 codeunit 55000 MyCodeunit

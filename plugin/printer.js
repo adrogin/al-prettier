@@ -55,6 +55,7 @@ function print(path, options, print, args) {
         case ALParser.RULE_entitlementPropertiesList:
         case ALParser.RULE_controlAddInPropertiesList:
         case ALParser.RULE_profilePropertiesList:
+        case ALParser.RULE_fieldGroupPropertiesList:
             return printObjectPropertiesList(path, options, print);
 
         case ALParser.RULE_tablePropertyItem:
@@ -67,6 +68,7 @@ function print(path, options, print, args) {
         case ALParser.RULE_queryPropertyItem:
         case ALParser.RULE_queryColumnPropertyItem:
         case ALParser.RULE_xmlPortPropertyItem:
+        case ALParser.RULE_fieldGroupPropertyItem:
             return printObjectPropertyItem(path, options, print);
 
         case ALParser.RULE_tableProperty:
@@ -86,6 +88,7 @@ function print(path, options, print, args) {
         case ALParser.RULE_reportProperty:
         case ALParser.RULE_reportDataItemProperty:
         case ALParser.RULE_xmlPortProperty:
+        case ALParser.RULE_fieldGroupProperty:
             return printObjectProperty(path, options, print);
 
         case ALParser.RULE_objectReference:
@@ -1007,7 +1010,7 @@ function printFieldGroupsList(path, options, print) {
 }
 
 function printFieldGroupItem(path, options, print) {
-    // Grammar: FIELDGROUP LPAREN fieldGroupDefinition RPAREN LBRACE RBRACE
+    // Grammar: FIELDGROUP LPAREN fieldGroupDefinition RPAREN LBRACE fieldGroupPropertiesList? RBRACE
     const fieldgroup = [
         path.call(print, 'children', 0),
         path.call(print, 'children', 1),
@@ -1015,11 +1018,14 @@ function printFieldGroupItem(path, options, print) {
         path.call(print, 'children', 3)
     ];
 
-    fieldgroup.push(options.collapseEmptyBraces ? " " : hardline);
-    fieldgroup.push(path.call(print, 'children', path.node.children.length - 2));
+    const propsIdx = path.node.children.findIndex(c => c.ruleIndex === ALParser.RULE_fieldGroupPropertiesList);
+    fieldgroup.push(options.collapseEmptyBraces && propsIdx === -1 ? " " : hardline);
+    fieldgroup.push(path.call(print, 'children', 4));
     
-    if (!options.collapseEmptyBraces) {
+    if (!options.collapseEmptyBraces || propsIdx > -1) {
         fieldgroup.push(hardline);
+    } else if (propsIdx > -1) {
+        fieldgroup.push(indent([hardline, path.call(print, 'children', propsIdx)]), hardline);
     }
 
     fieldgroup.push(path.call(print, 'children', path.node.children.length - 1));
@@ -1579,6 +1585,12 @@ function printTableRelationFilterRef(path, options, print) {
 }
 
 function printRelationFilterExpression(path, options, print) {
+    if (path.node.children.length === 2 &&
+        (path.node.children[0].symbol?.type === ALParser.RANGE_OP || path.node.children[1].symbol?.type === ALParser.RANGE_OP)
+    ) {
+        return path.map(print, 'children');
+    }
+
     return join(" ", path.map(print, 'children'));
 }
 

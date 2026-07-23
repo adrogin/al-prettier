@@ -426,3 +426,102 @@ describe('Table relation formula', () => {
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
 });
+
+describe('FielgGroups', () => {
+    it('Properties of fieldgroup', () => {
+        const code = `table 50000 MyTable
+        { fields{
+        field(1; Code; Code[10])
+        {}}
+        fieldgroups{
+        fieldgroup(DropDown; Code) {
+        Caption='This is Code';
+        }
+        }
+        }`;
+
+        const expected = `table 50000 MyTable
+{
+  fields
+  {
+    field(1; Code; Code[10]) {}
+  }
+
+  fieldgroups
+  {
+    fieldgroup(DropDown; Code)
+    {
+      Caption = 'This is Code';
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Fieldgroup with multiple properties', () => {
+        const code = `table 50000 MyTable
+        { fields{
+        field(1; Code; Code[10])
+        {}}
+        fieldgroups{
+        fieldgroup(DropDown; Code) {
+        Caption='This is Code';
+        ObsoleteState = Pending;
+        ObsoleteTag = 'v999';
+        }
+        }
+        }`;
+
+        const expected = `table 50000 MyTable
+{
+  fields
+  {
+    field(1; Code; Code[10]) {}
+  }
+
+  fieldgroups
+  {
+    fieldgroup(DropDown; Code)
+    {
+      Caption = 'This is Code';
+      ObsoleteState = Pending;
+      ObsoleteTag = 'v999';
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Fieldgroup with multiple fields', () => {
+        const code = `table 50000 MyTable
+        { fields{
+        field(1; Code; Code[10]){}
+        field(2; Description; Text[50]) {
+        }}
+        fieldgroups{
+        fieldgroup(DropDown;Code,Description) {}
+        }
+        }`;
+
+        const expected = `table 50000 MyTable
+{
+  fields
+  {
+    field(1; Code; Code[10]) {}
+    field(2; Description; Text[50]) {}
+  }
+
+  fieldgroups
+  {
+    fieldgroup(DropDown; Code, Description) {}
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+});
