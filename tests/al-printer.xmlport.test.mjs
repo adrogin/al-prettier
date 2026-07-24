@@ -365,4 +365,40 @@ xmlport 50000 ImportExportXml {
 
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
+
+    it('Nested TableElement with multiple linked fields in the LinkFields property', () => {
+        const code = `
+xmlport 50000 ImportExportXml {
+    schema
+    {
+        tableelement(DocumentHeader; "Document Header")
+        {
+            tableelement("Document Line"; "Document Line")
+            {
+                LinkFields=Code=field(Code),Type=field(Type);
+                LinkTable = DocumentHeader;
+            }
+        }
+    }
+}
+`;
+
+        const expected = `xmlport 50000 ImportExportXml
+{
+  schema
+  {
+    tableelement(DocumentHeader; "Document Header")
+    {
+      tableelement("Document Line"; "Document Line")
+      {
+        LinkFields = Code = field(Code), Type = field(Type);
+        LinkTable = DocumentHeader;
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
 });

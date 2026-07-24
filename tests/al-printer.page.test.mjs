@@ -152,120 +152,6 @@ page 50001 "Page With Three Fields"
             expect(formattedCode).to.equal(expected))
     });
 
-    it('Page with empty actions segment', () => {
-        const code = `
-page 50001 "No Actions Page"
-{
-  actions
-  {}
-}`;
-
-        const expected = `page 50001 "No Actions Page"
-{
-  actions {}
-}
-`;
-
-        return alFormat(code).then(formattedCode =>
-            expect(formattedCode).to.equal(expected))
-    });
-
-    it('Page with action', () => {
-        const code = `
-page 50001 "Page With One Action"
-{
-  actions
-  {area(navigation)
-    {group("&Action Group")
-      {
-        Caption = 'Action Group';
-        action(RunAnotherPage)
-        {Caption = 'Run Another Page';RunObject = Page "Another Page";}
-      }
-    }
-  }
-}`;
-
-        const expected = `page 50001 "Page With One Action"
-{
-  actions
-  {
-    area(navigation)
-    {
-      group("&Action Group")
-      {
-        Caption = 'Action Group';
-
-        action(RunAnotherPage)
-        {
-          Caption = 'Run Another Page';
-          RunObject = Page "Another Page";
-        }
-      }
-    }
-  }
-}
-`;
-
-        return alFormat(code).then(formattedCode =>
-            expect(formattedCode).to.equal(expected))
-    });
-
-    it('Promoted area with actionref', () => {
-        const code = `
-page 50001 "Page With One Action"
-{
-  actions
-  {area(navigation)
-    {group("&Action Group")
-      {
-        Caption = 'Action Group';
-        action(RunAnotherPage)
-        {Caption = 'Run Another Page';RunObject = Page "Another Page";}
-      }
-    }
-    area(Promoted)
-    {
-      group(PromotedGroup)
-      {
-        actionref(AnotherPage_Promoted; RunAnotherPage){}
-      }}
-  }
-}
-`;
-
-        const expected = `page 50001 "Page With One Action"
-{
-  actions
-  {
-    area(navigation)
-    {
-      group("&Action Group")
-      {
-        Caption = 'Action Group';
-
-        action(RunAnotherPage)
-        {
-          Caption = 'Run Another Page';
-          RunObject = Page "Another Page";
-        }
-      }
-    }
-    area(Promoted)
-    {
-      group(PromotedGroup)
-      {
-        actionref(AnotherPage_Promoted; RunAnotherPage) {}
-      }
-    }
-  }
-}
-`;
-
-        return alFormat(code).then(formattedCode =>
-            expect(formattedCode).to.equal(expected))
-    });
-
     it('Page with subpage', () => {
         const code = `
 page 50001 "Page With Subpage"
@@ -295,47 +181,6 @@ page 50001 "Page With Subpage"
         SubPageLink =
           "Table No." = const(Database::"My Table"),
           "No." = field("No.");
-      }
-    }
-  }
-}
-`;
-
-        return alFormat(code).then(formattedCode =>
-            expect(formattedCode).to.equal(expected))
-    });
-
-    it('RunPageLink with pipe character', () => {
-        const code = `
-page 50001 "Page With One Action"
-{
-  actions
-  {area(navigation)
-    {group("&Action Group")
-      {
-        action(RunAnotherPage)
-        {RunObject = Page "Another Page";
-        RunPageLink = "Source Type" = filter(83|5407),"Source Subtype" = filter("3"|"4"|"5");}
-      }
-    }
-  }
-}`;
-
-        const expected = `page 50001 "Page With One Action"
-{
-  actions
-  {
-    area(navigation)
-    {
-      group("&Action Group")
-      {
-        action(RunAnotherPage)
-        {
-          RunObject = Page "Another Page";
-          RunPageLink =
-            "Source Type" = filter(83 | 5407),
-            "Source Subtype" = filter("3" | "4" | "5");
-        }
       }
     }
   }
@@ -601,6 +446,42 @@ page 50001 MyPage
 
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
+
+    it('Filter inside field reference in SubPageLink', () => {
+        const code = `
+page 50001 MyPage
+{
+    layout
+    {
+        area(Content)
+        {
+            part(AdditionalInfo; "Subpage Source")
+            {
+                SubPageLink = "Order No." = field(filter("Order No.")),"Line No." = field("Line No.");
+            }
+        }
+    }
+}`;
+
+        const expected = `page 50001 MyPage
+{
+  layout
+  {
+    area(Content)
+    {
+      part(AdditionalInfo; "Subpage Source")
+      {
+        SubPageLink =
+          "Order No." = field(filter("Order No.")),
+          "Line No." = field("Line No.");
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
 });
 
 describe('Cuegroup', () => {
@@ -779,9 +660,91 @@ page 60000 "Page with Grid"
 
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
+
+    it('Grid inside a group', () => {
+        const code = `
+page 60000 "Page with Grid"
+{
+    layout
+    {
+        area(content)
+        {
+            group(GridGroup) {
+            grid(Grid)
+            {
+                Caption = 'Grid View';
+                field("Purchase Orders"; Rec."Purchase Orders")
+                {
+                }}
+            }}
+            }
+    }
+`;
+
+        const expected = `page 60000 "Page with Grid"
+{
+  layout
+  {
+    area(content)
+    {
+      group(GridGroup)
+      {
+        grid(Grid)
+        {
+          Caption = 'Grid View';
+
+          field("Purchase Orders"; Rec."Purchase Orders") {}
+        }
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Subpage in grid', () => {
+        const code = `
+page 60000 "Page with Grid"
+{
+    layout
+    {
+        area(content)
+        {
+            grid(Grid)
+            {
+                field("Purchase Orders"; Rec."Purchase Orders")
+                {
+                }
+                part(Subpage; "Subpage Source")
+                {}
+            }
+            }}
+    }
+`;
+
+        const expected = `page 60000 "Page with Grid"
+{
+  layout
+  {
+    area(content)
+    {
+      grid(Grid)
+      {
+        field("Purchase Orders"; Rec."Purchase Orders") {}
+        part(Subpage; "Subpage Source") {}
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
 });
 
-describe('SourceTableView property', () => {
+describe('SourceTable and SourceTableView properties', () => {
     it('SourceTableView property', () => {
         const code = `
 page 50001 "Page With One Action"
@@ -835,5 +798,230 @@ SourceTableView = where(Status = filter("In Process"..));
 `;
 
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+
+    it('SourceTable property', () => {
+        const code = `
+page 50001 "Page With Source"
+{
+SourceTable=MyTable;
+}
+`;
+
+        const expected = `page 50001 "Page With Source"
+{
+  SourceTable = MyTable;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+
+    it('SourceTable property, table with namespace', () => {
+        const code = `
+page 50001 "Page With Source"
+{
+SourceTable=My.Namespace.MyTable;
+}
+`;
+
+        const expected = `page 50001 "Page With Source"
+{
+  SourceTable = My.Namespace.MyTable;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+});
+
+describe('Page actions', () => {
+    it('Page with empty actions segment', () => {
+        const code = `
+page 50001 "No Actions Page"
+{
+  actions
+  {}
+}`;
+
+        const expected = `page 50001 "No Actions Page"
+{
+  actions {}
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Page with action', () => {
+        const code = `
+page 50001 "Page With One Action"
+{
+  actions
+  {area(navigation)
+    {group("&Action Group")
+      {
+        Caption = 'Action Group';
+        action(RunAnotherPage)
+        {Caption = 'Run Another Page';RunObject = Page "Another Page";}
+      }
+    }
+  }
+}`;
+
+        const expected = `page 50001 "Page With One Action"
+{
+  actions
+  {
+    area(navigation)
+    {
+      group("&Action Group")
+      {
+        Caption = 'Action Group';
+
+        action(RunAnotherPage)
+        {
+          Caption = 'Run Another Page';
+          RunObject = Page "Another Page";
+        }
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Promoted area with actionref', () => {
+        const code = `
+page 50001 "Page With One Action"
+{
+  actions
+  {area(navigation)
+    {group("&Action Group")
+      {
+        Caption = 'Action Group';
+        action(RunAnotherPage)
+        {Caption = 'Run Another Page';RunObject = Page "Another Page";}
+      }
+    }
+    area(Promoted)
+    {
+      group(PromotedGroup)
+      {
+        actionref(AnotherPage_Promoted; RunAnotherPage){}
+      }}
+  }
+}
+`;
+
+        const expected = `page 50001 "Page With One Action"
+{
+  actions
+  {
+    area(navigation)
+    {
+      group("&Action Group")
+      {
+        Caption = 'Action Group';
+
+        action(RunAnotherPage)
+        {
+          Caption = 'Run Another Page';
+          RunObject = Page "Another Page";
+        }
+      }
+    }
+    area(Promoted)
+    {
+      group(PromotedGroup)
+      {
+        actionref(AnotherPage_Promoted; RunAnotherPage) {}
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('RunPageLink with pipe character', () => {
+        const code = `
+page 50001 "Page With One Action"
+{
+  actions
+  {area(navigation)
+    {group("&Action Group")
+      {
+        action(RunAnotherPage)
+        {RunObject = Page "Another Page";
+        RunPageLink = "Source Type" = filter(83|5407),"Source Subtype" = filter("3"|"4"|"5");}
+      }
+    }
+  }
+}`;
+
+        const expected = `page 50001 "Page With One Action"
+{
+  actions
+  {
+    area(navigation)
+    {
+      group("&Action Group")
+      {
+        action(RunAnotherPage)
+        {
+          RunObject = Page "Another Page";
+          RunPageLink =
+            "Source Type" = filter(83 | 5407),
+            "Source Subtype" = filter("3" | "4" | "5");
+        }
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Empty const value in RunPageLink property', () => {
+        const code = `
+page 50001 "Page With One Action"
+{
+  actions
+  {area(navigation)
+    {group("&Action Group")
+      {
+        action(RunSomePage)
+        {RunObject = Page "Some Page";
+        RunPageLink = "Source Type" = const();}
+      }
+    }
+  }
+}`;
+
+        const expected = `page 50001 "Page With One Action"
+{
+  actions
+  {
+    area(navigation)
+    {
+      group("&Action Group")
+      {
+        action(RunSomePage)
+        {
+          RunObject = Page "Some Page";
+          RunPageLink = "Source Type" = const();
+        }
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
 });

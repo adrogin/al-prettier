@@ -36,6 +36,7 @@ function print(path, options, print, args) {
 
         case ALParser.RULE_genericObjectProperty:
         case ALParser.RULE_accessProperty:
+        case ALParser.RULE_sourceTableProperty:
             return printGenericObjectProperty(path, options, print);
 
         case ALParser.RULE_tablePropertiesList:
@@ -51,6 +52,7 @@ function print(path, options, print, args) {
         case ALParser.RULE_reportPropertiesList:
         case ALParser.RULE_reportDataItemPropertiesList:
         case ALParser.RULE_xmlPortPropertiesList:
+        case ALParser.RULE_tableElementPropertiesList:
         case ALParser.RULE_permissionSetPropertiesList:
         case ALParser.RULE_entitlementPropertiesList:
         case ALParser.RULE_controlAddInPropertiesList:
@@ -68,6 +70,7 @@ function print(path, options, print, args) {
         case ALParser.RULE_queryPropertyItem:
         case ALParser.RULE_queryColumnPropertyItem:
         case ALParser.RULE_xmlPortPropertyItem:
+        case ALParser.RULE_tableElementPropertyItem:
         case ALParser.RULE_fieldGroupPropertyItem:
             return printObjectPropertyItem(path, options, print);
 
@@ -88,6 +91,7 @@ function print(path, options, print, args) {
         case ALParser.RULE_reportProperty:
         case ALParser.RULE_reportDataItemProperty:
         case ALParser.RULE_xmlPortProperty:
+        case ALParser.RULE_tableElementProperty:
         case ALParser.RULE_fieldGroupProperty:
             return printObjectProperty(path, options, print);
 
@@ -378,6 +382,7 @@ function print(path, options, print, args) {
             return printQueryDataItemDefinition(path, options, print);
 
         case ALParser.RULE_queryDataItemLinkProperty:
+        case ALParser.RULE_linkFieldsProperty:
         case ALParser.RULE_dataItemTableFilterProp:
         case ALParser.RULE_columnFilterProp:
             return printDataItemLinkProperty(path, options, print);
@@ -2359,7 +2364,9 @@ function printXmlPortElementContent(path, options, print) {
         schemaElementsEnd--;
     }
 
-    if (path.node.children[schemaElementsStart].ruleIndex === ALParser.RULE_xmlPortPropertiesList) {
+    if (path.node.children[schemaElementsStart].ruleIndex === ALParser.RULE_tableElementPropertiesList ||
+        path.node.children[schemaElementsStart].ruleIndex === ALParser.RULE_xmlPortPropertiesList
+    ) {
         const props = path.call(print, 'children', schemaElementsStart++);
         if (schemaElementsStart < path.node.children.length - 1) {
             props.push(hardline);
@@ -2854,7 +2861,7 @@ function printWhileLoopStatement(path, options, print) {
 }
 
 function printCaseStatement(path, options, print) {
-    // Grammar: CASE expression OF caseBranch+ (elseStatement SEMICOLON?)? END
+    // Grammar: CASE expression OF caseBranch* (elseStatement SEMICOLON?)? END
     const children = path.node.children;
     const caseKeyword = path.call(print, 'children', 0);
     const ofKeyword = path.call(print, 'children', 2);
@@ -2874,7 +2881,15 @@ function printCaseStatement(path, options, print) {
         branches.push(elseBranch);
     }
 
-    return [caseKeyword, " ", switchExpr, " ", ofKeyword, indent([hardline, join(hardline, branches)]), hardline, endKeyword];
+    const stmt = [];
+    stmt.push(caseKeyword, " ", switchExpr, " ", ofKeyword);
+    
+    if (branches.length > 0) {
+        stmt.push(indent([hardline, join(hardline, branches)]));
+    }
+
+    stmt.push(hardline, endKeyword);
+    return stmt;
 }
 
 function printCaseBranch(path, options, print) {

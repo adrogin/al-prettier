@@ -602,6 +602,31 @@ codeunit 50000 MyCodeunit
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
+
+    it('Case without options', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  trigger OnRun()
+  begin
+    case a of end;
+  end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  trigger OnRun()
+  begin
+    case a of
+    end;
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
 });
 
 describe('Blank lines in statements list', () => {
