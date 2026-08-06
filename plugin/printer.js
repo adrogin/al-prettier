@@ -475,6 +475,11 @@ function print(path, options, print, args) {
         case ALParser.RULE_eventDeclaration:
             return printControlAddInEventDeclaration(path, options, print);
 
+        case ALParser.RULE_imagesList:
+        case ALParser.RULE_scriptsList:
+        case ALParser.RULE_stylesheetsList:
+            return printControlAddinImportsList(path, options, print);
+
         case ALParser.RULE_reportDatasetModification:
             return printReportDatasetModification(path, options, print);
 
@@ -2421,6 +2426,32 @@ function printControlAddInEventDeclaration(path, options, print) {
         path.call(print, 'children', 4),
         path.call(print, 'children', 5)
     ];
+}
+
+function printControlAddinImportsList(path, options, print) {
+    // Grammar: IMAGES EQUAL STRING_LITERAL (COMMA STRING_LITERAL)*
+    //          SCRIPTS EQUAL STRING_LITERAL (COMMA STRING_LITERAL)*
+    //          STYLESHEETS EQUAL STRING_LITERAL (COMMA STRING_LITERAL)*
+
+    const docs = [
+        path.call(print, 'children', 0),
+        ' ',
+        path.call(print, 'children', 1)
+    ];
+
+    const imports = [path.call(print, 'children', 2)];
+
+    for (let i = 3; i < path.node.children.length - 1; i += 2) {
+        imports.push(
+            path.call(print, 'children', i),
+            line,
+            path.call(print, 'children', i + 1)
+        );
+    }
+
+    docs.push(group(indent([line, imports])));
+
+    return docs;
 }
 
 function printReportDatasetModification(path, options, print) {

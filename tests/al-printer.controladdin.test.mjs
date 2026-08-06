@@ -68,4 +68,54 @@ internal procedure PaintItBlack();
 
         return alFormat(code, { removeEmptyElements: true }).then(formattedCode => expect(formattedCode).to.equal(expected))
     });
+
+    it('ControlAddIn with multiple scripts and stylesheets, long line', () => {
+        const code = `
+controladdin "NiceUIControl"
+{
+    Images = 'ControlAddin/Images/Image1.png', 'ControlAddin/Images/Image2.png', 'ControlAddin/Images/Image3.png';
+    Stylesheets = 'StyleSheets/style1.css', 'StyleSheets/style2.css', 'StyleSheets/style3.css';
+    Scripts = 'Scripts/index.js', 'Scripts/chunk1.js', 'Scripts/chunk2.js', 'Scripts/chunk3.js';
+}`;
+
+        const expected = `controladdin "NiceUIControl"
+{
+  Images =
+    'ControlAddin/Images/Image1.png',
+    'ControlAddin/Images/Image2.png',
+    'ControlAddin/Images/Image3.png';
+  Stylesheets =
+    'StyleSheets/style1.css',
+    'StyleSheets/style2.css',
+    'StyleSheets/style3.css';
+  Scripts =
+    'Scripts/index.js',
+    'Scripts/chunk1.js',
+    'Scripts/chunk2.js',
+    'Scripts/chunk3.js';
+}
+`;
+
+        return alFormat(code, { removeEmptyElements: true }).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+
+    it('ControlAddIn with multiple scripts and stylesheets, short line', () => {
+        const code = `
+controladdin "NiceUIControl"
+{
+    Images = 'Images/Image1.png', 'Images/Image2.png';
+    Stylesheets = 'StyleSheets/style1.css', 'StyleSheets/style2.css';
+    Scripts = 'Scripts/index.js', 'Scripts/chunk1.js', 'Scripts/chunk2.js';
+}`;
+
+        const expected = `controladdin "NiceUIControl"
+{
+  Images = 'Images/Image1.png', 'Images/Image2.png';
+  Stylesheets = 'StyleSheets/style1.css', 'StyleSheets/style2.css';
+  Scripts = 'Scripts/index.js', 'Scripts/chunk1.js', 'Scripts/chunk2.js';
+}
+`;
+
+        return alFormat(code, { removeEmptyElements: true }).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
 });
