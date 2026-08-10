@@ -118,4 +118,22 @@ controladdin "NiceUIControl"
 
         return alFormat(code, { removeEmptyElements: true }).then(formattedCode => expect(formattedCode).to.equal(expected))
     });
+
+    it('Long ControlAddIn event declaration', () => {
+        const code = `
+controladdin "NiceUIControl"
+{
+  event VeryLongControlAddInEventName(AndVeryLongParameterNameToo: Text; AnotherVeryLongParameterName: Text);
+}`;
+
+        const expected = `controladdin "NiceUIControl"
+{
+  event VeryLongControlAddInEventName(
+    AndVeryLongParameterNameToo: Text;
+    AnotherVeryLongParameterName: Text);
+}
+`;
+
+        return alFormat(code, { removeEmptyElements: true }).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
 });

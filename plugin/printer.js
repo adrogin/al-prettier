@@ -2422,10 +2422,14 @@ function printControlAddInEventDeclaration(path, options, print) {
         " ",
         path.call(print, 'children', 1),
         path.call(print, 'children', 2),
-        path.call(print, 'children', 3),
-        path.call(print, 'children', 4),
-        path.call(print, 'children', 5)
-    ];
+        group(
+            indent([
+                softline,
+                path.call(print, 'children', 3),
+                path.call(print, 'children', 4),
+                path.call(print, 'children', 5)
+            ])
+        )];
 }
 
 function printControlAddinImportsList(path, options, print) {
