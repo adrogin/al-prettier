@@ -1025,3 +1025,47 @@ page 50001 "Page With One Action"
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
 });
+
+describe('Fixed layout', () => {
+    it('Fixed layout with properties and fields', () => {
+        const code = `
+page 50001 "Page With Fixed Layout"
+{
+    layout
+    {
+        area(Content)
+        {
+            fixed(Fixed)
+            {
+            ShowCaption = false;
+            group(FixedGroup)
+            {
+                field(FixedField1; FieldDataSource1) {}
+                field(FixedField2; FieldDataSource2) {}
+    }}}}}
+`;
+
+        const expected = `page 50001 "Page With Fixed Layout"
+{
+  layout
+  {
+    area(Content)
+    {
+      fixed(Fixed)
+      {
+        ShowCaption = false;
+
+        group(FixedGroup)
+        {
+          field(FixedField1; FieldDataSource1) {}
+          field(FixedField2; FieldDataSource2) {}
+        }
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+});

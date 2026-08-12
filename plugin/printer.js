@@ -211,6 +211,7 @@ function print(path, options, print, args) {
         case ALParser.RULE_groupDefinition:
         case ALParser.RULE_cueGroupDefinition:
         case ALParser.RULE_gridControlDefinition:
+        case ALParser.RULE_fixedLayoutDefinition:
             return printPageSegmentDefinition(path, options, print);
 
         case ALParser.RULE_areaElements:
@@ -219,6 +220,7 @@ function print(path, options, print, args) {
         case ALParser.RULE_groupElements:
         case ALParser.RULE_cueGroupElements:
         case ALParser.RULE_gridControlElements:
+        case ALParser.RULE_fixedLayoutElements:
             return printGroupElements(path, options, print);
 
         case ALParser.RULE_groupPropertyItem:
@@ -1208,7 +1210,8 @@ function printGroupElements(path, options, print) {
     // Inserting an empty line after the properties block if there is one
     if ([
         ALParser.RULE_groupPropertiesList,
-        ALParser.RULE_gridPropertiesList
+        ALParser.RULE_gridPropertiesList,
+        ALParser.RULE_fixedLayoutPropertiesList
     ].includes(children[0].ruleIndex)) {
         layoutElementsStartIndex = 1;
         docs.push([path.call(print, 'children', 0), hardline]);
