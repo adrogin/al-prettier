@@ -1024,6 +1024,46 @@ page 50001 "Page With One Action"
 
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
+
+    it('RunPageLink with filter and empty const', () => {
+        const code = `
+page 50001 "Page With One Action"
+{
+  actions
+  {area(navigation)
+    {group("&Action Group")
+      {
+        action(RunSomePage)
+        {RunObject = Page "Some Page";
+        RunPageLink = "Item No." = field("Item No."),"Variant Code" = const();}
+      }
+    }
+  }
+}`;
+
+        const expected = `page 50001 "Page With One Action"
+{
+  actions
+  {
+    area(navigation)
+    {
+      group("&Action Group")
+      {
+        action(RunSomePage)
+        {
+          RunObject = Page "Some Page";
+          RunPageLink =
+            "Item No." = field("Item No."),
+            "Variant Code" = const();
+        }
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
 });
 
 describe('Fixed layout', () => {
