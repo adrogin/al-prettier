@@ -361,6 +361,29 @@ end;
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
+
+    it('"var" keyword is removed if not followed by variable declarations', () => {
+        const code = `
+codeunit 50001 MyCodeunit
+{
+  procedure DoStuff()
+  var
+  begin
+  end;
+}
+`;
+
+        const expected = `codeunit 50001 MyCodeunit
+{
+  procedure DoStuff()
+  begin
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
 });
 
 describe('Complex variable types', () => {
@@ -498,7 +521,26 @@ codeunit 50000 MyCodeunit
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
-})
+
+    it('Commas without identifiers in option declaration', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  var OptionVar: Option Option1,,,,Option5,,Option7;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  var
+    OptionVar: Option Option1,,,, Option5,, Option7;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+});
 
 describe('Quoted variable names', () => {
     it('Quote marks inside a quoted identifier', () => {
@@ -711,6 +753,77 @@ table 50000 MyTable
   {
     field(1; "Entry No."; Integer) {}
   }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('ControlAddin variable', () => {
+        const code = `
+codeunit 55555 MyCodeunit
+{
+  procedure InvokeControlAddin(var Addin: ControlAddin MyAddin)
+  begin
+    Addin.InvokeMethod();
+  end;
+}
+`;
+
+        const expected = `codeunit 55555 MyCodeunit
+{
+  procedure InvokeControlAddin(var Addin: ControlAddin MyAddin)
+  begin
+    Addin.InvokeMethod();
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Codeunit ID instead of name in variable type', () => {
+        const code = `
+codeunit 55555 MyCodeunit
+{
+  procedure TakeOverTheWorld()
+  var Helper: Codeunit 10;
+  begin
+  end;
+}
+`;
+
+        const expected = `codeunit 55555 MyCodeunit
+{
+  procedure TakeOverTheWorld()
+  var
+    Helper: Codeunit 10;
+  begin
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Record ID instead of name in variable type', () => {
+        const code = `
+codeunit 55555 MyCodeunit
+{
+  procedure GetGLEntry()
+  var GLEntry: Record 17;
+  begin
+  end;
+}
+`;
+
+        const expected = `codeunit 55555 MyCodeunit
+{
+  procedure GetGLEntry()
+  var
+    GLEntry: Record 17;
+  begin
+  end;
 }
 `;
 

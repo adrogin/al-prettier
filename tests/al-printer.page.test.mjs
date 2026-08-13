@@ -152,142 +152,6 @@ page 50001 "Page With Three Fields"
             expect(formattedCode).to.equal(expected))
     });
 
-    it('Page with empty actions segment', () => {
-        const code = `
-page 50001 "No Actions Page"
-{
-  actions
-  {}
-}`;
-
-        const expected = `page 50001 "No Actions Page"
-{
-  actions {}
-}
-`;
-
-        return alFormat(code).then(formattedCode =>
-            expect(formattedCode).to.equal(expected))
-    });
-
-    it('Page with action', () => {
-        const code = `
-page 50001 "Page With One Action"
-{
-  actions
-  {area(navigation)
-    {group("&Action Group")
-      {
-        Caption = 'Action Group';
-        action(RunAnotherPage)
-        {Caption = 'Run Another Page';RunObject = Page "Another Page";}
-      }
-    }
-  }
-}`;
-
-        const expected = `page 50001 "Page With One Action"
-{
-  actions
-  {
-    area(navigation)
-    {
-      group("&Action Group")
-      {
-        Caption = 'Action Group';
-
-        action(RunAnotherPage)
-        {
-          Caption = 'Run Another Page';
-          RunObject = Page "Another Page";
-        }
-      }
-    }
-  }
-}
-`;
-
-        return alFormat(code).then(formattedCode =>
-            expect(formattedCode).to.equal(expected))
-    });
-
-    it('Promoted area with actionref', () => {
-        const code = `
-page 50001 "Page With One Action"
-{
-  actions
-  {area(navigation)
-    {group("&Action Group")
-      {
-        Caption = 'Action Group';
-        action(RunAnotherPage)
-        {Caption = 'Run Another Page';RunObject = Page "Another Page";}
-      }
-    }
-    area(Promoted)
-    {
-      group(PromotedGroup)
-      {
-        actionref(AnotherPage_Promoted; RunAnotherPage){}
-      }}
-  }
-}
-`;
-
-        const expected = `page 50001 "Page With One Action"
-{
-  actions
-  {
-    area(navigation)
-    {
-      group("&Action Group")
-      {
-        Caption = 'Action Group';
-
-        action(RunAnotherPage)
-        {
-          Caption = 'Run Another Page';
-          RunObject = Page "Another Page";
-        }
-      }
-    }
-    area(Promoted)
-    {
-      group(PromotedGroup)
-      {
-        actionref(AnotherPage_Promoted; RunAnotherPage) {}
-      }
-    }
-  }
-}
-`;
-
-        return alFormat(code).then(formattedCode =>
-            expect(formattedCode).to.equal(expected))
-    });
-
-    it('SourceTableView property', () => {
-        const code = `
-page 50001 "Page With One Action"
-{
-SourceTableView = sorting (Name, "No.") order(descending)
- where ("Balance (LCY)" = filter (>= 50000), "Sales (LCY)" = filter (<> 0));
-}
-`;
-
-        const expected = `page 50001 "Page With One Action"
-{
-  SourceTableView = sorting(Name, "No.")
-    order(descending)
-    where("Balance (LCY)" = filter(>= 50000),
-      "Sales (LCY)" = filter(<> 0));
-}
-`;
-
-        return alFormat(code).then(formattedCode =>
-            expect(formattedCode).to.equal(expected))
-    });
-
     it('Page with subpage', () => {
         const code = `
 page 50001 "Page With Subpage"
@@ -317,47 +181,6 @@ page 50001 "Page With Subpage"
         SubPageLink =
           "Table No." = const(Database::"My Table"),
           "No." = field("No.");
-      }
-    }
-  }
-}
-`;
-
-        return alFormat(code).then(formattedCode =>
-            expect(formattedCode).to.equal(expected))
-    });
-
-    it('RunPageLink with pipe character', () => {
-        const code = `
-page 50001 "Page With One Action"
-{
-  actions
-  {area(navigation)
-    {group("&Action Group")
-      {
-        action(RunAnotherPage)
-        {RunObject = Page "Another Page";
-        RunPageLink = "Source Type" = filter(83|5407),"Source Subtype" = filter("3"|"4"|"5");}
-      }
-    }
-  }
-}`;
-
-        const expected = `page 50001 "Page With One Action"
-{
-  actions
-  {
-    area(navigation)
-    {
-      group("&Action Group")
-      {
-        action(RunAnotherPage)
-        {
-          RunObject = Page "Another Page";
-          RunPageLink =
-            "Source Type" = filter(83 | 5407),
-            "Source Subtype" = filter("3" | "4" | "5");
-        }
       }
     }
   }
@@ -546,7 +369,7 @@ page 50001 "Page with Systempart"
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
 
-    it('Part element insode a repeater', () => {
+    it('Part element inside a repeater', () => {
         const code = `
 page 50001 MyPage
 {
@@ -578,6 +401,704 @@ page 50001 MyPage
         part(salesPriceItems; "Customer List")
         {
           SubPageLink = "No." = field("No.");
+        }
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('SubPageView property', () => {
+        const code = `
+page 50001 MyPage
+{
+    layout
+    {
+        area(Content)
+        {
+            part(AdditionalInfo; "Subpage Source")
+            {
+                SubPageLink = "No." = field("No.");
+                SubPageView = sorting("Customer No.", "Start Date") order(descending);
+            }
+        }
+    }
+}`;
+
+        const expected = `page 50001 MyPage
+{
+  layout
+  {
+    area(Content)
+    {
+      part(AdditionalInfo; "Subpage Source")
+      {
+        SubPageLink = "No." = field("No.");
+        SubPageView = sorting("Customer No.", "Start Date") order(descending);
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Filter inside field reference in SubPageLink', () => {
+        const code = `
+page 50001 MyPage
+{
+    layout
+    {
+        area(Content)
+        {
+            part(AdditionalInfo; "Subpage Source")
+            {
+                SubPageLink = "Order No." = field(filter("Order No.")),"Line No." = field("Line No.");
+            }
+        }
+    }
+}`;
+
+        const expected = `page 50001 MyPage
+{
+  layout
+  {
+    area(Content)
+    {
+      part(AdditionalInfo; "Subpage Source")
+      {
+        SubPageLink =
+          "Order No." = field(filter("Order No.")),
+          "Line No." = field("Line No.");
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+});
+
+describe('Cuegroup', () => {
+    it('Cuegroup with properties and fields', () => {
+        const code = `
+page 60000 "Page with Cuegroup"
+{
+    layout
+    {
+        area(content)
+        {
+            cuegroup(Documents)
+            {
+                Caption = 'Documents';
+                field("Purchase Orders"; Rec."Purchase Orders")
+                {
+                    DrillDown = true;
+                    DrillDownPageID = "Purch. Order";
+                }
+                field("Transfer Orders"; Rec."Transfer Orders")
+                {
+                    DrillDownPageID = "Transfer List";
+                }
+            }
+    }}}
+`;
+
+        const expected = `page 60000 "Page with Cuegroup"
+{
+  layout
+  {
+    area(content)
+    {
+      cuegroup(Documents)
+      {
+        Caption = 'Documents';
+
+        field("Purchase Orders"; Rec."Purchase Orders")
+        {
+          DrillDown = true;
+          DrillDownPageID = "Purch. Order";
+        }
+        field("Transfer Orders"; Rec."Transfer Orders")
+        {
+          DrillDownPageID = "Transfer List";
+        }
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+});
+
+describe('Grid layout', () => {
+    it('Grid with two groups', () => {
+        const code = `
+page 60000 "Page with Grid"
+{
+    layout
+    {
+        area(content)
+        {
+            grid(Grid)
+            {
+                Caption = 'Grid View';
+                group(Group1) {
+                field("Purchase Orders"; Rec."Purchase Orders")
+                {
+                    DrillDown = true;
+                    DrillDownPageID = "Purch. Order";
+                }}
+                group(Group2) {
+                field("Transfer Orders"; Rec."Transfer Orders")
+                {
+                    DrillDownPageID = "Transfer List";
+            }}
+            }
+    }}}
+`;
+
+        const expected = `page 60000 "Page with Grid"
+{
+  layout
+  {
+    area(content)
+    {
+      grid(Grid)
+      {
+        Caption = 'Grid View';
+
+        group(Group1)
+        {
+          field("Purchase Orders"; Rec."Purchase Orders")
+          {
+            DrillDown = true;
+            DrillDownPageID = "Purch. Order";
+          }
+        }
+        group(Group2)
+        {
+          field("Transfer Orders"; Rec."Transfer Orders")
+          {
+            DrillDownPageID = "Transfer List";
+          }
+        }
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Grid with groups and fields', () => {
+        const code = `
+page 60000 "Page with Grid"
+{
+    layout
+    {
+        area(content)
+        {
+            grid(Grid)
+            {
+                Caption = 'Grid View';
+                group(Group1) {
+                field("Purchase Orders"; Rec."Purchase Orders")
+                {
+                    DrillDown = true;
+                    DrillDownPageID = "Purch. Order";
+                }}
+                field(JustAnotherField; Rec."Source for Another Field") {}
+                group(Group2) {
+                field("Transfer Orders"; Rec."Transfer Orders")
+                {
+                    DrillDownPageID = "Transfer List";
+            }}
+            }
+    }}}
+`;
+
+        const expected = `page 60000 "Page with Grid"
+{
+  layout
+  {
+    area(content)
+    {
+      grid(Grid)
+      {
+        Caption = 'Grid View';
+
+        group(Group1)
+        {
+          field("Purchase Orders"; Rec."Purchase Orders")
+          {
+            DrillDown = true;
+            DrillDownPageID = "Purch. Order";
+          }
+        }
+        field(JustAnotherField; Rec."Source for Another Field") {}
+        group(Group2)
+        {
+          field("Transfer Orders"; Rec."Transfer Orders")
+          {
+            DrillDownPageID = "Transfer List";
+          }
+        }
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Grid inside a group', () => {
+        const code = `
+page 60000 "Page with Grid"
+{
+    layout
+    {
+        area(content)
+        {
+            group(GridGroup) {
+            grid(Grid)
+            {
+                Caption = 'Grid View';
+                field("Purchase Orders"; Rec."Purchase Orders")
+                {
+                }}
+            }}
+            }
+    }
+`;
+
+        const expected = `page 60000 "Page with Grid"
+{
+  layout
+  {
+    area(content)
+    {
+      group(GridGroup)
+      {
+        grid(Grid)
+        {
+          Caption = 'Grid View';
+
+          field("Purchase Orders"; Rec."Purchase Orders") {}
+        }
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Subpage in grid', () => {
+        const code = `
+page 60000 "Page with Grid"
+{
+    layout
+    {
+        area(content)
+        {
+            grid(Grid)
+            {
+                field("Purchase Orders"; Rec."Purchase Orders")
+                {
+                }
+                part(Subpage; "Subpage Source")
+                {}
+            }
+            }}
+    }
+`;
+
+        const expected = `page 60000 "Page with Grid"
+{
+  layout
+  {
+    area(content)
+    {
+      grid(Grid)
+      {
+        field("Purchase Orders"; Rec."Purchase Orders") {}
+        part(Subpage; "Subpage Source") {}
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+});
+
+describe('SourceTable and SourceTableView properties', () => {
+    it('SourceTableView property', () => {
+        const code = `
+page 50001 "Page With One Action"
+{
+SourceTableView = sorting (Name, "No.") order(descending)
+ where ("Balance (LCY)" = filter (>= 50000), "Sales (LCY)" = filter (<> 0));
+}
+`;
+
+        const expected = `page 50001 "Page With One Action"
+{
+  SourceTableView = sorting(Name, "No.")
+    order(descending)
+    where("Balance (LCY)" = filter(>= 50000),
+      "Sales (LCY)" = filter(<> 0));
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+
+    it('Open left range in filter', () => {
+        const code = `
+page 50001 "Page With Filtered Source"
+{
+SourceTableView = where(Status = filter(.. "In Process"));
+}
+`;
+
+        const expected = `page 50001 "Page With Filtered Source"
+{
+  SourceTableView = where(Status = filter(.."In Process"));
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+
+    it('Open right range in filter', () => {
+        const code = `
+page 50001 "Page With Filtered Source"
+{
+SourceTableView = where(Status = filter("In Process"..));
+}
+`;
+
+        const expected = `page 50001 "Page With Filtered Source"
+{
+  SourceTableView = where(Status = filter("In Process"..));
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+
+    it('SourceTable property', () => {
+        const code = `
+page 50001 "Page With Source"
+{
+SourceTable=MyTable;
+}
+`;
+
+        const expected = `page 50001 "Page With Source"
+{
+  SourceTable = MyTable;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+
+    it('SourceTable property, table with namespace', () => {
+        const code = `
+page 50001 "Page With Source"
+{
+SourceTable=My.Namespace.MyTable;
+}
+`;
+
+        const expected = `page 50001 "Page With Source"
+{
+  SourceTable = My.Namespace.MyTable;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+});
+
+describe('Page actions', () => {
+    it('Page with empty actions segment', () => {
+        const code = `
+page 50001 "No Actions Page"
+{
+  actions
+  {}
+}`;
+
+        const expected = `page 50001 "No Actions Page"
+{
+  actions {}
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Page with action', () => {
+        const code = `
+page 50001 "Page With One Action"
+{
+  actions
+  {area(navigation)
+    {group("&Action Group")
+      {
+        Caption = 'Action Group';
+        action(RunAnotherPage)
+        {Caption = 'Run Another Page';RunObject = Page "Another Page";}
+      }
+    }
+  }
+}`;
+
+        const expected = `page 50001 "Page With One Action"
+{
+  actions
+  {
+    area(navigation)
+    {
+      group("&Action Group")
+      {
+        Caption = 'Action Group';
+
+        action(RunAnotherPage)
+        {
+          Caption = 'Run Another Page';
+          RunObject = Page "Another Page";
+        }
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Promoted area with actionref', () => {
+        const code = `
+page 50001 "Page With One Action"
+{
+  actions
+  {area(navigation)
+    {group("&Action Group")
+      {
+        Caption = 'Action Group';
+        action(RunAnotherPage)
+        {Caption = 'Run Another Page';RunObject = Page "Another Page";}
+      }
+    }
+    area(Promoted)
+    {
+      group(PromotedGroup)
+      {
+        actionref(AnotherPage_Promoted; RunAnotherPage){}
+      }}
+  }
+}
+`;
+
+        const expected = `page 50001 "Page With One Action"
+{
+  actions
+  {
+    area(navigation)
+    {
+      group("&Action Group")
+      {
+        Caption = 'Action Group';
+
+        action(RunAnotherPage)
+        {
+          Caption = 'Run Another Page';
+          RunObject = Page "Another Page";
+        }
+      }
+    }
+    area(Promoted)
+    {
+      group(PromotedGroup)
+      {
+        actionref(AnotherPage_Promoted; RunAnotherPage) {}
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('RunPageLink with pipe character', () => {
+        const code = `
+page 50001 "Page With One Action"
+{
+  actions
+  {area(navigation)
+    {group("&Action Group")
+      {
+        action(RunAnotherPage)
+        {RunObject = Page "Another Page";
+        RunPageLink = "Source Type" = filter(83|5407),"Source Subtype" = filter("3"|"4"|"5");}
+      }
+    }
+  }
+}`;
+
+        const expected = `page 50001 "Page With One Action"
+{
+  actions
+  {
+    area(navigation)
+    {
+      group("&Action Group")
+      {
+        action(RunAnotherPage)
+        {
+          RunObject = Page "Another Page";
+          RunPageLink =
+            "Source Type" = filter(83 | 5407),
+            "Source Subtype" = filter("3" | "4" | "5");
+        }
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Empty const value in RunPageLink property', () => {
+        const code = `
+page 50001 "Page With One Action"
+{
+  actions
+  {area(navigation)
+    {group("&Action Group")
+      {
+        action(RunSomePage)
+        {RunObject = Page "Some Page";
+        RunPageLink = "Source Type" = const();}
+      }
+    }
+  }
+}`;
+
+        const expected = `page 50001 "Page With One Action"
+{
+  actions
+  {
+    area(navigation)
+    {
+      group("&Action Group")
+      {
+        action(RunSomePage)
+        {
+          RunObject = Page "Some Page";
+          RunPageLink = "Source Type" = const();
+        }
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('RunPageLink with filter and empty const', () => {
+        const code = `
+page 50001 "Page With One Action"
+{
+  actions
+  {area(navigation)
+    {group("&Action Group")
+      {
+        action(RunSomePage)
+        {RunObject = Page "Some Page";
+        RunPageLink = "Item No." = field("Item No."),"Variant Code" = const();}
+      }
+    }
+  }
+}`;
+
+        const expected = `page 50001 "Page With One Action"
+{
+  actions
+  {
+    area(navigation)
+    {
+      group("&Action Group")
+      {
+        action(RunSomePage)
+        {
+          RunObject = Page "Some Page";
+          RunPageLink =
+            "Item No." = field("Item No."),
+            "Variant Code" = const();
+        }
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+});
+
+describe('Fixed layout', () => {
+    it('Fixed layout with properties and fields', () => {
+        const code = `
+page 50001 "Page With Fixed Layout"
+{
+    layout
+    {
+        area(Content)
+        {
+            fixed(Fixed)
+            {
+            ShowCaption = false;
+            group(FixedGroup)
+            {
+                field(FixedField1; FieldDataSource1) {}
+                field(FixedField2; FieldDataSource2) {}
+    }}}}}
+`;
+
+        const expected = `page 50001 "Page With Fixed Layout"
+{
+  layout
+  {
+    area(Content)
+    {
+      fixed(Fixed)
+      {
+        ShowCaption = false;
+
+        group(FixedGroup)
+        {
+          field(FixedField1; FieldDataSource1) {}
+          field(FixedField2; FieldDataSource2) {}
         }
       }
     }

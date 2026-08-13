@@ -267,7 +267,7 @@ codeunit 50000 MyCodeunit
 {
   procedure EvaluateConditions(CodeValue: Code[10]; IntegerValue: Integer): Boolean
   begin
-    exit(CodeValue in ['CodeA', 'CodeB', 'CodeC'] or (IntegerValue < 0 and Integer > -99));
+    exit(CodeValue in ['CodeA', 'CodeB', 'CodeC'] or (IntegerValue < 0 and IntegerValue > -99));
   end;
 }
 `;
@@ -280,7 +280,7 @@ codeunit 50000 MyCodeunit
   begin
     exit(
       CodeValue in ['CodeA', 'CodeB', 'CodeC'] or
-        (IntegerValue < 0 and Integer > -99));
+      (IntegerValue < 0 and IntegerValue > -99));
   end;
 }
 `;
@@ -594,6 +594,31 @@ codeunit 50000 MyCodeunit
         CallProcedure1();
       2:
         CallProcedure2();
+    end;
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Case without options', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  trigger OnRun()
+  begin
+    case a of end;
+  end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  trigger OnRun()
+  begin
+    case a of
     end;
   end;
 }
@@ -1172,6 +1197,56 @@ end;
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
+
+    it('Get character from an array of strings', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+procedure ArrayAccess()
+var
+  ArrayOfStrings: array[10] of Text[50];
+begin
+Char := ArrayOfStrings[1][20];
+end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure ArrayAccess()
+  var
+    ArrayOfStrings: array[10] of Text[50];
+  begin
+    Char := ArrayOfStrings[1][20];
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+
+    it('Get character from a text function return value', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+    internal procedure GetDecimalSeparator(): Text
+    begin
+        exit(Format(5.5) [2]);
+    end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  internal procedure GetDecimalSeparator(): Text
+  begin
+    exit(Format(5.5)[2]);
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
 });
 
 describe('Ternary operator', () => {
@@ -1311,6 +1386,105 @@ codeunit 50000 MyCodeunit
   procedure Shorthand()
   begin
     A /= B;
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+});
+
+describe('Data types and identifiers as object members', () => {
+    it('Record function on FieldRef', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure CallRecord()
+  begin
+    RecRef := FieldRef.Record();
+  end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure CallRecord()
+  begin
+    RecRef := FieldRef.Record();
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+});
+
+describe('Object definition keywords as AL identifiers', () => {
+    it('Adding value to list', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure AddOne()
+  var NumbersList:List of [Integer];
+  begin
+    NumbersList.Add(1);
+  end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure AddOne()
+  var
+    NumbersList: List of [Integer];
+  begin
+    NumbersList.Add(1);
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Record Modify function', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure ModifyRecord(var Buf: Record "Name/Value Buffer")
+  begin
+    Buf.Modify(true);
+  end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure ModifyRecord(var Buf: Record "Name/Value Buffer")
+  begin
+    Buf.Modify(true);
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('OptionMembers function', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure GetOptionMembers(FieldRef: FieldRef): Text
+  begin
+    exit(FieldRef.OptionMembers());
+  end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure GetOptionMembers(FieldRef: FieldRef): Text
+  begin
+    exit(FieldRef.OptionMembers());
   end;
 }
 `;

@@ -225,4 +225,93 @@ report 50000 "Report with empty labels section"
         return alFormat(code, { removeEmptyElements: true }).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
+
+    it('Empty request page in XMLport is removed when option is on', () => {
+        const code = `
+xmlport 50001 MyTestXmlPort
+{
+  schema
+  {
+    textelement(RootNode)
+    {
+      tableelement(TableElement; "TableElement Source")
+      {
+        fieldelement(DocumentType; TableElement."Document Type") {}
+      }
+    }
+  }
+
+  requestpage
+  {
+    layout
+    {
+    }
+  }
+}`;
+
+        const expected = `xmlport 50001 MyTestXmlPort
+{
+  schema
+  {
+    textelement(RootNode)
+    {
+      tableelement(TableElement; "TableElement Source")
+      {
+        fieldelement(DocumentType; TableElement."Document Type") {}
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code, { removeEmptyElements: true }).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Empty request page in XMLport is preserved when option is off', () => {
+        const code = `
+xmlport 50001 MyTestXmlPort
+{
+  schema
+  {
+    textelement(RootNode)
+    {
+      tableelement(TableElement; "TableElement Source")
+      {
+        fieldelement(DocumentType; TableElement."Document Type") {}
+      }
+    }
+  }
+
+  requestpage
+  {
+    layout
+    {
+    }
+  }
+}`;
+
+        const expected = `xmlport 50001 MyTestXmlPort
+{
+  schema
+  {
+    textelement(RootNode)
+    {
+      tableelement(TableElement; "TableElement Source")
+      {
+        fieldelement(DocumentType; TableElement."Document Type") {}
+      }
+    }
+  }
+
+  requestpage
+  {
+    layout {}
+  }
+}
+`;
+
+        return alFormat(code, { removeEmptyElements: false }).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
 });

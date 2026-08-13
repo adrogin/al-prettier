@@ -209,4 +209,196 @@ xmlport 50001 MyTestXmlPort
 
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
+
+    it('XmlPort with request page', () => {
+        const code = `
+xmlport 50001 MyTestXmlPort
+{
+    schema{
+        textelement(RootNode){
+            tableelement(TableElement; "TableElement Source")
+            {
+                fieldelement(DocumentType; TableElement."Document Type")
+                {}
+            }}}
+    requestpage {
+    layout{
+            area(content)
+            {
+                group(Control2)
+                {
+                    ShowCaption = false;
+                    field("SalesInvoiceHeader.""No."""; SalesInvoiceHeader."No.")
+                    {
+                        ApplicationArea = Basic, Suite;
+                        Caption = 'Sales Invoice No.';
+                        TableRelation = "Sales Invoice Header";
+                    }
+                }
+            }
+    }
+    }
+}
+`;
+
+        const expected = `xmlport 50001 MyTestXmlPort
+{
+  schema
+  {
+    textelement(RootNode)
+    {
+      tableelement(TableElement; "TableElement Source")
+      {
+        fieldelement(DocumentType; TableElement."Document Type") {}
+      }
+    }
+  }
+
+  requestpage
+  {
+    layout
+    {
+      area(content)
+      {
+        group(Control2)
+        {
+          ShowCaption = false;
+
+          field("SalesInvoiceHeader.""No."""; SalesInvoiceHeader."No.")
+          {
+            ApplicationArea = Basic, Suite;
+            Caption = 'Sales Invoice No.';
+            TableRelation = "Sales Invoice Header";
+          }
+        }
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('TextAttribute node inside a tableelement', () => {
+        const code = `
+xmlport 10012880 "LSC POS Fiscal Transaction"
+{
+    schema
+    {
+        tableelement(SourceTableName; "XML Source Table")
+        {
+            XmlName = 'Transaction';
+            fieldattribute(Payment; SourceTableName.Payment)
+            {
+            }
+            textattribute(CurrencyInfo)
+            {}
+        }
+    }
+}
+`;
+
+        const expected = `xmlport 10012880 "LSC POS Fiscal Transaction"
+{
+  schema
+  {
+    tableelement(SourceTableName; "XML Source Table")
+    {
+      XmlName = 'Transaction';
+
+      fieldattribute(Payment; SourceTableName.Payment) {}
+      textattribute(CurrencyInfo) {}
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+});
+
+describe('Nested XMLPort elements', () => {
+    it('TableElement inside TableElement', () => {
+        const code = `
+xmlport 50000 ImportExportXml {
+    schema
+    {
+        textelement(Root)
+        {
+            tableelement(DocumentHeader; "Document Header")
+            {
+                tableelement("Document Line"; "Document Line")
+                {
+                    LinkFields = Code = field(Code);
+                    LinkTable = DocumentHeader;
+                    MinOccurs = Zero;
+                    fieldelement(Code; DocumentLine.Code) {}
+                }
+            }
+        }
+    }
+}
+`;
+
+        const expected = `xmlport 50000 ImportExportXml
+{
+  schema
+  {
+    textelement(Root)
+    {
+      tableelement(DocumentHeader; "Document Header")
+      {
+        tableelement("Document Line"; "Document Line")
+        {
+          LinkFields = Code = field(Code);
+          LinkTable = DocumentHeader;
+          MinOccurs = Zero;
+
+          fieldelement(Code; DocumentLine.Code) {}
+        }
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Nested TableElement with multiple linked fields in the LinkFields property', () => {
+        const code = `
+xmlport 50000 ImportExportXml {
+    schema
+    {
+        tableelement(DocumentHeader; "Document Header")
+        {
+            tableelement("Document Line"; "Document Line")
+            {
+                LinkFields=Code=field(Code),Type=field(Type);
+                LinkTable = DocumentHeader;
+            }
+        }
+    }
+}
+`;
+
+        const expected = `xmlport 50000 ImportExportXml
+{
+  schema
+  {
+    tableelement(DocumentHeader; "Document Header")
+    {
+      tableelement("Document Line"; "Document Line")
+      {
+        LinkFields = Code = field(Code), Type = field(Type);
+        LinkTable = DocumentHeader;
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
 });

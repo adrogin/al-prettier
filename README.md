@@ -2,13 +2,12 @@
 
 A [Prettier](https://prettier.io/) plugin for AL language and a VS Code extension that provides code formatting using this plugin.
 
-<img width="1412" height="868" alt="Code_QmgRFcuCtz" src="https://github.com/user-attachments/assets/ccc4096f-a785-4199-aa7f-abe2ea134885" />
-
+<img width="1041" height="651" alt="Code_4H3nND91MJ" src="https://github.com/user-attachments/assets/5926bef3-7ade-4f55-9149-c3eede4425c0" />
 
 ## Installation
 
 1. Install from VS Code Extensions Marketplace (direct link: [AL Prettier](https://marketplace.visualstudio.com/items?itemName=alexander-drogin.al-prettier-vscode) or search for "AL Prettier")
-2. Or install manually by downloading the `.vsix` file and running `code --install-extension al-prettier-vscode-0.3.3.vsix`
+2. Or install manually by downloading the `.vsix` file and running `code --install-extension al-prettier-vscode-0.4.4.vsix`
 
 ## Usage
 
@@ -64,19 +63,8 @@ You can customize the formatting behavior in VS Code settings:
 ## Known issues and limitations
 
 - Requires valid AL syntax to format correctly. Formatting of an AL statement that cannot be parsed correctly will throw an error.
-- Range formatting is in development and currently not supported.
-- Not all AL objects are supported (yet). Currently supported objects:
-    - Codeunit
-    - Enum
-    - Enum extension
-    - Interface
-    - Page
-    - Page extension
-    - Query
-    - Report (without embedded RDL layout)
-    - Table
-    - Table extension
-
+- Range formatting is in development and currently not implemented.
+- Report objects with embedded RDLC layout are not supported.
 
 ## Contributing
 
