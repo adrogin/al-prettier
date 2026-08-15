@@ -40,7 +40,7 @@
             },
             {
                 "command": "al-prettier.formatFilesInFolder",
-                "title": "AL-Prettier: Format all files in project folder"
+                "title": "AL-Prettier: Format all files in current folder"
             }
         ],
         "configuration": {
