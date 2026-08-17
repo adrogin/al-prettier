@@ -315,3 +315,73 @@ xmlport 50001 MyTestXmlPort
             expect(formattedCode).to.equal(expected))
     });
 });
+
+describe('Printing page views with Remove Empty Elements option', () => {
+    it('Empty views section is deleted with Remove Empty Elements on', () => {
+        const code = `
+page 50001 "Page With View"
+{
+  layout
+  {
+    area(Content)
+    {
+        field(FixedField1; FieldDataSource1) {}
+    }
+  }
+
+  views
+  {
+  }
+}`;
+
+        const expected = `page 50001 "Page With View"
+{
+  layout
+  {
+    area(Content)
+    {
+      field(FixedField1; FieldDataSource1) {}
+    }
+  }
+}
+`;
+
+        return alFormat(code, { removeEmptyElements: true }).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Empty views section is preserved with Remove Empty Elements off', () => {
+        const code = `
+page 50001 "Page With View"
+{
+  layout
+  {
+    area(Content)
+    {
+        field(FixedField1; FieldDataSource1) {}
+    }
+  }
+
+  views
+  {
+  }
+}`;
+
+        const expected = `page 50001 "Page With View"
+{
+  layout
+  {
+    area(Content)
+    {
+      field(FixedField1; FieldDataSource1) {}
+    }
+  }
+
+  views {}
+}
+`;
+
+        return alFormat(code, { removeEmptyElements: false }).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+});

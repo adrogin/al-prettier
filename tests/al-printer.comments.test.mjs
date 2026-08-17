@@ -188,6 +188,54 @@ end;
             expect(formattedCode).to.equal(expected))
     });
 
+    it('Obsoleted action in action area', () => {
+        const code = `
+page 50000 MyPageWithActions
+{
+actions {
+area(ObsoletedActions){
+#if not CLEAN28
+                    action("Sales Statistics1")
+                    {
+                        ApplicationArea = Basic, Suite;
+                        Caption = 'Sales Statistics';
+                        RunObject = report "Sales Statistics";
+                        ObsoleteState = Pending;
+                        ObsoleteReason = 'This report is obsolete and will be removed in a future version.';
+                        ObsoleteTag = '28.0';
+                    }
+#endif
+}
+}
+}
+`;
+
+        const expected = `page 50000 MyPageWithActions
+{
+  actions
+  {
+    area(ObsoletedActions)
+    {
+#if not CLEAN28
+      action("Sales Statistics1")
+      {
+        ApplicationArea = Basic, Suite;
+        Caption = 'Sales Statistics';
+        RunObject = report "Sales Statistics";
+        ObsoleteState = Pending;
+        ObsoleteReason = 'This report is obsolete and will be removed in a future version.';
+        ObsoleteTag = '28.0';
+      }
+#endif
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
     it('Region marker around code statement', () => {
         const code = `
 codeunit 50000 MyCodeunit

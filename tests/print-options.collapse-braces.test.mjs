@@ -615,3 +615,95 @@ page 50001 "Page with factbox part"
     });
   });
 });
+
+  describe('Empty braces in page views', () => {
+    it('View definition without properties and collapse braces option on', () => {
+        const code = `
+page 50001 "Page With View"
+{
+  layout
+  {
+    area(Content)
+    {
+        field(FixedField1; FieldDataSource1) {}
+    }
+  }
+
+  views
+  {
+    view("Last 30 Days")
+    {
+    }
+  }
+}`;
+
+        const expected = `page 50001 "Page With View"
+{
+  layout
+  {
+    area(Content)
+    {
+      field(FixedField1; FieldDataSource1) {}
+    }
+  }
+
+  views
+  {
+    view("Last 30 Days") {}
+  }
+}
+`;
+
+      return alFormat(code, {
+          collapseEmptyBraces: true
+      }).then(formattedCode =>
+          expect(formattedCode).to.equal(expected))
+  });
+
+    it('View definition without properties and collapse braces option off', () => {
+        const code = `
+page 50001 "Page With View"
+{
+  layout
+  {
+    area(Content)
+    {
+        field(FixedField1; FieldDataSource1) {}
+    }
+  }
+
+  views
+  {
+    view("Last 30 Days")
+    {
+    }
+  }
+}`;
+
+        const expected = `page 50001 "Page With View"
+{
+  layout
+  {
+    area(Content)
+    {
+      field(FixedField1; FieldDataSource1)
+      {
+      }
+    }
+  }
+
+  views
+  {
+    view("Last 30 Days")
+    {
+    }
+  }
+}
+`;
+
+      return alFormat(code, {
+          collapseEmptyBraces: false
+      }).then(formattedCode =>
+          expect(formattedCode).to.equal(expected))
+  });
+});
