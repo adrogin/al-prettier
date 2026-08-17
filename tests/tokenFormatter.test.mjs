@@ -794,6 +794,20 @@ describe('TokenFormatter', () => {
         });
     });
 
+    describe('upperlimitFormatter', () => {
+        it('should lowercase token when in filterFieldReference context', () => {
+            const token = createMockToken('UPPERLIMIT', ALParser.UPPERLIMIT, ALParser.RULE_filterFieldReference);
+            const result = TokenFormatter.format(token);
+            expect(result).to.equal('upperlimit');
+        });
+
+        it('should return original text when used as identifier', () => {
+            const token = createMockToken('UpperLimit', ALParser.UPPERLIMIT, ALParser.RULE_variablesList);
+            const result = TokenFormatter.format(token);
+            expect(result).to.equal('UpperLimit');
+        });
+    });
+
     describe('usingFormatter', () => {
         it('should lowercase token when in usingReference context', () => {
             const token = createMockToken('USING', ALParser.USING, ALParser.RULE_usingReference);

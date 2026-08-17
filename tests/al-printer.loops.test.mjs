@@ -50,6 +50,34 @@ codeunit 50000 MyCodeunit
             expect(formattedCode).to.equal(expected))
     });
 
+    it('"foreach" without action statement', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure DoWhile(ListOfNumbers:List of [Integer])
+  var OneNumber:Integer;
+  begin
+    foreach OneNumber in ListOfNumbers do;
+  end;
+}`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure DoWhile(ListOfNumbers: List of [Integer])
+  var
+    OneNumber: Integer;
+  begin
+    foreach OneNumber in ListOfNumbers do;
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+});
+
+describe('for .. to loops', () => {
     it('"for..to" without action statement', () => {
         const code = `
 codeunit 50000 MyCodeunit
@@ -73,24 +101,23 @@ codeunit 50000 MyCodeunit
             expect(formattedCode).to.equal(expected))
     });
 
-    it('"foreach" without action statement', () => {
+    it('"for..to" with table field as control variable', () => {
         const code = `
 codeunit 50000 MyCodeunit
 {
-  procedure DoWhile(ListOfNumbers:List of [Integer])
-  var OneNumber:Integer;
+  procedure DoFor()
   begin
-    foreach OneNumber in ListOfNumbers do;
+    for Table.Counter := 1 to 100 do
+    CallProcedure(Table.Counter);
   end;
 }`;
 
         const expected = `codeunit 50000 MyCodeunit
 {
-  procedure DoWhile(ListOfNumbers: List of [Integer])
-  var
-    OneNumber: Integer;
+  procedure DoFor()
   begin
-    foreach OneNumber in ListOfNumbers do;
+    for Table.Counter := 1 to 100 do
+      CallProcedure(Table.Counter);
   end;
 }
 `;

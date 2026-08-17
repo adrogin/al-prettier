@@ -106,4 +106,74 @@ table 50000 TableWithFlowField
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
+
+    it('Filter keyword inside a field reference', () => {
+        const code = `
+table 50000 TableWithFlowField
+{
+  fields
+  {
+  field(1; PK; Code[10]) {}
+  field(2; CalculatedField; Decimal)
+  {
+    FieldClass=FlowField;
+    CalcFormula = sum("G/L Entry".Amount where("G/L Account No." = field("No."),
+                                                "G/L Account No."=field(filter(Totaling))));  }
+  }
+}`;
+
+        const expected = `table 50000 TableWithFlowField
+{
+  fields
+  {
+    field(1; PK; Code[10]) {}
+    field(2; CalculatedField; Decimal)
+    {
+      FieldClass = FlowField;
+      CalcFormula = sum("G/L Entry".Amount
+        where("G/L Account No." = field("No."),
+          "G/L Account No." = field(filter(Totaling))));
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Filter with upperlimit filter', () => {
+        const code = `
+table 50000 TableWithFlowField
+{
+  fields
+  {
+  field(1; PK; Code[10]) {}
+  field(2; CalculatedField; Decimal)
+  {
+    FieldClass=FlowField;
+    CalcFormula = sum("G/L Entry".Amount where("G/L Account No." = field("No."),
+                                                "Posting Date" = field(UpperLimit("Date Filter"))));  }
+  }
+}`;
+
+        const expected = `table 50000 TableWithFlowField
+{
+  fields
+  {
+    field(1; PK; Code[10]) {}
+    field(2; CalculatedField; Decimal)
+    {
+      FieldClass = FlowField;
+      CalcFormula = sum("G/L Entry".Amount
+        where("G/L Account No." = field("No."),
+          "Posting Date" = field(upperlimit("Date Filter"))));
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
 });

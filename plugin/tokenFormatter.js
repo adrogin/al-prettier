@@ -497,6 +497,14 @@ function usingFormatter(token) {
     return token.symbol.text;
 }
 
+function upperlimitFormatter(token) {
+    if (token.parentCtx.ruleIndex === ALParser.RULE_filterFieldReference) {
+        return token.symbol.text.toLowerCase();
+    }
+
+    return token.symbol.text;
+}
+
 function varFormatter(token) {
     if (token.parentCtx.ruleIndex === ALParser.RULE_variablesList) {
         return token.symbol.text.toLowerCase();
@@ -585,6 +593,7 @@ export class TokenFormatter {
         [ALParser.TO, toFormatter],
         [ALParser.TRIGGER, triggerFormatter],
         [ALParser.UNTIL, untilFormatter],
+        [ALParser.UPPERLIMIT, upperlimitFormatter],
         [ALParser.USING, usingFormatter],
         [ALParser.VAR, varFormatter],
         [ALParser.WHILE, whileFormatter],

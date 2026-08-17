@@ -132,6 +132,23 @@ describe('Basic table structure', () => {
             ));
     });
 
+    it('Table field with DecimalPlaces property, no decimal value after colon', () => {
+        return alFormat("table 50000 MyTable { fields{field(1; Amount; Decimal){ DecimalPlaces=2: ; }} }").then(formattedCode =>
+            expect(formattedCode).to.equal(
+                `table 50000 MyTable
+{
+  fields
+  {
+    field(1; Amount; Decimal)
+    {
+      DecimalPlaces = 2 :;
+    }
+  }
+}
+`
+            ));
+    });
+
     it('Table field with TableRelation property', () => {
         return alFormat(`table 50000 MyTable { fields{field(1; Code; Code[20]){ TableRelation=Customer where(Blocked=const("Customer Blocked"::" ")); }} }`).then(formattedCode =>
             expect(formattedCode).to.equal(

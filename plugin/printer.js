@@ -58,6 +58,7 @@ function print(path, options, print, args) {
         case ALParser.RULE_controlAddInPropertiesList:
         case ALParser.RULE_profilePropertiesList:
         case ALParser.RULE_fieldGroupPropertiesList:
+        case ALParser.RULE_pageViewPropertiesList:
             return printObjectPropertiesList(path, options, print);
 
         case ALParser.RULE_tablePropertyItem:
@@ -72,6 +73,7 @@ function print(path, options, print, args) {
         case ALParser.RULE_xmlPortPropertyItem:
         case ALParser.RULE_tableElementPropertyItem:
         case ALParser.RULE_fieldGroupPropertyItem:
+        case ALParser.RULE_pageViewPropertyItem:
             return printObjectPropertyItem(path, options, print);
 
         case ALParser.RULE_tableProperty:
@@ -93,6 +95,7 @@ function print(path, options, print, args) {
         case ALParser.RULE_xmlPortProperty:
         case ALParser.RULE_tableElementProperty:
         case ALParser.RULE_fieldGroupProperty:
+        case ALParser.RULE_pageViewProperty:
             return printObjectProperty(path, options, print);
 
         case ALParser.RULE_objectReference:
@@ -212,6 +215,7 @@ function print(path, options, print, args) {
         case ALParser.RULE_cueGroupDefinition:
         case ALParser.RULE_gridControlDefinition:
         case ALParser.RULE_fixedLayoutDefinition:
+        case ALParser.RULE_pageViewDefinition:
             return printPageSegmentDefinition(path, options, print);
 
         case ALParser.RULE_areaElements:
@@ -294,6 +298,8 @@ function print(path, options, print, args) {
         case ALParser.RULE_subPageViewProperty:
             return printSourceTableViewExpression(path, options, print);
 
+        case ALParser.RULE_pageViewsList:
+            return printPageViewsList(path, options, print);
         //#endregion Page object
 
         //#region Codeunit object
@@ -558,6 +564,9 @@ function print(path, options, print, args) {
 
         case ALParser.RULE_forEachStatement:
             return printForEachStatement(path, options, print);
+
+        case ALParser.RULE_loopIteratorExpression:
+            return printLoopIteratorExpression(path, options, print);
 
         case ALParser.RULE_simpleDataType:
             path.call(print, 'children', 0);
@@ -1166,6 +1175,7 @@ function printPageSegmentDefinition(path, options, print) {
     //          GROUP LPAREN identifier RPAREN LBRACE groupElements RBRACE;
     //          CUEGROUP LPAREN identifier RPAREN LBRACE cueGroupElements RBRACE;
     //          GRID LPAREN identifier RPAREN LBRACE gridControlElements RBRACE;
+    //          VIEW LPAREN identifier RPAREN LBRACE pageViewPropertiesList? RBRACE;
     const elements = path.call(print, 'children', 5);
     
     const definition = [
@@ -1513,9 +1523,18 @@ function printActionPropertyItem(path, options, print) {
 
 function printActionAreaDefinition(path, options, print) {
     // Grammar: AREA LPAREN IDENTIFIER RPAREN LBRACE actionAreaElements RBRACE
-    const name = path.call(print, 'children', 2);
     const elements = path.call(print, 'children', 5);
-    return ["area(", name, ")", hardline, "{", indent([hardline, elements]), hardline, "}"];
+    return [
+        path.call(print, 'children', 0),
+        path.call(print, 'children', 1),
+        path.call(print, 'children', 2),
+        path.call(print, 'children', 3),
+        hardline,
+        path.call(print, 'children', 4),
+        indent([hardline, elements]),
+        hardline,
+        path.call(print, 'children', 6)
+    ];
 }
 
 function printActionAreaElements(path, options, print) {
@@ -1527,9 +1546,18 @@ function printActionAreaElements(path, options, print) {
 
 function printActionGroupDefinition(path, options, print) {
     // Grammar: GROUP LPAREN IDENTIFIER RPAREN LBRACE actionElements RBRACE
-    const name = path.call(print, 'children', 2);
     const elements = path.call(print, 'children', 5);
-    return ["group(", name, ")", hardline, "{", indent([hardline, elements]), hardline, "}"];
+    return [
+        path.call(print, 'children', 0),
+        path.call(print, 'children', 1),
+        path.call(print, 'children', 2),
+        path.call(print, 'children', 3),
+        hardline,
+        path.call(print, 'children', 4),
+        indent([hardline, elements]),
+        hardline,
+        path.call(print, 'children', 6)
+    ];
 }
 
 function printActionRefsList(path, options, print) {
@@ -1664,6 +1692,42 @@ function pintTableViewExpression(path, options, print) {
 
 function printSourceTableViewExpression(path, options, print) {
     return printObjectProperty(path, options, print);
+}
+
+function printPageViewsList(path, options, print) {
+    // Grammar: VIEWS LBRACE pageViewDefinition* RBRACE
+
+    const viewDefs = [];
+
+    if (path.node.children[2].ruleIndex === ALParser.RULE_pageViewDefinition) {
+        for (let i = 2; i < path.node.children.length - 1; i++) {
+            viewDefs.push(path.call(print, 'children', i));
+        }
+    }
+
+    if (viewDefs.length === 0 && options.removeEmptyElements) {
+        return [];
+    }
+
+    const views = [path.call(print, 'children', 0)];
+
+    views.push(viewDefs.length > 0 || !options.collapseEmptyBraces ? hardline : " ");
+    views.push(path.call(print, 'children', 1));
+
+    if (viewDefs.length > 0) {
+        views.push(indent([hardline, join(hardline, viewDefs)]));
+    }
+    else if (!options.collapseEmptyBraces) {
+        viewDefs.push(hardline);
+    }
+
+    if (viewDefs.length > 0 || !options.collapseEmptyBraces) {
+        views.push(hardline);
+    }
+
+    views.push(path.call(print, 'children', path.node.children.length - 1));
+
+    return views;
 }
 
 //#endregion Page functions
@@ -2823,8 +2887,8 @@ function printElseStatement(path, options, print) {
 }
 
 function printForLoopStatement(path, options, print) {
-    // Grammar: FOR identifier ASSIGN expression TO expression DO statement
-    //        | FOR identifier ASSIGN expression DOWNTO expression DO statement;
+    // Grammar: FOR loopIteratorExpression ASSIGN expression TO expression DO statement
+    //        | FOR loopIteratorExpression ASSIGN expression DOWNTO expression DO statement;
 
     const children = path.node.children;
     const iterator = path.call(print, 'children', 1);
@@ -2844,6 +2908,11 @@ function printForLoopStatement(path, options, print) {
     }
 
     return ["for ", iterator, " := ", initialization, ` ${increment} `, condition, " do", statement];
+}
+
+function printLoopIteratorExpression(path, options, print) {
+    // Grammar: loopIteratorExpression: identifier (DOT identifier)?
+    return path.map(print, 'children');
 }
 
 function printForEachStatement(path, options, print) {
@@ -2868,14 +2937,28 @@ function printForEachStatement(path, options, print) {
 }
 
 function printRepeatStatement(path, options, print) {
-    // Grammar: REPEAT statementList UNTIL expression;
+    // Grammar: REPEAT statementList? UNTIL expression;
 
+    const children = path.node.children;
+    const stmtsIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_statementList);
     const repeatKeyword = path.call(print, 'children', 0);
-    const statementList = path.call(print, 'children', 1);
-    const untilKeyword = path.call(print, 'children', 2);
-    const condition = path.call(print, 'children', 3);
+    let statementList = [];
 
-    return [repeatKeyword, indent([hardline, statementList]), [hardline, untilKeyword, " ", condition]];
+    if (stmtsIdx > -1) {
+        statementList = path.call(print, 'children', stmtsIdx);
+    }
+    const untilKeyword = path.call(print, 'children', children.length - 2);
+    const condition = path.call(print, 'children', children.length - 1);
+
+    const docs = [];
+    docs.push(repeatKeyword);
+
+    if (statementList.length > 0) {
+        docs.push(indent([hardline, statementList]));
+    }
+
+    docs.push(hardline, untilKeyword, " ", condition);
+    return docs;
 }
 
 function printWhileLoopStatement(path, options, print) {
@@ -3319,14 +3402,8 @@ function printPermissionsPropertyValue(path, options, print) {
 }
 
 function printDecimalPlacesPropertyValue(path, options, print) {
-    // Grammar: INTEGER_LITERAL (COLON INTEGER_LITERAL)?;
-    const intPart = path.call(print, 'children', 0);
-    if (path.node.children.length === 1)
-        return intPart;
-
-    const colon = path.call(print, 'children', 1);
-    const decPart = path.call(print, 'children', 2);
-    return [intPart, " ", colon, " ", decPart];
+    // Grammar: INTEGER_LITERAL (COLON INTEGER_LITERAL?)?;
+    return join(" ", path.map(print, 'children'));
 }
 
 function printAccessByPermissionPropertyValue(path, options, print) {

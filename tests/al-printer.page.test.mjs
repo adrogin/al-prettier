@@ -742,6 +742,46 @@ page 60000 "Page with Grid"
 
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
+
+    it('Nested grids', () => {
+        const code = `
+page 60000 "Page with Grid"
+{
+    layout
+    {
+        area(content)
+        {
+            grid(Grid)
+            {
+            grid(SubGrid) {
+                field("Purchase Orders"; Rec."Purchase Orders")
+                {
+    }}
+            }
+            }}
+    }
+`;
+
+        const expected = `page 60000 "Page with Grid"
+{
+  layout
+  {
+    area(content)
+    {
+      grid(Grid)
+      {
+        grid(SubGrid)
+        {
+          field("Purchase Orders"; Rec."Purchase Orders") {}
+        }
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
 });
 
 describe('SourceTable and SourceTableView properties', () => {
@@ -794,6 +834,40 @@ SourceTableView = where(Status = filter("In Process"..));
         const expected = `page 50001 "Page With Filtered Source"
 {
   SourceTableView = where(Status = filter("In Process"..));
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+
+    it('Open left range in literal filter', () => {
+        const code = `
+page 50001 "Page With Filtered Source"
+{
+SourceTableView = where(SomeIntValue = filter(.. 10));
+}
+`;
+
+        const expected = `page 50001 "Page With Filtered Source"
+{
+  SourceTableView = where(SomeIntValue = filter(..10));
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+
+    it('Open right range in literal filter', () => {
+        const code = `
+page 50001 "Page With Filtered Source"
+{
+SourceTableView = where(SomeIntValue = filter(1..));
+}
+`;
+
+        const expected = `page 50001 "Page With Filtered Source"
+{
+  SourceTableView = where(SomeIntValue = filter(1..));
 }
 `;
 
@@ -1101,6 +1175,116 @@ page 50001 "Page With Fixed Layout"
           field(FixedField2; FieldDataSource2) {}
         }
       }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Fixed layout in group', () => {
+        const code = `
+page 50001 "Page With Fixed Layout"
+{
+    layout
+    {
+        area(Content)
+        {
+        group(MyGroup) {
+            fixed(Fixed)
+            {
+            ShowCaption = false;
+            group(FixedGroup)
+            {
+                field(FixedField1; FieldDataSource1) {}
+                field(FixedField2; FieldDataSource2) {}
+    }}}}}}
+`;
+
+        const expected = `page 50001 "Page With Fixed Layout"
+{
+  layout
+  {
+    area(Content)
+    {
+      group(MyGroup)
+      {
+        fixed(Fixed)
+        {
+          ShowCaption = false;
+
+          group(FixedGroup)
+          {
+            field(FixedField1; FieldDataSource1) {}
+            field(FixedField2; FieldDataSource2) {}
+          }
+        }
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+});
+
+describe('Page with views', () => {
+    it('Page views', () => {
+        const code = `
+page 50001 "Page With View"
+{
+    layout
+    {
+        area(Content)
+        {
+            group(FieldGroup)
+            {
+                field(FixedField1; FieldDataSource1) {}
+                field(FixedField2; FieldDataSource2) {}
+            }
+        }
+    }
+    views
+    {
+        view("Last 30 Days")
+        {
+            Caption = 'Last 30 Days';Filters=where("Date Filter Type"=const(Last30Days));}
+        view("Year to Date")
+        {
+            Caption = 'Year to Date';
+Filters = where("Date Filter Type" = const(YearToDate));
+        }
+    }
+}
+`;
+
+        const expected = `page 50001 "Page With View"
+{
+  layout
+  {
+    area(Content)
+    {
+      group(FieldGroup)
+      {
+        field(FixedField1; FieldDataSource1) {}
+        field(FixedField2; FieldDataSource2) {}
+      }
+    }
+  }
+
+  views
+  {
+    view("Last 30 Days")
+    {
+      Caption = 'Last 30 Days';
+      Filters = where("Date Filter Type" = const(Last30Days));
+    }
+    view("Year to Date")
+    {
+      Caption = 'Year to Date';
+      Filters = where("Date Filter Type" = const(YearToDate));
     }
   }
 }
