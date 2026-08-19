@@ -1138,6 +1138,53 @@ page 50001 "Page With One Action"
 
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
+
+    it('Page FileUploadAction', () => {
+        const code = `
+page 50001 "Page With File Upload"
+{
+  actions
+  {area(processing)
+    {group("&Action Group")
+      {
+        fileuploadaction(UploadAttachments)
+        {
+        Caption='Upload Attachments';
+        trigger OnAction(files: List of [FileUpload])
+        begin
+        UploadMultipleAttachments(files);
+        end;
+        }
+      }
+    }
+  }
+}`;
+
+        const expected = `page 50001 "Page With File Upload"
+{
+  actions
+  {
+    area(processing)
+    {
+      group("&Action Group")
+      {
+        fileuploadaction(UploadAttachments)
+        {
+          Caption = 'Upload Attachments';
+
+          trigger OnAction(files: List of [FileUpload])
+          begin
+            UploadMultipleAttachments(files);
+          end;
+        }
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
 });
 
 describe('Fixed layout', () => {
@@ -1287,6 +1334,56 @@ Filters = where("Date Filter Type" = const(YearToDate));
       Filters = where("Date Filter Type" = const(YearToDate));
     }
   }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+});
+
+describe('Page triggers', () => {
+    it('Simple page with two triggers', () => {
+        const code = `
+page 55555 MyPageWithTriggers
+{
+    trigger OnOpenPage()
+    begin
+    end;
+    trigger OnFindRecord(Which: Text): Boolean
+    begin end;
+}
+`;
+
+        const expected = `page 55555 MyPageWithTriggers
+{
+  trigger OnOpenPage()
+  begin
+  end;
+
+  trigger OnFindRecord(Which: Text): Boolean
+  begin
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('DotNet trigger with scope operator', () => {
+        const code = `
+page 806 "Online Map Location"
+{
+    trigger LocationProvider::LocationChanged(location: DotNet Location)
+    begin
+    end;
+}
+`;
+
+        const expected = `page 806 "Online Map Location"
+{
+  trigger LocationProvider::LocationChanged(location: DotNet Location)
+  begin
+  end;
 }
 `;
 

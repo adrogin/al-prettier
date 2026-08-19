@@ -51,6 +51,7 @@ function print(path, options, print, args) {
         case ALParser.RULE_queryColumnPropertiesList:
         case ALParser.RULE_reportPropertiesList:
         case ALParser.RULE_reportDataItemPropertiesList:
+        case ALParser.RULE_reportColumnPropertiesList:
         case ALParser.RULE_xmlPortPropertiesList:
         case ALParser.RULE_tableElementPropertiesList:
         case ALParser.RULE_permissionSetPropertiesList:
@@ -74,6 +75,8 @@ function print(path, options, print, args) {
         case ALParser.RULE_tableElementPropertyItem:
         case ALParser.RULE_fieldGroupPropertyItem:
         case ALParser.RULE_pageViewPropertyItem:
+        case ALParser.RULE_reportDataItemPropertyItem:
+        case ALParser.RULE_reportColumnPropertyItem:
             return printObjectPropertyItem(path, options, print);
 
         case ALParser.RULE_tableProperty:
@@ -92,6 +95,7 @@ function print(path, options, print, args) {
         case ALParser.RULE_queryColumnProperty:
         case ALParser.RULE_reportProperty:
         case ALParser.RULE_reportDataItemProperty:
+        case ALParser.RULE_reportColumnProperty:
         case ALParser.RULE_xmlPortProperty:
         case ALParser.RULE_tableElementProperty:
         case ALParser.RULE_fieldGroupProperty:
@@ -489,6 +493,7 @@ function print(path, options, print, args) {
             return printControlAddinImportsList(path, options, print);
 
         case ALParser.RULE_reportDatasetModification:
+        case ALParser.RULE_reportExtDatasetAddition:
             return printReportDatasetModification(path, options, print);
 
         //#endregion
@@ -801,25 +806,31 @@ function insertBlankLinesInComments(comments) {
 function printCompilationUnit(path, options, print) {
     // Grammar: namespaceDeclaration? usingRefList? objectDefinition* EOF
     const children = path.node.children;
-    const namespaceDescIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_namespaceDeclaration);
+    const namespaceDeclIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_namespaceDeclaration);
     const usingRefListIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_usingRefList);
     const objectDefinitionIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_objectDefinition);
 
-    const namespace = namespaceDescIdx > -1 ? path.call(print, 'children', namespaceDescIdx) : [];
+    const namespace = namespaceDeclIdx > -1 ? path.call(print, 'children', namespaceDeclIdx) : [];
     const usingRefList = usingRefListIdx > -1 ? path.call(print, 'children', usingRefListIdx) : [];
 
     const objectDefs = [];
 
-    for (let i = objectDefinitionIdx; i < children.length - 1; i++) {
-        objectDefs.push(path.call(print, 'children', i));
+    if (objectDefinitionIdx > -1) {
+        for (let i = objectDefinitionIdx; i < children.length - 1; i++) {
+            objectDefs.push(path.call(print, 'children', i));
+        }
     }
 
     const result = [];
     if (namespace.length > 0) {
-        result.push(...namespace, hardline, hardline);
+        result.push(...namespace, hardline);
+        if (usingRefListIdx > -1 || objectDefinitionIdx > -1)
+            result.push(hardline);
     }
     if (usingRefList.length > 0) {
-        result.push(...usingRefList, hardline, hardline);
+        result.push(...usingRefList, hardline);
+        if (objectDefinitionIdx > -1)
+            result.push(hardline);
     }
 
     if (objectDefs.length > 0) {
@@ -1480,9 +1491,12 @@ function printActionElements(path, options, print) {
 }
 
 function printActionDefinition(path, options, print) {
-    // Grammar: ACTION LPAREN IDENTIFIER RPAREN LBRACE actionPropertiesList? triggersList? RBRACE
+    // Grammar: (ACTION | FILEUPLOADACTION) LPAREN IDENTIFIER RPAREN LBRACE actionPropertiesList? triggersList? RBRACE
     const children = path.node.children;
+    const actionKeyword = path.call(print, 'children', 0);
+    const lParen = path.call(print, 'children', 1);
     const name = path.call(print, 'children', 2);
+    const rParen = path.call(print, 'children', 3);
 
     // actionPropertiesList? and triggersList? are collected between LBRACE (index 4) and RBRACE (last)
     const elementDocs = [];
@@ -1508,7 +1522,7 @@ function printActionDefinition(path, options, print) {
         }
     }
 
-    return ["action(", name, ")", ...body];
+    return [actionKeyword, lParen, name, rParen, ...body];
 }
 
 function printActionPropertiesList(path, options, print) {
@@ -2619,19 +2633,25 @@ function printTriggersList(path, options, print) {
 }
 
 function printTriggerDefinition(path, options, print) {
-    // Grammar: TRIGGER IDENTIFIER LPAREN parameterList? RPAREN procedureReturnType? variablesList? BEGIN statementList? END SEMICOLON
+    // Grammar: triggerDefinition: TRIGGER identifier (SCOPE_OP identifier)? LPAREN parameterList? RPAREN procedureReturnType? SEMICOLON? variablesList? BEGIN statementList? END SEMICOLON
     const children = path.node.children;
     const paramsListIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_parameterList);
     const beginIdx = children.findIndex(c => c.symbol?.type === ALParser.BEGIN);
     const endIdx = children.findIndex(c => c.symbol?.type === ALParser.END);
     const returnTypeIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_procedureReturnType);
     const varsIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_variablesList);
-    const statementListId = endIdx > beginIdx + 1 ? beginIdx + 1 : -1;
+    const statementListIdx = endIdx > beginIdx + 1 ? beginIdx + 1 : -1;
+    const lParenIdx = children.findIndex(c => c.symbol?.type === ALParser.LPAREN);
 
     const triggerKeyword = path.call(print, 'children', 0);
-    const name = path.call(print, 'children', 1);
-    const lParen = path.call(print, 'children', 2);
-    const rParen = path.call(print, 'children', paramsListIdx > -1 ? paramsListIdx + 1 : 3);
+
+    const name = [path.call(print, 'children', 1)];
+    if (children[2].symbol?.type === ALParser.SCOPE_OP) {
+        name.push(path.call(print, 'children', 2), path.call(print, 'children', 3));
+    }
+
+    const lParen = path.call(print, 'children', lParenIdx);
+    const rParen = path.call(print, 'children', paramsListIdx > -1 ? paramsListIdx + 1 : lParenIdx + 1);
     const beginKeyword = path.call(print, 'children', beginIdx);
     const endKeyword = path.call(print, 'children', endIdx);
     const semicolon = path.call(print, 'children', children.length - 1);
@@ -2642,14 +2662,14 @@ function printTriggerDefinition(path, options, print) {
     // variablesList: any rule context between RPAREN and BEGIN
     const varDocs = path.call(print, 'children', varsIdx);
 
-    const signature = [triggerKeyword, " ", name, lParen, paramDoc, rParen];
+    const signature = [triggerKeyword, " ", ...name, lParen, paramDoc, rParen];
     if (returnType.length > 0) {
         signature.push(...returnType);
     }
 
     const vars = varDocs.length > 0 ? [hardline, ...varDocs] : [];
-    const body = statementListId > 0
-        ? [hardline, beginKeyword, indent([hardline, path.call(print, 'children', statementListId)]), hardline, endKeyword, semicolon]
+    const body = statementListIdx > 0
+        ? [hardline, beginKeyword, indent([hardline, path.call(print, 'children', statementListIdx)]), hardline, endKeyword, semicolon]
         : [hardline, beginKeyword, hardline, endKeyword, semicolon];
 
     return [...signature, ...vars, ...body];

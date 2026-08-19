@@ -42,6 +42,25 @@ permissionset 50000 MyAppPermissions
         return alFormat(code, { removeEmptyElements: true }).then(formattedCode => expect(formattedCode).to.equal(expected))
     });
 
+    it('System permissions', () => {
+        const code = `
+permissionset 5378 "Page Inspection - Objects"
+{
+    Assignable = false;
+    Permissions =system "Tools, Zoom" = X;
+}
+`;
+
+        const expected = `permissionset 5378 "Page Inspection - Objects"
+{
+  Assignable = false;
+  Permissions = System "Tools, Zoom" = X;
+}
+`;
+
+        return alFormat(code, { removeEmptyElements: true }).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+
     it('permissionsetextension object', () => {
         const code = `
 permissionsetextension 50000 ExtentionPermissions extends MyAppPermissions
