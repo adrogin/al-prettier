@@ -253,6 +253,29 @@ describe('Table field properties', () => {
 
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
+
+    it('AccessByPermission property referencing a full object name with namespace', () => {
+        const code = `table 50000 MyTable
+        { fields{
+        field(507; "Qty. on Trans. Order Shipment"; Decimal)
+        {
+            AccessByPermission = TableData Microsoft.Inventory.Transfer."Transfer Header" = R;}
+        }}`;
+
+        const expected = `table 50000 MyTable
+{
+  fields
+  {
+    field(507; "Qty. on Trans. Order Shipment"; Decimal)
+    {
+      AccessByPermission = TableData Microsoft.Inventory.Transfer."Transfer Header" = R;
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
 });
 
 describe('Table triggers and procedures', () => {
@@ -464,6 +487,57 @@ describe('Table relation formula', () => {
       TableRelation = Field."No."
         where(TableNo = field("Table No."),
           Class = const());
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('TableRelation filter referencing an enum value', () => {
+        const code = `table 50000 MyTable
+        { fields{
+        field(8; "Partner Code for Acc. Syn."; Code[20])
+        {
+            Caption = 'Account Syncronization Partner Code';
+            TableRelation = "IC Partner".Code where("Inbox Type" = filter("IC Partner Inbox Type"::Database));
+        }
+    }}`;
+
+        const expected = `table 50000 MyTable
+{
+  fields
+  {
+    field(8; "Partner Code for Acc. Syn."; Code[20])
+    {
+      Caption = 'Account Syncronization Partner Code';
+      TableRelation = "IC Partner".Code
+        where("Inbox Type" = filter("IC Partner Inbox Type"::Database));
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('TableRelation property referencing a field name', () => {
+        const code = `table 50000 MyTable
+        { fields{
+        field(1; "Customer No."; Code[20])
+        {
+            TableRelation = Customer."No.";
+        }
+    }}`;
+
+        const expected = `table 50000 MyTable
+{
+  fields
+  {
+    field(1; "Customer No."; Code[20])
+    {
+      TableRelation = Customer."No.";
     }
   }
 }

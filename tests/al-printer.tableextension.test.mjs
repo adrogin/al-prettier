@@ -74,7 +74,43 @@ tableextension 55111 "Let's Extend Something" extends "Something Extendable"
 }
 `;
 
-        return alFormat(code).then(formattedCode =>
-            expect(formattedCode).to.equal(expected))
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+
+    it('Table extension adding field groups', () => {
+        const code = `
+tableextension 55111 "Let's Extend Something" extends "Something Extendable"
+{
+    fields{
+        modify("Some Field")
+        {
+            Editable=false;
+        }
+    }
+    fieldgroups{
+        addlast(DropDown; "Very Important Field", "Less Important Field")
+        {
+        }
+    }
+}`;
+
+        const expected = `tableextension 55111 "Let's Extend Something" extends "Something Extendable"
+{
+  fields
+  {
+    modify("Some Field")
+    {
+      Editable = false;
+    }
+  }
+
+  fieldgroups
+  {
+    addlast(DropDown; "Very Important Field", "Less Important Field") {}
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
     });
 });

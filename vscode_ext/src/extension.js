@@ -88,27 +88,7 @@ export function deactivate() {
 
 async function formatDocument(document, options, prettier) {
     try {
-        const formattedText = await runFormatter(document, options, prettier);
-        // const config = vscode.workspace.getConfiguration('alPrettier');
-        // const text = document.getText();
-
-        // if (!text || text.trim().length === 0) {
-        //     return [];
-        // }
-
-        // const plugin = alPrettierPlugin.default || alPrettierPlugin;
-
-        // const formattedText = await prettier.format(text, {
-        //     parser: 'al-parse',
-        //     plugins: [plugin],
-        //     tabWidth: config.get('tabWidth') || options.tabSize || 4,
-        //     useTabs: config.get('useTabs') || !options.insertSpaces || false,
-        //     printWidth: config.get('printWidth') || 120,
-        //     groupGlobalVars: config.get('groupGlobalVars') || "none",
-        //     noLineBreaksInAttributes: config.get('noLineBreaksInAttributes') || false,
-        //     removeEmptyElements: config.get('removeEmptyElements') || false,
-        //     collapseEmptyBraces: config.get('collapseEmptyBraces'),
-        // });
+        const formattedText = await runFormatter(document.getText(), options, prettier);
 
         // Return a single edit that replaces the entire document
         const lastLine = document.lineCount - 1;
@@ -166,28 +146,9 @@ async function batchFormatFiles(prettier, options, files) {
                 });
 
                 try {
-                    const document = await vscode.workspace.openTextDocument(fileUri);
-                    const formattedText = await runFormatter(document, options, prettier);
-                    // const text = document.getText();
-
-                    // if (!text || text.trim().length === 0) {
-                    //     continue;
-                    // }
-
-                    // const config = vscode.workspace.getConfiguration('alPrettier');
-                    // const plugin = alPrettierPlugin.default || alPrettierPlugin;
-
-                    // const formattedText = await prettier.format(text, {
-                    //     parser: 'al-parse',
-                    //     plugins: [plugin],
-                    //     tabWidth: config.get('tabWidth') || options.tabSize || 4,
-                    //     useTabs: config.get('useTabs') || !options.insertSpaces || false,
-                    //     printWidth: config.get('printWidth') || 120,
-                    //     groupGlobalVars: config.get('groupGlobalVars') || "none",
-                    //     noLineBreaksInAttributes: config.get('noLineBreaksInAttributes') || false,
-                    //     removeEmptyElements: config.get('removeEmptyElements') || false,
-                    //     collapseEmptyBraces: config.get('collapseEmptyBraces'),
-                    // });
+                    const fileBytes = await vscode.workspace.fs.readFile(fileUri);
+                    const text = new TextDecoder().decode(fileBytes);
+                    const formattedText = await runFormatter(text, options, prettier);
 
                     // Write formatted content directly to file without opening editor
                     const uint8Array = new TextEncoder().encode(formattedText);
@@ -215,9 +176,8 @@ async function batchFormatFiles(prettier, options, files) {
     );
 }
 
-async function runFormatter(document, options, prettier) {
+async function runFormatter(text, options, prettier) {
     const config = vscode.workspace.getConfiguration('alPrettier');
-    const text = document.getText();
 
     if (!text || text.trim().length === 0) {
         return [];

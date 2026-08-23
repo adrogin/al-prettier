@@ -60,6 +60,8 @@ function print(path, options, print, args) {
         case ALParser.RULE_profilePropertiesList:
         case ALParser.RULE_fieldGroupPropertiesList:
         case ALParser.RULE_pageViewPropertiesList:
+        case ALParser.RULE_analysisViewPropertiesList:
+        case ALParser.RULE_gridPropertiesList:
             return printObjectPropertiesList(path, options, print);
 
         case ALParser.RULE_tablePropertyItem:
@@ -75,8 +77,11 @@ function print(path, options, print, args) {
         case ALParser.RULE_tableElementPropertyItem:
         case ALParser.RULE_fieldGroupPropertyItem:
         case ALParser.RULE_pageViewPropertyItem:
+        case ALParser.RULE_analysisViewPropertyItem:
         case ALParser.RULE_reportDataItemPropertyItem:
         case ALParser.RULE_reportColumnPropertyItem:
+        case ALParser.RULE_groupPropertyItem:
+        case ALParser.RULE_gridPropertyItem:
             return printObjectPropertyItem(path, options, print);
 
         case ALParser.RULE_tableProperty:
@@ -100,6 +105,9 @@ function print(path, options, print, args) {
         case ALParser.RULE_tableElementProperty:
         case ALParser.RULE_fieldGroupProperty:
         case ALParser.RULE_pageViewProperty:
+        case ALParser.RULE_analysisViewProperty:
+        case ALParser.RULE_gridProperty:
+        case ALParser.RULE_pageViewFiltersProperty:
             return printObjectProperty(path, options, print);
 
         case ALParser.RULE_objectReference:
@@ -158,6 +166,7 @@ function print(path, options, print, args) {
             return join(" ", path.map(print, 'children'));
 
         case ALParser.RULE_relationFilterExpression:
+        case ALParser.RULE_relationFilterSubExpression:
         case ALParser.RULE_relationalFilterEqalityExpression:
             return printRelationFilterExpression(path, options, print);
         
@@ -177,9 +186,11 @@ function print(path, options, print, args) {
             return printKeyItem(path, options, print);
 
         case ALParser.RULE_fieldGroupsList:
+        case ALParser.RULE_tableExtFieldGroupsList:
             return printFieldGroupsList(path, options, print);
 
         case ALParser.RULE_fieldGroupItem:
+        case ALParser.RULE_tableExtFieldGroupItem:
             return printFieldGroupItem(path, options, print);
 
         case ALParser.RULE_fieldGroupDefinition:
@@ -208,11 +219,11 @@ function print(path, options, print, args) {
         case ALParser.RULE_pageObject:
             return printPageObject(path, options, print);
 
-        case ALParser.RULE_layoutDefinition:
-            return printLayoutDefinition(path, options, print);
+        case ALParser.RULE_pageLayoutDefinition:
+            return printPageLayoutDefinition(path, options, print);
 
-        case ALParser.RULE_layoutElements:
-            return printLayoutElements(path, options, print);
+        case ALParser.RULE_pageExtLayoutElements:
+            return printPageExtLayoutElements(path, options, print);
 
         case ALParser.RULE_areaDefinition:
         case ALParser.RULE_groupDefinition:
@@ -220,6 +231,7 @@ function print(path, options, print, args) {
         case ALParser.RULE_gridControlDefinition:
         case ALParser.RULE_fixedLayoutDefinition:
         case ALParser.RULE_pageViewDefinition:
+        case ALParser.RULE_analysisViewDefinition:
             return printPageSegmentDefinition(path, options, print);
 
         case ALParser.RULE_areaElements:
@@ -230,9 +242,6 @@ function print(path, options, print, args) {
         case ALParser.RULE_gridControlElements:
         case ALParser.RULE_fixedLayoutElements:
             return printGroupElements(path, options, print);
-
-        case ALParser.RULE_groupPropertyItem:
-            return printGroupPropertyItem(path, options, print);
 
         case ALParser.RULE_partDefinition:
             return printPartDefinition(path, options, print);
@@ -272,6 +281,7 @@ function print(path, options, print, args) {
             return printActionElements(path, options, print);
 
         case ALParser.RULE_actionDefinition:
+        case ALParser.RULE_customActionDefinition:
             return printActionDefinition(path, options, print);
 
         case ALParser.RULE_actionPropertiesList:
@@ -296,13 +306,14 @@ function print(path, options, print, args) {
             return printActionRef(path, options, print);
 
         case ALParser.RULE_tableViewExpression:
-            return pintTableViewExpression(path, options, print);
+            return printTableViewExpression(path, options, print);
 
         case ALParser.RULE_sourceTableViewProperty:
         case ALParser.RULE_subPageViewProperty:
             return printSourceTableViewExpression(path, options, print);
 
         case ALParser.RULE_pageViewsList:
+        case ALParser.RULE_analysisViewsList:
             return printPageViewsList(path, options, print);
         //#endregion Page object
 
@@ -611,6 +622,7 @@ function print(path, options, print, args) {
             return printTextConst(path, options, print);
         case ALParser.RULE_optionValuesList:
         case ALParser.RULE_optionMembersPropertyValue:
+        case ALParser.RULE_allowedValuesList:
             return printOptionValuesList(path, options, print);
 
         case ALParser.RULE_identifiersList:
@@ -1149,9 +1161,14 @@ function printPageObject(path, options, print) {
     return printALObject(path, options, print, ALParser.PAGE);
 }
 
-function printLayoutDefinition(path, options, print) {
-    // Grammar: LAYOUT LBRACE layoutElements RBRACE
-    const elements = path.call(print, 'children', 2);
+function printPageLayoutDefinition(path, options, print) {
+    // Grammar: LAYOUT LBRACE areaDefinition* RBRACE
+    const elements = [];
+    if (path.node.children[2].ruleIndex === ALParser.RULE_areaDefinition) {
+        for (let i = 2; i < path.node.children.length - 1; i++) {
+            elements.push(path.call(print, 'children', i));
+        }
+    }
     if (options.removeEmptyElements && (!Array.isArray(elements) || elements.length === 0))
         return [];
 
@@ -1163,18 +1180,18 @@ function printLayoutDefinition(path, options, print) {
     pageLayout.push(path.call(print, 'children', 1));
 
     if (Array.isArray(elements) && elements.length > 0) {
-        pageLayout.push(indent([hardline, elements]));
+        pageLayout.push(indent([hardline, join(hardline, elements)]));
     }
 
     if (!options.collapseEmptyBraces || (Array.isArray(elements) && elements.length > 0)) {
         pageLayout.push(hardline);
     }
 
-    pageLayout.push(path.call(print, 'children', 3));
+    pageLayout.push(path.call(print, 'children', path.node.children.length - 1));
     return pageLayout;
 }
 
-function printLayoutElements(path, options, print) {
+function printPageExtLayoutElements(path, options, print) {
     // Grammar: (areaDefinition | groupDefinition | pageFieldItem | partDefinition | repeaterDefinition)*
     const children = path.node.children;
     if (!children || children.length === 0) return "";
@@ -1243,10 +1260,6 @@ function printGroupElements(path, options, print) {
     }
 
     return join(hardline, docs);
-}
-
-function printGroupPropertyItem(path, options, print) {
-    return [path.call(print, 'children', 0), ";"];
 }
 
 function printPartDefinition(path, options, print) {
@@ -1699,9 +1712,10 @@ function printPageLinkExpression(path, options, print) {
     return filters;
 }
 
-function pintTableViewExpression(path, options, print) {
+function printTableViewExpression(path, options, print) {
     // Grammar: sourceTableSortingExpr? sourceTableOrderExpr? tableRelationWhereExpression?;
-    return group(indent(join(line, path.map(print, 'children'))));
+    const children = path.map(print, 'children');
+    return children.length > 1 ? group(indent(join(line, children))) : children;
 }
 
 function printSourceTableViewExpression(path, options, print) {
@@ -1710,10 +1724,13 @@ function printSourceTableViewExpression(path, options, print) {
 
 function printPageViewsList(path, options, print) {
     // Grammar: VIEWS LBRACE pageViewDefinition* RBRACE
+    //          ANALYSISVIEWS LBRACE analysisViewDefinition* RBRACE
 
     const viewDefs = [];
 
-    if (path.node.children[2].ruleIndex === ALParser.RULE_pageViewDefinition) {
+    if (path.node.children[2].ruleIndex === ALParser.RULE_pageViewDefinition ||
+        path.node.children[2].ruleIndex === ALParser.RULE_analysisViewDefinition
+    ) {
         for (let i = 2; i < path.node.children.length - 1; i++) {
             viewDefs.push(path.call(print, 'children', i));
         }
@@ -1775,7 +1792,7 @@ function printPageExtLayoutDefinition(path, options, print) {
 }
 
 function printPageExtLayoutModificationBlock(path, options, print) {
-    // Grammar: pageExtLayoutMod LPAREN identifier RPAREN LBRACE layoutElements RBRACE
+    // Grammar: pageExtLayoutModKeyword LPAREN identifier RPAREN LBRACE pageExtLayoutElements RBRACE
     const children = path.node.children;
     const lBraceIdx = children.findIndex(c => c.symbol?.type === ALParser.LBRACE);
 
@@ -2892,16 +2909,22 @@ function printIfStatement(path, options, print) {
 }
 
 function printElseStatement(path, options, print) {
-    // Grammar: ELSE statementList;
+    // Grammar: ELSE statementList?;
     // Similar to "then begin" in the if statement above, "else begin" must not break the line.
     const elseKeyword = path.call(print, 'children', 0);
-    let elseStmt = path.call(print, 'children', 1);
-    if (isCompoundStatement(path.node.children[1]?.children[0])) {
-        elseStmt = [" ", elseStmt];
+    let elseStmt = "";
+
+    if (path.node.children.length > 1) {
+        elseStmt = path.call(print, 'children', 1);
+        if (isCompoundStatement(path.node.children[1]?.children[0])) {
+            elseStmt = [" ", elseStmt];
+        }
+        else {
+            elseStmt = indent([hardline, elseStmt]);
+        }
     }
-    else {
-        elseStmt = indent([hardline, elseStmt]);
-    }
+    else
+        elseStmt = indent([hardline, ";"]);
 
     return [elseKeyword, elseStmt];
 }
@@ -2985,7 +3008,9 @@ function printWhileLoopStatement(path, options, print) {
     // Grammar: WHILE expression DO statement?
 
     const children = path.node.children;
+    const whileKeyword = path.call(print, 'children', 0);
     const condition = path.call(print, 'children', 1);
+    const doKeyword = path.call(print, 'children', 2);
     let statement = children.length > 3 ? path.call(print, 'children', 3) : [];
 
     // Statement executed inside the loop. If it's a compond statement "begin..end", do not insert a hardline before the statement.
@@ -2998,7 +3023,7 @@ function printWhileLoopStatement(path, options, print) {
         }
     }
 
-    return ["while ", condition, " do", statement];
+    return [whileKeyword, " ", condition, " ", doKeyword, statement];
 }
 
 function printCaseStatement(path, options, print) {
@@ -3394,7 +3419,7 @@ function printOptionValuesList(path, options, print) {
 }
 
 function printObjectPermissionsList(path, options, print) {
-    // Grammar: PERMISSIONS EQUAL permissionsPropertyValue (COMMA permissionsPropertyValue)*
+    // Grammar: PERMISSIONS EQUAL (permissionsPropertyValue (COMMA permissionsPropertyValue)*)?
     const children = path.node.children;
     const permissionsKeyword = path.call(print, 'children', 0);
     const equalSign = path.call(print, 'children', 1);
@@ -3408,7 +3433,9 @@ function printObjectPermissionsList(path, options, print) {
         propValues.push(value);
     }
 
-    return group(indent([permissionsKeyword, " ", equalSign, line, join(line, propValues)]));
+    return propValues.length > 0
+        ? group(indent([permissionsKeyword, " ", equalSign, line, join(line, propValues)]))
+        : [permissionsKeyword, " ", equalSign];
 }
 
 function printPermissionsPropertyValue(path, options, print) {
@@ -3475,7 +3502,8 @@ function printElementsInGroups(path, options, print, elementStart, elementEnd) {
                 objectElements.procedures.push(path.call(print, 'children', i));
                 break;
 
-            case path.node.children[i].ruleIndex === ALParser.RULE_layoutDefinition:
+            case path.node.children[i].ruleIndex === ALParser.RULE_pageLayoutDefinition:
+            case path.node.children[i].ruleIndex === ALParser.RULE_pageExtLayoutDefinition:
                 objectElements.layout = path.call(print, 'children', i);
                 break;
 

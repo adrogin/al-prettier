@@ -473,7 +473,6 @@ codeunit 50000 MyCodeunit
             expect(formattedCode).to.equal(expected))
     });
 
-
     it('Compound else branch without begin..end', () => {
         const code = `
 codeunit 50000 MyCodeunit
@@ -498,6 +497,70 @@ codeunit 50000 MyCodeunit
       else
         CallProcedure2();
         CallProcedure3();
+    end;
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Empty else branch without trailing semicolon - printer adds the missing semicolon', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure DoSomething()
+  begin
+    case Option of
+    Value1:
+      CallProcedure1();
+    else
+    end;
+  end;
+}`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure DoSomething()
+  begin
+    case Option of
+      Value1:
+        CallProcedure1();
+      else
+        ;
+    end;
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Empty else branch with trailing semicolon - extra semicolon is not added', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure DoSomething()
+  begin
+    case Option of
+    Value1:
+      CallProcedure1();
+    else;
+    end;
+  end;
+}`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure DoSomething()
+  begin
+    case Option of
+      Value1:
+        CallProcedure1();
+      else
+        ;
     end;
   end;
 }

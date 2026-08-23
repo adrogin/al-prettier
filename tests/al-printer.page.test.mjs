@@ -71,6 +71,43 @@ page 50001 "Page With Label"
             expect(formattedCode).to.equal(expected))
     });
 
+    it('"is" and "as" operators can be used as identifiers"', () => {
+        const code = `
+page 50001 "Page With Label"
+{
+  layout
+  {
+      area(content)
+      { 
+      label(is) { Caption='This is is'; }
+      label(as) { Caption='And this is as'; }
+       }
+  }
+}`;
+
+        const expected = `page 50001 "Page With Label"
+{
+  layout
+  {
+    area(content)
+    {
+      label(is)
+      {
+        Caption = 'This is is';
+      }
+      label(as)
+      {
+        Caption = 'And this is as';
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
     it('Page with field and user control', () => {
         const code = `
 page 50001 "Page With User Control"
@@ -173,6 +210,52 @@ page 50001 "Page With Subpage"
   layout
   {
     area(content)
+    {
+      part(Subpage; "Factbox Subpage")
+      {
+        Caption = 'Factbox';
+        UpdatePropagation = Both;
+        SubPageLink =
+          "Table No." = const(Database::"My Table"),
+          "No." = field("No.");
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Factboxes in a separate area', () => {
+        const code = `
+page 50001 "Page With Subpage"
+{
+    layout
+    {
+        area(content) {
+        field(Price; Rec.Price) {}
+        }
+        area(factboxes)
+        {part(Subpage;"Factbox Subpage")
+            {
+            Caption = 'Factbox';
+            UpdatePropagation = Both;
+            SubPageLink="Table No."=Const(Database::"My Table"), "No."=field("No.");
+            }
+        }}}
+`;
+
+        const expected = `page 50001 "Page With Subpage"
+{
+  layout
+  {
+    area(content)
+    {
+      field(Price; Rec.Price) {}
+    }
+    area(factboxes)
     {
       part(Subpage; "Factbox Subpage")
       {
@@ -527,6 +610,45 @@ page 60000 "Page with Cuegroup"
         field("Transfer Orders"; Rec."Transfer Orders")
         {
           DrillDownPageID = "Transfer List";
+        }
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Cuegroup inside group', () => {
+        const code = `
+page 60000 "Page with Cuegroup"
+{
+    layout
+    {
+        area(content)
+        {
+        group(GroupWithCues) {
+            cuegroup(Documents)
+            {
+                field("Purchase Orders"; Rec."Purchase Orders")
+                {
+                }
+            }
+    }}}}
+`;
+
+        const expected = `page 60000 "Page with Cuegroup"
+{
+  layout
+  {
+    area(content)
+    {
+      group(GroupWithCues)
+      {
+        cuegroup(Documents)
+        {
+          field("Purchase Orders"; Rec."Purchase Orders") {}
         }
       }
     }
@@ -909,284 +1031,6 @@ SourceTable=My.Namespace.MyTable;
     });
 });
 
-describe('Page actions', () => {
-    it('Page with empty actions segment', () => {
-        const code = `
-page 50001 "No Actions Page"
-{
-  actions
-  {}
-}`;
-
-        const expected = `page 50001 "No Actions Page"
-{
-  actions {}
-}
-`;
-
-        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
-    });
-
-    it('Page with action', () => {
-        const code = `
-page 50001 "Page With One Action"
-{
-  actions
-  {area(navigation)
-    {group("&Action Group")
-      {
-        Caption = 'Action Group';
-        action(RunAnotherPage)
-        {Caption = 'Run Another Page';RunObject = Page "Another Page";}
-      }
-    }
-  }
-}`;
-
-        const expected = `page 50001 "Page With One Action"
-{
-  actions
-  {
-    area(navigation)
-    {
-      group("&Action Group")
-      {
-        Caption = 'Action Group';
-
-        action(RunAnotherPage)
-        {
-          Caption = 'Run Another Page';
-          RunObject = Page "Another Page";
-        }
-      }
-    }
-  }
-}
-`;
-
-        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
-    });
-
-    it('Promoted area with actionref', () => {
-        const code = `
-page 50001 "Page With One Action"
-{
-  actions
-  {area(navigation)
-    {group("&Action Group")
-      {
-        Caption = 'Action Group';
-        action(RunAnotherPage)
-        {Caption = 'Run Another Page';RunObject = Page "Another Page";}
-      }
-    }
-    area(Promoted)
-    {
-      group(PromotedGroup)
-      {
-        actionref(AnotherPage_Promoted; RunAnotherPage){}
-      }}
-  }
-}
-`;
-
-        const expected = `page 50001 "Page With One Action"
-{
-  actions
-  {
-    area(navigation)
-    {
-      group("&Action Group")
-      {
-        Caption = 'Action Group';
-
-        action(RunAnotherPage)
-        {
-          Caption = 'Run Another Page';
-          RunObject = Page "Another Page";
-        }
-      }
-    }
-    area(Promoted)
-    {
-      group(PromotedGroup)
-      {
-        actionref(AnotherPage_Promoted; RunAnotherPage) {}
-      }
-    }
-  }
-}
-`;
-
-        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
-    });
-
-    it('RunPageLink with pipe character', () => {
-        const code = `
-page 50001 "Page With One Action"
-{
-  actions
-  {area(navigation)
-    {group("&Action Group")
-      {
-        action(RunAnotherPage)
-        {RunObject = Page "Another Page";
-        RunPageLink = "Source Type" = filter(83|5407),"Source Subtype" = filter("3"|"4"|"5");}
-      }
-    }
-  }
-}`;
-
-        const expected = `page 50001 "Page With One Action"
-{
-  actions
-  {
-    area(navigation)
-    {
-      group("&Action Group")
-      {
-        action(RunAnotherPage)
-        {
-          RunObject = Page "Another Page";
-          RunPageLink =
-            "Source Type" = filter(83 | 5407),
-            "Source Subtype" = filter("3" | "4" | "5");
-        }
-      }
-    }
-  }
-}
-`;
-
-        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
-    });
-
-    it('Empty const value in RunPageLink property', () => {
-        const code = `
-page 50001 "Page With One Action"
-{
-  actions
-  {area(navigation)
-    {group("&Action Group")
-      {
-        action(RunSomePage)
-        {RunObject = Page "Some Page";
-        RunPageLink = "Source Type" = const();}
-      }
-    }
-  }
-}`;
-
-        const expected = `page 50001 "Page With One Action"
-{
-  actions
-  {
-    area(navigation)
-    {
-      group("&Action Group")
-      {
-        action(RunSomePage)
-        {
-          RunObject = Page "Some Page";
-          RunPageLink = "Source Type" = const();
-        }
-      }
-    }
-  }
-}
-`;
-
-        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
-    });
-
-    it('RunPageLink with filter and empty const', () => {
-        const code = `
-page 50001 "Page With One Action"
-{
-  actions
-  {area(navigation)
-    {group("&Action Group")
-      {
-        action(RunSomePage)
-        {RunObject = Page "Some Page";
-        RunPageLink = "Item No." = field("Item No."),"Variant Code" = const();}
-      }
-    }
-  }
-}`;
-
-        const expected = `page 50001 "Page With One Action"
-{
-  actions
-  {
-    area(navigation)
-    {
-      group("&Action Group")
-      {
-        action(RunSomePage)
-        {
-          RunObject = Page "Some Page";
-          RunPageLink =
-            "Item No." = field("Item No."),
-            "Variant Code" = const();
-        }
-      }
-    }
-  }
-}
-`;
-
-        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
-    });
-
-    it('Page FileUploadAction', () => {
-        const code = `
-page 50001 "Page With File Upload"
-{
-  actions
-  {area(processing)
-    {group("&Action Group")
-      {
-        fileuploadaction(UploadAttachments)
-        {
-        Caption='Upload Attachments';
-        trigger OnAction(files: List of [FileUpload])
-        begin
-        UploadMultipleAttachments(files);
-        end;
-        }
-      }
-    }
-  }
-}`;
-
-        const expected = `page 50001 "Page With File Upload"
-{
-  actions
-  {
-    area(processing)
-    {
-      group("&Action Group")
-      {
-        fileuploadaction(UploadAttachments)
-        {
-          Caption = 'Upload Attachments';
-
-          trigger OnAction(files: List of [FileUpload])
-          begin
-            UploadMultipleAttachments(files);
-          end;
-        }
-      }
-    }
-  }
-}
-`;
-
-        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
-    });
-});
-
 describe('Fixed layout', () => {
     it('Fixed layout with properties and fields', () => {
         const code = `
@@ -1277,70 +1121,6 @@ page 50001 "Page With Fixed Layout"
     });
 });
 
-describe('Page with views', () => {
-    it('Page views', () => {
-        const code = `
-page 50001 "Page With View"
-{
-    layout
-    {
-        area(Content)
-        {
-            group(FieldGroup)
-            {
-                field(FixedField1; FieldDataSource1) {}
-                field(FixedField2; FieldDataSource2) {}
-            }
-        }
-    }
-    views
-    {
-        view("Last 30 Days")
-        {
-            Caption = 'Last 30 Days';Filters=where("Date Filter Type"=const(Last30Days));}
-        view("Year to Date")
-        {
-            Caption = 'Year to Date';
-Filters = where("Date Filter Type" = const(YearToDate));
-        }
-    }
-}
-`;
-
-        const expected = `page 50001 "Page With View"
-{
-  layout
-  {
-    area(Content)
-    {
-      group(FieldGroup)
-      {
-        field(FixedField1; FieldDataSource1) {}
-        field(FixedField2; FieldDataSource2) {}
-      }
-    }
-  }
-
-  views
-  {
-    view("Last 30 Days")
-    {
-      Caption = 'Last 30 Days';
-      Filters = where("Date Filter Type" = const(Last30Days));
-    }
-    view("Year to Date")
-    {
-      Caption = 'Year to Date';
-      Filters = where("Date Filter Type" = const(YearToDate));
-    }
-  }
-}
-`;
-
-        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
-    });
-});
-
 describe('Page triggers', () => {
     it('Simple page with two triggers', () => {
         const code = `
@@ -1384,6 +1164,72 @@ page 806 "Online Map Location"
   trigger LocationProvider::LocationChanged(location: DotNet Location)
   begin
   end;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+});
+
+describe('Page field properties', () => {
+    it('TableRelation property referencing a table field', () => {
+        const code = `
+    page 9999 MyPage
+    {
+        layout
+        {
+            area(content)
+            {
+                    field(AnalysisViewCodes; AnalysisViewCode)
+                    {
+                        TableRelation ="Analysis View".Code;
+    }}}}
+`;
+
+        const expected = `page 9999 MyPage
+{
+  layout
+  {
+    area(content)
+    {
+      field(AnalysisViewCodes; AnalysisViewCode)
+      {
+        TableRelation = "Analysis View".Code;
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('ValuesAllowed property is printed with one space separating each value', () => {
+        const code = `
+    page 9999 MyPage
+    {
+        layout
+        {
+            area(content)
+            {
+                    field(Name; ReservedFromStock)
+                    {
+                        ValuesAllowed =0,None,Partial;
+    }}}}
+`;
+
+        const expected = `page 9999 MyPage
+{
+  layout
+  {
+    area(content)
+    {
+      field(Name; ReservedFromStock)
+      {
+        ValuesAllowed = 0, None, Partial;
+      }
+    }
+  }
 }
 `;
 

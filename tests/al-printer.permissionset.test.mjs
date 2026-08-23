@@ -83,4 +83,22 @@ permissionsetextension 50000 ExtentionPermissions extends MyAppPermissions
 
         return alFormat(code, { removeEmptyElements: true }).then(formattedCode => expect(formattedCode).to.equal(expected))
     });
+
+    it('Permissions for Entitlement table', () => {
+        const code = `
+permissionset 50000 MyAppPermissions
+{
+  Assignable = true;
+  Permissions = tabledata Entitlement = Rm;
+}`;
+
+        const expected = `permissionset 50000 MyAppPermissions
+{
+  Assignable = true;
+  Permissions = tabledata Entitlement = Rm;
+}
+`;
+
+        return alFormat(code, { removeEmptyElements: true }).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
 });

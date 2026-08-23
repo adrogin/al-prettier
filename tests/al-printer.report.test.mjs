@@ -599,6 +599,35 @@ report 915 "Assemble to Order - Sales"
 `;
 
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
 
+    it('DataItemTableView property including pipe filters and open lower range', () => {
+        const code = `
+report 8614 "Get Config. Tables"
+{
+    dataset
+    {
+        dataitem(AllObj; AllObj)
+        {
+            DataItemTableView = where("Object Type" = const(Table), "Object ID" = filter(.. 99000999|2000000004|2000000005));
+        }
+    }
+}
+`;
+
+        const expected = `report 8614 "Get Config. Tables"
+{
+  dataset
+  {
+    dataitem(AllObj; AllObj)
+    {
+      DataItemTableView = where("Object Type" = const(Table),
+        "Object ID" = filter(..99000999 | 2000000004 | 2000000005));
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
 });
