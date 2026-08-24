@@ -254,6 +254,31 @@ describe('Table field properties', () => {
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
 
+    it('Option field with OptionOrdinalValues property', () => {
+        const code = `table 50000 MyTable
+        { fields{
+          field(1; OptionField; Option){
+          OptionMembers=" ",Option1,Option2,"Option 3";
+          OptionOrdinalValues =-1,1,2,3;
+          }
+        }}`;
+
+        const expected = `table 50000 MyTable
+{
+  fields
+  {
+    field(1; OptionField; Option)
+    {
+      OptionMembers = " ", Option1, Option2, "Option 3";
+      OptionOrdinalValues = -1, 1, 2, 3;
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
     it('AccessByPermission property referencing a full object name with namespace', () => {
         const code = `table 50000 MyTable
         { fields{
@@ -545,6 +570,58 @@ describe('Table relation formula', () => {
 
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
+
+    it('TableRelation property with a negative integer in filter', () => {
+        const code = `table 50000 MyTable
+        { fields{
+        field(1; "Field with TableRef"; Code[20])
+        {
+            TableRelation = "Activity Reservation"."No." where("Reservation No." = field("No."),"Reservation Line No." = filter(-1));
+        }
+    }}`;
+
+        const expected = `table 50000 MyTable
+{
+  fields
+  {
+    field(1; "Field with TableRef"; Code[20])
+    {
+      TableRelation = "Activity Reservation"."No."
+        where("Reservation No." = field("No."),
+          "Reservation Line No." = filter(-1));
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('TableRelation property with a negative integer in "const" link', () => {
+        const code = `table 50000 MyTable
+        { fields{
+        field(1; "Field with TableRef"; Code[20])
+        {
+            TableRelation = "Activity Reservation"."No." where("Reservation No." = field("No."),"Reservation Line No." = const(-1));
+        }
+    }}`;
+
+        const expected = `table 50000 MyTable
+{
+  fields
+  {
+    field(1; "Field with TableRef"; Code[20])
+    {
+      TableRelation = "Activity Reservation"."No."
+        where("Reservation No." = field("No."),
+          "Reservation Line No." = const(-1));
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
 });
 
 describe('FieldGroups', () => {
@@ -638,6 +715,29 @@ describe('FieldGroups', () => {
   fieldgroups
   {
     fieldgroup(DropDown; Code, Description) {}
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+});
+
+describe('Table field types', () => {
+    it('TableFilter type', () => {
+        const code = `table 50000 MyTable
+        { fields{
+        field(1; Code; Code[10])
+        {} field(2; "Security Filter"; TableFilter) {}
+        }
+        }`;
+
+        const expected = `table 50000 MyTable
+{
+  fields
+  {
+    field(1; Code; Code[10]) {}
+    field(2; "Security Filter"; TableFilter) {}
   }
 }
 `;

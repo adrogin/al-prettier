@@ -318,6 +318,35 @@ codeunit 50000 MyCodeunit
                 expect(formattedCode).to.equal(expected))
         });
     });
+
+    describe('Long "if" condition breaking the line', () => {
+        it('Long condition breaking the line must be printed with indent', () => {
+            const code = `
+codeunit 50000 MyCodeunit
+{
+  trigger OnRun()
+  begin
+    if VeryLongVariableName = AnotherLongVariableName and YetAnotherConditionCheckInThisProcedure() then begin a := b;end;
+  end;
+}
+`;
+
+            const expected = `codeunit 50000 MyCodeunit
+{
+  trigger OnRun()
+  begin
+    if VeryLongVariableName = AnotherLongVariableName and
+      YetAnotherConditionCheckInThisProcedure()
+    then begin
+      a := b;
+    end;
+  end;
+}
+`;
+
+            return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+        });
+    });
 });
 
 describe('Case statements', () => {
@@ -714,8 +743,61 @@ codeunit 50000 MyCodeunit
 }
 `;
 
-        return alFormat(code).then(formattedCode =>
-            expect(formattedCode).to.equal(expected))
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+
+    it('Boolean assignment with a long "in" operator breaking the line', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  trigger OnRun()
+  begin
+    BoolValue := SomeVariable in [LongVariableName1, LongVariableName2,LongVariableName3,LongVariableName4];
+  end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  trigger OnRun()
+  begin
+    BoolValue :=
+      SomeVariable in [
+        LongVariableName1,
+        LongVariableName2,
+        LongVariableName3,
+        LongVariableName4];
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+
+    it('Verbatim string in procedure arguments', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  trigger OnRun()
+  begin CallProcedure(@'multiple
+        string
+        argument');
+  end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  trigger OnRun()
+  begin
+    CallProcedure(@'multiple
+        string
+        argument');
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
     });
 });
 
@@ -1039,7 +1121,7 @@ codeunit 50000 MyCodeunit
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
 
-    it('OptionMembers function', () => {
+    it('OptionMembers as a function name must be successfully parsed', () => {
         const code = `
 codeunit 50000 MyCodeunit
 {

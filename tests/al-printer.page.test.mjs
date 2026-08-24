@@ -67,8 +67,41 @@ page 50001 "Page With Label"
 }
 `;
 
-        return alFormat(code).then(formattedCode =>
-            expect(formattedCode).to.equal(expected))
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+
+    it('Page label in repeater control', () => {
+        const code = `
+page 50001 "Page With Label"
+{
+  layout
+  {
+      area(content)
+      { 
+      repeater(Group) {
+      label(Warning) { Caption='Read this warning!'; } }}
+  }
+}`;
+
+        const expected = `page 50001 "Page With Label"
+{
+  layout
+  {
+    area(content)
+    {
+      repeater(Group)
+      {
+        label(Warning)
+        {
+          Caption = 'Read this warning!';
+        }
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
     });
 
     it('"is" and "as" operators can be used as identifiers"', () => {

@@ -1,6 +1,6 @@
 import * as prettier from 'prettier';
 import ALParser from '../parser/ALParser.js';
-import { isParagraphStatement, isCompoundStatement, shouldAddBlankLineAfter } from "./printerHelpers.js";
+import { isParagraphStatement, isCompoundStatement, shouldAddBlankLineAfter, isIfStatementContext } from "./printerHelpers.js";
 import { TokenFormatter } from './tokenFormatter.js';
 
 const { hardline, join, indent, group, line, softline } = prettier.doc.builders;
@@ -496,7 +496,8 @@ function print(path, options, print, args) {
             return printControlAddInApiDeclarations(path, options, print);
 
         case ALParser.RULE_eventDeclaration:
-            return printControlAddInEventDeclaration(path, options, print);
+            // return printControlAddInEventDeclaration(path, options, print);
+            return printProcedureDeclaration(path, options, print);
 
         case ALParser.RULE_imagesList:
         case ALParser.RULE_scriptsList:
@@ -621,8 +622,8 @@ function print(path, options, print, args) {
         case ALParser.RULE_textConstDataType:
             return printTextConst(path, options, print);
         case ALParser.RULE_optionValuesList:
-        case ALParser.RULE_optionMembersPropertyValue:
         case ALParser.RULE_allowedValuesList:
+        case ALParser.RULE_optionOrdinalValuesPropValue:
             return printOptionValuesList(path, options, print);
 
         case ALParser.RULE_identifiersList:
@@ -1912,19 +1913,32 @@ function printInterfacePropertiesList(path, options, print) {
 }
 
 function printProcedureDeclaration(path, options, print) {
-    // Grammar: procedureAccessModifier? PROCEDURE identifier LPAREN parameterList? RPAREN procedureReturnType? SEMICOLON?;
+    // Grammar: procedureAttributesList? procedureAccessModifier? PROCEDURE identifier LPAREN parameterList? RPAREN procedureReturnType? SEMICOLON?;
+    //          procedureAttributesList? EVENT identifier LPAREN parameterList? RPAREN SEMICOLON?;
 
     const children = path.node.children;
-    const accessModifier = children[0].ruleIndex === ALParser.RULE_procedureAccessModifier ? [path.call(print, 'children', 0), " "] : "";
+    const attrListIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_procedureAttributesList);
+    const accessModIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_procedureAccessModifier);
     const rParenIdx = children.findIndex(c => c.symbol?.type === ALParser.RPAREN);
     const returnTypeIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_procedureReturnType);
-    const procKeyword = children.findIndex(c => c.symbol?.type === ALParser.PROCEDURE);
+    const procKeyword = children.findIndex(c => c.symbol?.type === ALParser.PROCEDURE || c.symbol?.type === ALParser.EVENT);  // The same printer procedure is invoked for procedures and control add-in events
 
+    const attributes = attrListIdx > -1 ? path.call(print, 'children', attrListIdx) : [];
+    const accessModifier = accessModIdx > -1 ? path.call(print, 'children', accessModIdx) : "";
     const name = path.call(print, 'children', procKeyword + 1);
     const paramDoc = rParenIdx > procKeyword + 3 ? path.call(print, 'children', procKeyword + 3) : "";
 
-    let signature = [
-        accessModifier,
+    let decl = []
+    if (attributes.length > 0) {
+        decl.push(...attributes, hardline);
+    }
+
+    let signature = [];
+    if (accessModIdx > -1) {
+        signature.push(accessModifier, " ");
+    }
+
+    signature.push([
         path.call(print, 'children', procKeyword),
         " ",
         name,
@@ -1932,7 +1946,7 @@ function printProcedureDeclaration(path, options, print) {
         softline,
         paramDoc,
         path.call(print, 'children', rParenIdx)
-    ];
+    ]);
 
     if (returnTypeIdx) {
         signature = [...signature, path.call(print, 'children', returnTypeIdx)];
@@ -1942,9 +1956,9 @@ function printProcedureDeclaration(path, options, print) {
         children[children.length - 1].symbol?.type === ALParser.SEMICOLON
             ? path.call(print, 'children', children.length - 1)
             : ";";
-    signature = group(indent([...signature, semicolon]));
+    decl.push(group(indent([...signature, semicolon])));
 
-    return signature;
+    return decl;
 }
 
 function printInterfacePropertyItem(path, options, print) {
@@ -2513,22 +2527,28 @@ function printControlAddInApiDeclarations(path, options, print) {
     return join(hardline, path.map(print, 'children'));
 }
 
-function printControlAddInEventDeclaration(path, options, print) {
-    // Grammar: EVENT identifier LPAREN parameterList? RPAREN SEMICOLON;
-    return [
-        path.call(print, 'children', 0),
-        " ",
-        path.call(print, 'children', 1),
-        path.call(print, 'children', 2),
-        group(
-            indent([
-                softline,
-                path.call(print, 'children', 3),
-                path.call(print, 'children', 4),
-                path.call(print, 'children', 5)
-            ])
-        )];
-}
+// function printControlAddInEventDeclaration(path, options, print) {
+//     // Grammar: procedureAttributesList? EVENT identifier LPAREN parameterList? RPAREN SEMICOLON?;
+//     const children = path.node.children;
+//     const docs = [
+//         path.call(print, 'children', 0),
+//         " ",
+//         path.call(print, 'children', 1),
+//         path.call(print, 'children', 2)
+//     ];
+
+//     const indentedLine = [];
+//     for (let i = 3; i < children.length; i++) {
+//         indentedLine.push(path.call(print, 'children', i));
+//     }
+
+//     if (children[children.length - 1].symbol?.type !== ALParser.SEMICOLON) {
+//         indentedLine.push(";");
+//     }
+
+//     docs.push(children[3]?.ruleIndex === ALParser.RULE_parameterList ? group(indent([softline, indentedLine])) : indentedLine);
+//     return docs;
+// }
 
 function printControlAddinImportsList(path, options, print) {
     // Grammar: IMAGES EQUAL STRING_LITERAL (COMMA STRING_LITERAL)*
@@ -2891,7 +2911,7 @@ function printIfStatement(path, options, print) {
         thenStmt = indent([hardline, thenStmt]);
     }
 
-    const result = [group([ifKeyword, " ", condition, line, thenKeyword]), thenStmt];
+    const result = [group([ifKeyword, " ", indent(condition), line, thenKeyword]), thenStmt];
 
     // ELSE and its statement are optional — present when children.length > 4
     if (children.length > 4) {
@@ -2962,8 +2982,11 @@ function printForEachStatement(path, options, print) {
     // Grammar: FOREACH identifier IN expression DO statement
 
     const children = path.node.children;
+    const foreachKeyword = path.call(print, 'children', 0);
     const iterator = path.call(print, 'children', 1);
+    const inKeyword = path.call(print, 'children', 2);
     const condition = path.call(print, 'children', 3);
+    const doKeyword = path.call(print, 'children', 4);
     let statement = (children.length > 5) ? path.call(print, 'children', 5) : [];
 
     // Statement executed inside the loop. If it's a compond statement "begin..end", do not insert a hardline before the statement.
@@ -2976,7 +2999,7 @@ function printForEachStatement(path, options, print) {
         }
     }
 
-    return ["foreach ", iterator, " in ", condition, " do", statement];
+    return [foreachKeyword, " ", iterator, " ", inKeyword, " ", condition, " ", doKeyword, statement];
 }
 
 function printRepeatStatement(path, options, print) {
@@ -3182,11 +3205,12 @@ function printLogicalInExpression(path, options, print) {
         conditions.push(path.call(print, 'children', i + 1));  // Condition following the operator
     }
 
-    components.push(
-        group(indent([
-            softline,
-            conditions,
-            path.call(print, 'children', children.length - 1)])));  // Right bracket
+    const conditionsLine = [
+        softline,
+        conditions,
+        path.call(print, 'children', children.length - 1)];  // Right bracket
+
+    components.push(isIfStatementContext(path.node) ? group(conditionsLine) : group(indent(conditionsLine)));
     return components;
 }
 
@@ -3409,7 +3433,10 @@ function printOptionValuesList(path, options, print) {
 
     const res = [];
     for (let i = 0; i < path.node.children.length; i++) {
-        if (path.node.children[i].ruleIndex === ALParser.RULE_identifier && i > 1) {
+        if ((path.node.children[i].ruleIndex === ALParser.RULE_identifier
+            || path.node.children[i]?.symbol?.type === ALParser.INTEGER_LITERAL)
+            && i > 1)
+        {
             res.push(" ");
         }
         res.push(path.call(print, 'children', i));
