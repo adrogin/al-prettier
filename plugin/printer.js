@@ -1,6 +1,6 @@
 import * as prettier from 'prettier';
 import ALParser from '../parser/ALParser.js';
-import { isParagraphStatement, isCompoundStatement, shouldAddBlankLineAfter } from "./printerHelpers.js";
+import { isParagraphStatement, isCompoundStatement, shouldAddBlankLineAfter, isIfStatementContext } from "./printerHelpers.js";
 import { TokenFormatter } from './tokenFormatter.js';
 
 const { hardline, join, indent, group, line, softline } = prettier.doc.builders;
@@ -51,6 +51,7 @@ function print(path, options, print, args) {
         case ALParser.RULE_queryColumnPropertiesList:
         case ALParser.RULE_reportPropertiesList:
         case ALParser.RULE_reportDataItemPropertiesList:
+        case ALParser.RULE_reportColumnPropertiesList:
         case ALParser.RULE_xmlPortPropertiesList:
         case ALParser.RULE_tableElementPropertiesList:
         case ALParser.RULE_permissionSetPropertiesList:
@@ -59,6 +60,8 @@ function print(path, options, print, args) {
         case ALParser.RULE_profilePropertiesList:
         case ALParser.RULE_fieldGroupPropertiesList:
         case ALParser.RULE_pageViewPropertiesList:
+        case ALParser.RULE_analysisViewPropertiesList:
+        case ALParser.RULE_gridPropertiesList:
             return printObjectPropertiesList(path, options, print);
 
         case ALParser.RULE_tablePropertyItem:
@@ -74,6 +77,11 @@ function print(path, options, print, args) {
         case ALParser.RULE_tableElementPropertyItem:
         case ALParser.RULE_fieldGroupPropertyItem:
         case ALParser.RULE_pageViewPropertyItem:
+        case ALParser.RULE_analysisViewPropertyItem:
+        case ALParser.RULE_reportDataItemPropertyItem:
+        case ALParser.RULE_reportColumnPropertyItem:
+        case ALParser.RULE_groupPropertyItem:
+        case ALParser.RULE_gridPropertyItem:
             return printObjectPropertyItem(path, options, print);
 
         case ALParser.RULE_tableProperty:
@@ -92,10 +100,14 @@ function print(path, options, print, args) {
         case ALParser.RULE_queryColumnProperty:
         case ALParser.RULE_reportProperty:
         case ALParser.RULE_reportDataItemProperty:
+        case ALParser.RULE_reportColumnProperty:
         case ALParser.RULE_xmlPortProperty:
         case ALParser.RULE_tableElementProperty:
         case ALParser.RULE_fieldGroupProperty:
         case ALParser.RULE_pageViewProperty:
+        case ALParser.RULE_analysisViewProperty:
+        case ALParser.RULE_gridProperty:
+        case ALParser.RULE_pageViewFiltersProperty:
             return printObjectProperty(path, options, print);
 
         case ALParser.RULE_objectReference:
@@ -154,6 +166,7 @@ function print(path, options, print, args) {
             return join(" ", path.map(print, 'children'));
 
         case ALParser.RULE_relationFilterExpression:
+        case ALParser.RULE_relationFilterSubExpression:
         case ALParser.RULE_relationalFilterEqalityExpression:
             return printRelationFilterExpression(path, options, print);
         
@@ -173,9 +186,11 @@ function print(path, options, print, args) {
             return printKeyItem(path, options, print);
 
         case ALParser.RULE_fieldGroupsList:
+        case ALParser.RULE_tableExtFieldGroupsList:
             return printFieldGroupsList(path, options, print);
 
         case ALParser.RULE_fieldGroupItem:
+        case ALParser.RULE_tableExtFieldGroupItem:
             return printFieldGroupItem(path, options, print);
 
         case ALParser.RULE_fieldGroupDefinition:
@@ -204,11 +219,11 @@ function print(path, options, print, args) {
         case ALParser.RULE_pageObject:
             return printPageObject(path, options, print);
 
-        case ALParser.RULE_layoutDefinition:
-            return printLayoutDefinition(path, options, print);
+        case ALParser.RULE_pageLayoutDefinition:
+            return printPageLayoutDefinition(path, options, print);
 
-        case ALParser.RULE_layoutElements:
-            return printLayoutElements(path, options, print);
+        case ALParser.RULE_pageExtLayoutElements:
+            return printPageExtLayoutElements(path, options, print);
 
         case ALParser.RULE_areaDefinition:
         case ALParser.RULE_groupDefinition:
@@ -216,6 +231,7 @@ function print(path, options, print, args) {
         case ALParser.RULE_gridControlDefinition:
         case ALParser.RULE_fixedLayoutDefinition:
         case ALParser.RULE_pageViewDefinition:
+        case ALParser.RULE_analysisViewDefinition:
             return printPageSegmentDefinition(path, options, print);
 
         case ALParser.RULE_areaElements:
@@ -226,9 +242,6 @@ function print(path, options, print, args) {
         case ALParser.RULE_gridControlElements:
         case ALParser.RULE_fixedLayoutElements:
             return printGroupElements(path, options, print);
-
-        case ALParser.RULE_groupPropertyItem:
-            return printGroupPropertyItem(path, options, print);
 
         case ALParser.RULE_partDefinition:
             return printPartDefinition(path, options, print);
@@ -268,6 +281,7 @@ function print(path, options, print, args) {
             return printActionElements(path, options, print);
 
         case ALParser.RULE_actionDefinition:
+        case ALParser.RULE_customActionDefinition:
             return printActionDefinition(path, options, print);
 
         case ALParser.RULE_actionPropertiesList:
@@ -292,13 +306,14 @@ function print(path, options, print, args) {
             return printActionRef(path, options, print);
 
         case ALParser.RULE_tableViewExpression:
-            return pintTableViewExpression(path, options, print);
+            return printTableViewExpression(path, options, print);
 
         case ALParser.RULE_sourceTableViewProperty:
         case ALParser.RULE_subPageViewProperty:
             return printSourceTableViewExpression(path, options, print);
 
         case ALParser.RULE_pageViewsList:
+        case ALParser.RULE_analysisViewsList:
             return printPageViewsList(path, options, print);
         //#endregion Page object
 
@@ -481,7 +496,8 @@ function print(path, options, print, args) {
             return printControlAddInApiDeclarations(path, options, print);
 
         case ALParser.RULE_eventDeclaration:
-            return printControlAddInEventDeclaration(path, options, print);
+            // return printControlAddInEventDeclaration(path, options, print);
+            return printProcedureDeclaration(path, options, print);
 
         case ALParser.RULE_imagesList:
         case ALParser.RULE_scriptsList:
@@ -489,6 +505,7 @@ function print(path, options, print, args) {
             return printControlAddinImportsList(path, options, print);
 
         case ALParser.RULE_reportDatasetModification:
+        case ALParser.RULE_reportExtDatasetAddition:
             return printReportDatasetModification(path, options, print);
 
         //#endregion
@@ -510,13 +527,11 @@ function print(path, options, print, args) {
         case ALParser.RULE_variablesList:
             return printVariablesList(path, options, print);
 
-        case ALParser.RULE_triggersList:
-            return printTriggersList(path, options, print);
-
         case ALParser.RULE_triggerDefinition:
             return printTriggerDefinition(path, options, print);
 
         case ALParser.RULE_proceduresList:
+        case ALParser.RULE_triggersList:
             return printProceduresList(path, options, print);
 
         case ALParser.RULE_procedureDefinition:
@@ -605,7 +620,8 @@ function print(path, options, print, args) {
         case ALParser.RULE_textConstDataType:
             return printTextConst(path, options, print);
         case ALParser.RULE_optionValuesList:
-        case ALParser.RULE_optionMembersPropertyValue:
+        case ALParser.RULE_allowedValuesList:
+        case ALParser.RULE_optionOrdinalValuesPropValue:
             return printOptionValuesList(path, options, print);
 
         case ALParser.RULE_identifiersList:
@@ -801,25 +817,31 @@ function insertBlankLinesInComments(comments) {
 function printCompilationUnit(path, options, print) {
     // Grammar: namespaceDeclaration? usingRefList? objectDefinition* EOF
     const children = path.node.children;
-    const namespaceDescIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_namespaceDeclaration);
+    const namespaceDeclIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_namespaceDeclaration);
     const usingRefListIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_usingRefList);
     const objectDefinitionIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_objectDefinition);
 
-    const namespace = namespaceDescIdx > -1 ? path.call(print, 'children', namespaceDescIdx) : [];
+    const namespace = namespaceDeclIdx > -1 ? path.call(print, 'children', namespaceDeclIdx) : [];
     const usingRefList = usingRefListIdx > -1 ? path.call(print, 'children', usingRefListIdx) : [];
 
     const objectDefs = [];
 
-    for (let i = objectDefinitionIdx; i < children.length - 1; i++) {
-        objectDefs.push(path.call(print, 'children', i));
+    if (objectDefinitionIdx > -1) {
+        for (let i = objectDefinitionIdx; i < children.length - 1; i++) {
+            objectDefs.push(path.call(print, 'children', i));
+        }
     }
 
     const result = [];
     if (namespace.length > 0) {
-        result.push(...namespace, hardline, hardline);
+        result.push(...namespace, hardline);
+        if (usingRefListIdx > -1 || objectDefinitionIdx > -1)
+            result.push(hardline);
     }
     if (usingRefList.length > 0) {
-        result.push(...usingRefList, hardline, hardline);
+        result.push(...usingRefList, hardline);
+        if (objectDefinitionIdx > -1)
+            result.push(hardline);
     }
 
     if (objectDefs.length > 0) {
@@ -988,7 +1010,15 @@ function printKeyItem(path, options, print) {
         ? path.call(print, 'children', children.length - 3) 
         : path.call(print, 'children', children.length - 2);
     const rBrace = path.call(print, 'children', children.length - 1);
-    const signature = ["key(", keyName, "; ", join(", ", fieldDocs), ")"];
+    const signature = [
+        path.call(print, 'children', 0),
+        path.call(print, 'children', 1),
+        keyName,
+        path.call(print, 'children', 3),
+        " ",
+        join(", ", fieldDocs),
+        path.call(print, 'children', rparenIdx)
+    ];
     let body = [];
     if (propsListIdx > -1) {
         body = [hardline, lBrace, indent([hardline, propsList]), hardline, rBrace];
@@ -1074,15 +1104,19 @@ function printFieldGroupFieldsList(path, options, print) {
 //#region Table extension functions
 
 function printTableExtObject(path, options, print) {
-    // Grammar: TABLEEXTENSION INTEGER_LITERAL IDENTIFIER EXTENDS IDENTIFIER LBRACE tableExtPropertiesList? tableExtFieldsList? tableKeysSection? (variablesList | triggersList | proceduresList)* RBRACE;
+    // Grammar: TABLEEXTENSION INTEGER_LITERAL identifier EXTENDS IDENTIFIER LBRACE tableExtPropertiesList? tableExtFieldsList? tableKeysSection? (variablesList | triggersList | proceduresList)* RBRACE;
     const children = path.node.children;
 
     const objectIdx = children.findIndex(c => c.symbol?.type === ALParser.TABLEEXTENSION);
     if (objectIdx === -1) return "";
 
+    const tableExt = path.call(print, 'children', objectIdx);
     const objectId = path.call(print, 'children', objectIdx + 1);
     const objectName = path.call(print, 'children', objectIdx + 2);
+    const extendsKeyword = path.call(print, 'children', objectIdx + 3);
     const extendedObjectName = path.call(print, 'children', objectIdx + 4);
+    const lBrace = path.call(print, 'children', objectIdx + 5);
+    const rBrace = path.call(print, 'children', children.length - 1);
 
     const elementStart = objectIdx + 6;
     const elementEnd = children.length - 1;
@@ -1095,7 +1129,7 @@ function printTableExtObject(path, options, print) {
         ? [indent([hardline, join([hardline, hardline], elementDocs)]), hardline]
         : [hardline];
 
-    return ["tableextension ", objectId, " ", objectName, " extends ", extendedObjectName, hardline, "{", ...body, "}"];
+    return [tableExt, " ", objectId, " ", objectName, " ", extendsKeyword, " ", extendedObjectName, hardline, lBrace, ...body, rBrace];
 }
 
 function printTableExtFieldModification(path, node, print) {
@@ -1138,9 +1172,14 @@ function printPageObject(path, options, print) {
     return printALObject(path, options, print, ALParser.PAGE);
 }
 
-function printLayoutDefinition(path, options, print) {
-    // Grammar: LAYOUT LBRACE layoutElements RBRACE
-    const elements = path.call(print, 'children', 2);
+function printPageLayoutDefinition(path, options, print) {
+    // Grammar: LAYOUT LBRACE areaDefinition* RBRACE
+    const elements = [];
+    if (path.node.children[2].ruleIndex === ALParser.RULE_areaDefinition) {
+        for (let i = 2; i < path.node.children.length - 1; i++) {
+            elements.push(path.call(print, 'children', i));
+        }
+    }
     if (options.removeEmptyElements && (!Array.isArray(elements) || elements.length === 0))
         return [];
 
@@ -1152,18 +1191,18 @@ function printLayoutDefinition(path, options, print) {
     pageLayout.push(path.call(print, 'children', 1));
 
     if (Array.isArray(elements) && elements.length > 0) {
-        pageLayout.push(indent([hardline, elements]));
+        pageLayout.push(indent([hardline, join(hardline, elements)]));
     }
 
     if (!options.collapseEmptyBraces || (Array.isArray(elements) && elements.length > 0)) {
         pageLayout.push(hardline);
     }
 
-    pageLayout.push(path.call(print, 'children', 3));
+    pageLayout.push(path.call(print, 'children', path.node.children.length - 1));
     return pageLayout;
 }
 
-function printLayoutElements(path, options, print) {
+function printPageExtLayoutElements(path, options, print) {
     // Grammar: (areaDefinition | groupDefinition | pageFieldItem | partDefinition | repeaterDefinition)*
     const children = path.node.children;
     if (!children || children.length === 0) return "";
@@ -1232,10 +1271,6 @@ function printGroupElements(path, options, print) {
     }
 
     return join(hardline, docs);
-}
-
-function printGroupPropertyItem(path, options, print) {
-    return [path.call(print, 'children', 0), ";"];
 }
 
 function printPartDefinition(path, options, print) {
@@ -1480,9 +1515,12 @@ function printActionElements(path, options, print) {
 }
 
 function printActionDefinition(path, options, print) {
-    // Grammar: ACTION LPAREN IDENTIFIER RPAREN LBRACE actionPropertiesList? triggersList? RBRACE
+    // Grammar: (ACTION | FILEUPLOADACTION) LPAREN IDENTIFIER RPAREN LBRACE actionPropertiesList? triggersList? RBRACE
     const children = path.node.children;
+    const actionKeyword = path.call(print, 'children', 0);
+    const lParen = path.call(print, 'children', 1);
     const name = path.call(print, 'children', 2);
+    const rParen = path.call(print, 'children', 3);
 
     // actionPropertiesList? and triggersList? are collected between LBRACE (index 4) and RBRACE (last)
     const elementDocs = [];
@@ -1508,7 +1546,7 @@ function printActionDefinition(path, options, print) {
         }
     }
 
-    return ["action(", name, ")", ...body];
+    return [actionKeyword, lParen, name, rParen, ...body];
 }
 
 function printActionPropertiesList(path, options, print) {
@@ -1627,8 +1665,17 @@ function printTableRelationFilterRef(path, options, print) {
 }
 
 function printRelationFilterExpression(path, options, print) {
-    if (path.node.children.length === 2 &&
-        (path.node.children[0].symbol?.type === ALParser.RANGE_OP || path.node.children[1].symbol?.type === ALParser.RANGE_OP)
+    const children = path.node.children;
+
+    if (children.length === 2 &&
+        (children[0].symbol?.type === ALParser.RANGE_OP || children[1].symbol?.type === ALParser.RANGE_OP)
+    ) {
+        return path.map(print, 'children');
+    }
+
+    if (children.length === 3 &&
+        children[0].symbol?.type === ALParser.LPAREN &&
+        children[2].symbol?.type === ALParser.RPAREN
     ) {
         return path.map(print, 'children');
     }
@@ -1685,9 +1732,10 @@ function printPageLinkExpression(path, options, print) {
     return filters;
 }
 
-function pintTableViewExpression(path, options, print) {
+function printTableViewExpression(path, options, print) {
     // Grammar: sourceTableSortingExpr? sourceTableOrderExpr? tableRelationWhereExpression?;
-    return group(indent(join(line, path.map(print, 'children'))));
+    const children = path.map(print, 'children');
+    return children.length > 1 ? group(indent(join(line, children))) : children;
 }
 
 function printSourceTableViewExpression(path, options, print) {
@@ -1696,10 +1744,13 @@ function printSourceTableViewExpression(path, options, print) {
 
 function printPageViewsList(path, options, print) {
     // Grammar: VIEWS LBRACE pageViewDefinition* RBRACE
+    //          ANALYSISVIEWS LBRACE analysisViewDefinition* RBRACE
 
     const viewDefs = [];
 
-    if (path.node.children[2].ruleIndex === ALParser.RULE_pageViewDefinition) {
+    if (path.node.children[2].ruleIndex === ALParser.RULE_pageViewDefinition ||
+        path.node.children[2].ruleIndex === ALParser.RULE_analysisViewDefinition
+    ) {
         for (let i = 2; i < path.node.children.length - 1; i++) {
             viewDefs.push(path.call(print, 'children', i));
         }
@@ -1761,7 +1812,7 @@ function printPageExtLayoutDefinition(path, options, print) {
 }
 
 function printPageExtLayoutModificationBlock(path, options, print) {
-    // Grammar: pageExtLayoutMod LPAREN identifier RPAREN LBRACE layoutElements RBRACE
+    // Grammar: pageExtLayoutModKeyword LPAREN identifier RPAREN LBRACE pageExtLayoutElements RBRACE
     const children = path.node.children;
     const lBraceIdx = children.findIndex(c => c.symbol?.type === ALParser.LBRACE);
 
@@ -1881,19 +1932,32 @@ function printInterfacePropertiesList(path, options, print) {
 }
 
 function printProcedureDeclaration(path, options, print) {
-    // Grammar: procedureAccessModifier? PROCEDURE identifier LPAREN parameterList? RPAREN procedureReturnType? SEMICOLON?;
+    // Grammar: procedureAttributesList? procedureAccessModifier? PROCEDURE identifier LPAREN parameterList? RPAREN procedureReturnType? SEMICOLON?;
+    //          procedureAttributesList? EVENT identifier LPAREN parameterList? RPAREN SEMICOLON?;
 
     const children = path.node.children;
-    const accessModifier = children[0].ruleIndex === ALParser.RULE_procedureAccessModifier ? [path.call(print, 'children', 0), " "] : "";
+    const attrListIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_procedureAttributesList);
+    const accessModIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_procedureAccessModifier);
     const rParenIdx = children.findIndex(c => c.symbol?.type === ALParser.RPAREN);
     const returnTypeIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_procedureReturnType);
-    const procKeyword = children.findIndex(c => c.symbol?.type === ALParser.PROCEDURE);
+    const procKeyword = children.findIndex(c => c.symbol?.type === ALParser.PROCEDURE || c.symbol?.type === ALParser.EVENT);  // The same printer procedure is invoked for procedures and control add-in events
 
+    const attributes = attrListIdx > -1 ? path.call(print, 'children', attrListIdx) : [];
+    const accessModifier = accessModIdx > -1 ? path.call(print, 'children', accessModIdx) : "";
     const name = path.call(print, 'children', procKeyword + 1);
     const paramDoc = rParenIdx > procKeyword + 3 ? path.call(print, 'children', procKeyword + 3) : "";
 
-    let signature = [
-        accessModifier,
+    let decl = []
+    if (attributes.length > 0) {
+        decl.push(...attributes, hardline);
+    }
+
+    let signature = [];
+    if (accessModIdx > -1) {
+        signature.push(accessModifier, " ");
+    }
+
+    signature.push([
         path.call(print, 'children', procKeyword),
         " ",
         name,
@@ -1901,7 +1965,7 @@ function printProcedureDeclaration(path, options, print) {
         softline,
         paramDoc,
         path.call(print, 'children', rParenIdx)
-    ];
+    ]);
 
     if (returnTypeIdx) {
         signature = [...signature, path.call(print, 'children', returnTypeIdx)];
@@ -1911,9 +1975,9 @@ function printProcedureDeclaration(path, options, print) {
         children[children.length - 1].symbol?.type === ALParser.SEMICOLON
             ? path.call(print, 'children', children.length - 1)
             : ";";
-    signature = group(indent([...signature, semicolon]));
+    decl.push(group(indent([...signature, semicolon])));
 
-    return signature;
+    return decl;
 }
 
 function printInterfacePropertyItem(path, options, print) {
@@ -2482,22 +2546,28 @@ function printControlAddInApiDeclarations(path, options, print) {
     return join(hardline, path.map(print, 'children'));
 }
 
-function printControlAddInEventDeclaration(path, options, print) {
-    // Grammar: EVENT identifier LPAREN parameterList? RPAREN SEMICOLON;
-    return [
-        path.call(print, 'children', 0),
-        " ",
-        path.call(print, 'children', 1),
-        path.call(print, 'children', 2),
-        group(
-            indent([
-                softline,
-                path.call(print, 'children', 3),
-                path.call(print, 'children', 4),
-                path.call(print, 'children', 5)
-            ])
-        )];
-}
+// function printControlAddInEventDeclaration(path, options, print) {
+//     // Grammar: procedureAttributesList? EVENT identifier LPAREN parameterList? RPAREN SEMICOLON?;
+//     const children = path.node.children;
+//     const docs = [
+//         path.call(print, 'children', 0),
+//         " ",
+//         path.call(print, 'children', 1),
+//         path.call(print, 'children', 2)
+//     ];
+
+//     const indentedLine = [];
+//     for (let i = 3; i < children.length; i++) {
+//         indentedLine.push(path.call(print, 'children', i));
+//     }
+
+//     if (children[children.length - 1].symbol?.type !== ALParser.SEMICOLON) {
+//         indentedLine.push(";");
+//     }
+
+//     docs.push(children[3]?.ruleIndex === ALParser.RULE_parameterList ? group(indent([softline, indentedLine])) : indentedLine);
+//     return docs;
+// }
 
 function printControlAddinImportsList(path, options, print) {
     // Grammar: IMAGES EQUAL STRING_LITERAL (COMMA STRING_LITERAL)*
@@ -2613,25 +2683,26 @@ function printVariablesList(path, options, print) {
         : [];
 }
 
-function printTriggersList(path, options, print) {
-    // Grammar: triggerDefinition+
-    return join([hardline, hardline], path.map(print, 'children'));
-}
-
 function printTriggerDefinition(path, options, print) {
-    // Grammar: TRIGGER IDENTIFIER LPAREN parameterList? RPAREN procedureReturnType? variablesList? BEGIN statementList? END SEMICOLON
+    // Grammar: triggerDefinition: TRIGGER identifier (SCOPE_OP identifier)? LPAREN parameterList? RPAREN procedureReturnType? SEMICOLON? variablesList? BEGIN statementList? END SEMICOLON
     const children = path.node.children;
     const paramsListIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_parameterList);
     const beginIdx = children.findIndex(c => c.symbol?.type === ALParser.BEGIN);
     const endIdx = children.findIndex(c => c.symbol?.type === ALParser.END);
     const returnTypeIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_procedureReturnType);
     const varsIdx = children.findIndex(c => c.ruleIndex === ALParser.RULE_variablesList);
-    const statementListId = endIdx > beginIdx + 1 ? beginIdx + 1 : -1;
+    const statementListIdx = endIdx > beginIdx + 1 ? beginIdx + 1 : -1;
+    const lParenIdx = children.findIndex(c => c.symbol?.type === ALParser.LPAREN);
 
     const triggerKeyword = path.call(print, 'children', 0);
-    const name = path.call(print, 'children', 1);
-    const lParen = path.call(print, 'children', 2);
-    const rParen = path.call(print, 'children', paramsListIdx > -1 ? paramsListIdx + 1 : 3);
+
+    const name = [path.call(print, 'children', 1)];
+    if (children[2].symbol?.type === ALParser.SCOPE_OP) {
+        name.push(path.call(print, 'children', 2), path.call(print, 'children', 3));
+    }
+
+    const lParen = path.call(print, 'children', lParenIdx);
+    const rParen = path.call(print, 'children', paramsListIdx > -1 ? paramsListIdx + 1 : lParenIdx + 1);
     const beginKeyword = path.call(print, 'children', beginIdx);
     const endKeyword = path.call(print, 'children', endIdx);
     const semicolon = path.call(print, 'children', children.length - 1);
@@ -2642,14 +2713,14 @@ function printTriggerDefinition(path, options, print) {
     // variablesList: any rule context between RPAREN and BEGIN
     const varDocs = path.call(print, 'children', varsIdx);
 
-    const signature = [triggerKeyword, " ", name, lParen, paramDoc, rParen];
+    const signature = [triggerKeyword, " ", ...name, lParen, paramDoc, rParen];
     if (returnType.length > 0) {
         signature.push(...returnType);
     }
 
     const vars = varDocs.length > 0 ? [hardline, ...varDocs] : [];
-    const body = statementListId > 0
-        ? [hardline, beginKeyword, indent([hardline, path.call(print, 'children', statementListId)]), hardline, endKeyword, semicolon]
+    const body = statementListIdx > 0
+        ? [hardline, beginKeyword, indent([hardline, path.call(print, 'children', statementListIdx)]), hardline, endKeyword, semicolon]
         : [hardline, beginKeyword, hardline, endKeyword, semicolon];
 
     return [...signature, ...vars, ...body];
@@ -2697,12 +2768,20 @@ function printProcedureDefinition(path, options, print) {
     const name = path.call(print, 'children', procKeywordIdx + 1);
 
     // parameterList is at index procKeywordIdx + 3 only when RPAREN is not immediately after LPAREN (index procKeywordIdx + 2)
-    const paramDoc = rParenIdx > procKeywordIdx + 3 ? path.call(print, 'children', procKeywordIdx + 3) : "";
+    const paramListNode = rParenIdx > procKeywordIdx + 3 ? children[procKeywordIdx + 3] : null;
+    const paramDoc = paramListNode ? path.call(print, 'children', procKeywordIdx + 3) : "";
+
+    // A trailing comment on the last parameter attaches to the parameterList node itself (there is no
+    // following SEMICOLON token to carry it). Without an explicit break here it would float past RPAREN
+    // to the next hardline instead of staying on the parameter's own line.
+    const hasTrailingParamComment = paramListNode?.comments?.some(comment => comment.trailing);
 
     // variablesList: any rule context between RPAREN and BEGIN
     const varDocs = varListIdx > 0 ? path.call(print, 'children', varListIdx) : [];
 
-    let signature = [proc, " ", name, path.call(print, 'children', lParenIdx), group(indent([softline, paramDoc])), path.call(print, 'children', rParenIdx)];
+    let signature = [proc, " ", name, path.call(print, 'children', lParenIdx),
+        group(hasTrailingParamComment ? [indent([softline, paramDoc]), hardline] : indent([softline, paramDoc])),
+        path.call(print, 'children', rParenIdx)];
 
     // If the procedure return type is not defined, returnTypeIdx = -1
     let returnType = [];
@@ -2742,9 +2821,9 @@ function printParameterList(path, options, print) {
     const children = path.node.children;
     const paramDocs = [];
     for (let i = 0; i < children.length; i += 2) {
-        paramDocs.push(path.call(print, 'children', i));
+        paramDocs.push([path.call(print, 'children', i), path.call(print, 'children', i + 1)]);
     }
-    return join([";", line], paramDocs);
+    return join(line, paramDocs);
 }
 
 function printProcReturnType(path, options, print) {
@@ -2854,7 +2933,7 @@ function printIfStatement(path, options, print) {
         thenStmt = indent([hardline, thenStmt]);
     }
 
-    const result = [group([ifKeyword, " ", condition, line, thenKeyword]), thenStmt];
+    const result = [group([ifKeyword, " ", indent(condition), line, thenKeyword]), thenStmt];
 
     // ELSE and its statement are optional — present when children.length > 4
     if (children.length > 4) {
@@ -2872,16 +2951,22 @@ function printIfStatement(path, options, print) {
 }
 
 function printElseStatement(path, options, print) {
-    // Grammar: ELSE statementList;
+    // Grammar: ELSE statementList?;
     // Similar to "then begin" in the if statement above, "else begin" must not break the line.
     const elseKeyword = path.call(print, 'children', 0);
-    let elseStmt = path.call(print, 'children', 1);
-    if (isCompoundStatement(path.node.children[1]?.children[0])) {
-        elseStmt = [" ", elseStmt];
+    let elseStmt = "";
+
+    if (path.node.children.length > 1) {
+        elseStmt = path.call(print, 'children', 1);
+        if (isCompoundStatement(path.node.children[1]?.children[0])) {
+            elseStmt = [" ", elseStmt];
+        }
+        else {
+            elseStmt = indent([hardline, elseStmt]);
+        }
     }
-    else {
-        elseStmt = indent([hardline, elseStmt]);
-    }
+    else
+        elseStmt = indent([hardline, ";"]);
 
     return [elseKeyword, elseStmt];
 }
@@ -2919,8 +3004,11 @@ function printForEachStatement(path, options, print) {
     // Grammar: FOREACH identifier IN expression DO statement
 
     const children = path.node.children;
+    const foreachKeyword = path.call(print, 'children', 0);
     const iterator = path.call(print, 'children', 1);
+    const inKeyword = path.call(print, 'children', 2);
     const condition = path.call(print, 'children', 3);
+    const doKeyword = path.call(print, 'children', 4);
     let statement = (children.length > 5) ? path.call(print, 'children', 5) : [];
 
     // Statement executed inside the loop. If it's a compond statement "begin..end", do not insert a hardline before the statement.
@@ -2933,7 +3021,7 @@ function printForEachStatement(path, options, print) {
         }
     }
 
-    return ["foreach ", iterator, " in ", condition, " do", statement];
+    return [foreachKeyword, " ", iterator, " ", inKeyword, " ", condition, " ", doKeyword, statement];
 }
 
 function printRepeatStatement(path, options, print) {
@@ -2965,7 +3053,9 @@ function printWhileLoopStatement(path, options, print) {
     // Grammar: WHILE expression DO statement?
 
     const children = path.node.children;
+    const whileKeyword = path.call(print, 'children', 0);
     const condition = path.call(print, 'children', 1);
+    const doKeyword = path.call(print, 'children', 2);
     let statement = children.length > 3 ? path.call(print, 'children', 3) : [];
 
     // Statement executed inside the loop. If it's a compond statement "begin..end", do not insert a hardline before the statement.
@@ -2978,7 +3068,7 @@ function printWhileLoopStatement(path, options, print) {
         }
     }
 
-    return ["while ", condition, " do", statement];
+    return [whileKeyword, " ", condition, " ", doKeyword, statement];
 }
 
 function printCaseStatement(path, options, print) {
@@ -3137,11 +3227,12 @@ function printLogicalInExpression(path, options, print) {
         conditions.push(path.call(print, 'children', i + 1));  // Condition following the operator
     }
 
-    components.push(
-        group(indent([
-            softline,
-            conditions,
-            path.call(print, 'children', children.length - 1)])));  // Right bracket
+    const conditionsLine = [
+        softline,
+        conditions,
+        path.call(print, 'children', children.length - 1)];  // Right bracket
+
+    components.push(isIfStatementContext(path.node) ? group(conditionsLine) : group(indent(conditionsLine)));
     return components;
 }
 
@@ -3364,7 +3455,10 @@ function printOptionValuesList(path, options, print) {
 
     const res = [];
     for (let i = 0; i < path.node.children.length; i++) {
-        if (path.node.children[i].ruleIndex === ALParser.RULE_identifier && i > 1) {
+        if ((path.node.children[i].ruleIndex === ALParser.RULE_identifier
+            || path.node.children[i]?.symbol?.type === ALParser.INTEGER_LITERAL)
+            && i > 1)
+        {
             res.push(" ");
         }
         res.push(path.call(print, 'children', i));
@@ -3374,7 +3468,7 @@ function printOptionValuesList(path, options, print) {
 }
 
 function printObjectPermissionsList(path, options, print) {
-    // Grammar: PERMISSIONS EQUAL permissionsPropertyValue (COMMA permissionsPropertyValue)*
+    // Grammar: PERMISSIONS EQUAL (permissionsPropertyValue (COMMA permissionsPropertyValue)*)?
     const children = path.node.children;
     const permissionsKeyword = path.call(print, 'children', 0);
     const equalSign = path.call(print, 'children', 1);
@@ -3388,7 +3482,9 @@ function printObjectPermissionsList(path, options, print) {
         propValues.push(value);
     }
 
-    return group(indent([permissionsKeyword, " ", equalSign, line, join(line, propValues)]));
+    return propValues.length > 0
+        ? group(indent([permissionsKeyword, " ", equalSign, line, join(line, propValues)]))
+        : [permissionsKeyword, " ", equalSign];
 }
 
 function printPermissionsPropertyValue(path, options, print) {
@@ -3455,7 +3551,8 @@ function printElementsInGroups(path, options, print, elementStart, elementEnd) {
                 objectElements.procedures.push(path.call(print, 'children', i));
                 break;
 
-            case path.node.children[i].ruleIndex === ALParser.RULE_layoutDefinition:
+            case path.node.children[i].ruleIndex === ALParser.RULE_pageLayoutDefinition:
+            case path.node.children[i].ruleIndex === ALParser.RULE_pageExtLayoutDefinition:
                 objectElements.layout = path.call(print, 'children', i);
                 break;
 

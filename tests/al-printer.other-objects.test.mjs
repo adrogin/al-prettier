@@ -79,3 +79,9 @@ pagecustomization MyCustomization customizes "Customer List"
         return alFormat(code, { removeEmptyElements: true }).then(formattedCode => expect(formattedCode).to.equal(expected))
     });
 });
+
+describe('Namespace tests', () => {
+    it('Source file containing only namespace without object', () => {
+        return alFormat('namespace My.Namespace;').then(formattedCode => expect(formattedCode).to.equal('namespace My.Namespace;\n'));
+    });
+});

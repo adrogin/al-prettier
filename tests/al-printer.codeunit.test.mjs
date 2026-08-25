@@ -104,7 +104,7 @@ permissions=tabledata Microsoft.Finance.GeneralLedger.Ledger."G/LEntry" = r;
             expect(formattedCode).to.equal(expected))
     });
 
-    it('Permissions property with ID operations', () => {
+    it('Permissions property with ID operations: Insert and Delete should not be parsed as an "ID" identifier', () => {
         const code = `
 codeunit 50000 MyCodeunit
 {
@@ -115,6 +115,24 @@ permissions=tabledata MyTable = ID;
         const expected = `codeunit 50000 MyCodeunit
 {
   permissions = tabledata MyTable = ID;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Permissions property with an empty permissions list', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+permissions= ;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  permissions =;
 }
 `;
 

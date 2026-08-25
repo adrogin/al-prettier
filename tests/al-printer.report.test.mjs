@@ -463,6 +463,62 @@ reportextension 50110 MyExtension extends "Customer - Top 10 List"
 
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
+
+    it('Report extension adding a dataitem to the original report', () => {
+        const code = `
+reportextension 929 "Asm. Get Demand To Reserve" extends "Get Demand To Reserve"
+{
+    dataset
+    {
+        addafter(TransferOrderLine)
+        {
+            dataitem(AssemblyLine; "Assembly Line")
+            {
+                DataItemTableView = sorting("Document Type", "Document No.", "Line No.")
+                                    where("Document Type" = const(Order),
+                                        Type = const(Item),
+                                        "Remaining Quantity (Base)" = filter(<> 0));
+
+                trigger OnPreDataItem()
+                begin
+                    if not (DemandType in [Enum::"Reservation Demand Type"::All, Enum::"Reservation Demand Type"::"Assembly Components"]) then
+                        CurrReport.Break();
+                end;
+            }
+        }
+    }
+}
+`;
+
+        const expected = `reportextension 929 "Asm. Get Demand To Reserve" extends "Get Demand To Reserve"
+{
+  dataset
+  {
+    addafter(TransferOrderLine)
+    {
+      dataitem(AssemblyLine; "Assembly Line")
+      {
+        DataItemTableView = sorting("Document Type", "Document No.", "Line No.")
+          where("Document Type" = const(Order),
+            Type = const(Item),
+            "Remaining Quantity (Base)" = filter(<> 0));
+
+        trigger OnPreDataItem()
+        begin
+          if not (DemandType in [
+            Enum::"Reservation Demand Type"::All,
+            Enum::"Reservation Demand Type"::"Assembly Components"])
+          then
+            CurrReport.Break();
+        end;
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
 });
 
 describe('Report code statements', () => {
@@ -493,6 +549,80 @@ report 50110 "Breaking Report"
       begin
         CurrReport.Break();
       end;
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+});
+
+describe('Report data items and columns', () => {
+    it('Column with OptionMembers property', () => {
+        const code = `
+report 915 "Assemble to Order - Sales"
+{
+    DefaultLayout = RDLC;
+    dataset
+    {
+            dataitem(ATOSalesBuffer; "Integer")
+            {
+                DataItemTableView = sorting(Number) where(Number = filter(1 ..));
+                column(Type; TempATOSalesBuffer.Type)
+                {
+                    OptionCaption = ',Sales,Directly,Assembly,In Assembly';
+                    OptionMembers = ,Sale,"Total Sale",Assembly,"Total Assembly";
+                }
+        }
+    }}
+`;
+
+        const expected = `report 915 "Assemble to Order - Sales"
+{
+  DefaultLayout = RDLC;
+
+  dataset
+  {
+    dataitem(ATOSalesBuffer; "Integer")
+    {
+      DataItemTableView = sorting(Number) where(Number = filter(1..));
+
+      column(Type; TempATOSalesBuffer.Type)
+      {
+        OptionCaption = ',Sales,Directly,Assembly,In Assembly';
+        OptionMembers = ,Sale, "Total Sale", Assembly, "Total Assembly";
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('DataItemTableView property including pipe filters and open lower range', () => {
+        const code = `
+report 8614 "Get Config. Tables"
+{
+    dataset
+    {
+        dataitem(AllObj; AllObj)
+        {
+            DataItemTableView = where("Object Type" = const(Table), "Object ID" = filter(.. 99000999|2000000004|2000000005));
+        }
+    }
+}
+`;
+
+        const expected = `report 8614 "Get Config. Tables"
+{
+  dataset
+  {
+    dataitem(AllObj; AllObj)
+    {
+      DataItemTableView = where("Object Type" = const(Table),
+        "Object ID" = filter(..99000999 | 2000000004 | 2000000005));
     }
   }
 }

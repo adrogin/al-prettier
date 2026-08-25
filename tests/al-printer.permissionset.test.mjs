@@ -42,6 +42,25 @@ permissionset 50000 MyAppPermissions
         return alFormat(code, { removeEmptyElements: true }).then(formattedCode => expect(formattedCode).to.equal(expected))
     });
 
+    it('System permissions', () => {
+        const code = `
+permissionset 5378 "Page Inspection - Objects"
+{
+    Assignable = false;
+    Permissions =system "Tools, Zoom" = X;
+}
+`;
+
+        const expected = `permissionset 5378 "Page Inspection - Objects"
+{
+  Assignable = false;
+  Permissions = System "Tools, Zoom" = X;
+}
+`;
+
+        return alFormat(code, { removeEmptyElements: true }).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+
     it('permissionsetextension object', () => {
         const code = `
 permissionsetextension 50000 ExtentionPermissions extends MyAppPermissions
@@ -59,6 +78,24 @@ permissionsetextension 50000 ExtentionPermissions extends MyAppPermissions
     tabledata EntryTable = ri,
     page MyPage = X,
     codeunit PostingCodeunit = X;
+}
+`;
+
+        return alFormat(code, { removeEmptyElements: true }).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+
+    it('Permissions for Entitlement table', () => {
+        const code = `
+permissionset 50000 MyAppPermissions
+{
+  Assignable = true;
+  Permissions = tabledata Entitlement = Rm;
+}`;
+
+        const expected = `permissionset 50000 MyAppPermissions
+{
+  Assignable = true;
+  Permissions = tabledata Entitlement = Rm;
 }
 `;
 

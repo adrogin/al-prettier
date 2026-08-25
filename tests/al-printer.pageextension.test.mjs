@@ -108,4 +108,142 @@ pageextension 50050 "Some Extended Page" extends "My Base Page"
             expect(formattedCode).to.equal(expected))
     });
 
+    it('Grid as the top element in page extension', () => {
+        const code = `
+pageextension 50050 "Some Extended Page" extends "My Base Page"
+{
+        layout {
+        addafter(Header)
+        {
+            grid(BaseAppRow)
+            {
+                ShowCaption = false;
+                GridLayout = Rows;
+                group(ServiceConnectionsGroup)
+                {
+                    ShowCaption = false;
+                    field(ServiceConnections; ServiceConnectionsLbl)
+    {}
+
+    }}}}
+}`;
+
+        const expected = `pageextension 50050 "Some Extended Page" extends "My Base Page"
+{
+  layout
+  {
+    addafter(Header)
+    {
+      grid(BaseAppRow)
+      {
+        ShowCaption = false;
+        GridLayout = Rows;
+
+        group(ServiceConnectionsGroup)
+        {
+          ShowCaption = false;
+
+          field(ServiceConnections; ServiceConnectionsLbl) {}
+        }
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Page extension modifies action adding a trigger', () => {
+        const code = `
+pageextension 50050 "Some Extended Page" extends "My Base Page"
+{
+  actions
+  {
+    modify("Post Document")
+    {             trigger OnAfterAction()
+            var
+                PostingCodeunit: Codeunit "Funky Custom Document - Post";
+            begin
+                PostingCodeunit.Post(Rec);
+            end;
+    }
+  }
+}`;
+
+        const expected = `pageextension 50050 "Some Extended Page" extends "My Base Page"
+{
+  actions
+  {
+    modify("Post Document")
+    {
+      trigger OnAfterAction()
+      var
+        PostingCodeunit: Codeunit "Funky Custom Document - Post";
+      begin
+        PostingCodeunit.Post(Rec);
+      end;
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+});
+
+describe('Custom action in page extension', () => {
+    it('Page extension adding a custom action', () => {
+        const code = `
+pageextension 50100 CustomerCardExt extends "Customer Card"
+{
+    actions
+    {
+        
+        addlast(processing)
+        {
+            customaction(MyFlowAction)
+            {
+                ApplicationArea = All;
+                CustomActionType = Flow;
+                FlowId = '00001111-aaaa-2222-bbbb-3333cccc4444';
+                FlowEnvironmentId = 'Default-44445555-eeee-6666-ffff-7777aaaa8888';
+            }
+        }
+        addfirst(Promoted)
+        {
+            actionref(MyFlowPromoted; MyFlowAction)
+            {
+            }
+        }
+
+    }
+}`;
+
+        const expected = `pageextension 50100 CustomerCardExt extends "Customer Card"
+{
+  actions
+  {
+    addlast(processing)
+    {
+      customaction(MyFlowAction)
+      {
+        ApplicationArea = All;
+        CustomActionType = Flow;
+        FlowId = '00001111-aaaa-2222-bbbb-3333cccc4444';
+        FlowEnvironmentId = 'Default-44445555-eeee-6666-ffff-7777aaaa8888';
+      }
+    }
+    addfirst(Promoted)
+    {
+      actionref(MyFlowPromoted; MyFlowAction) {}
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
 });

@@ -289,6 +289,14 @@ function fieldGroupsFormatter(token) {
     return token.symbol.text;
 }
 
+function fileUploadActionFormatter(token) {
+    if (token.parentCtx.ruleIndex === ALParser.RULE_actionDefinition) {
+        return token.symbol.text.toLowerCase();
+    }
+
+    return token.symbol.text;
+}
+
 function filterFormatter(token) {
     if (token.parentCtx.ruleIndex === ALParser.RULE_tableRelationFilter ||
         token.parentCtx.ruleIndex === ALParser.RULE_subpageLinkFilterExpression ||
@@ -449,6 +457,14 @@ function sortingFormatter(token) {
     return token.symbol.text;
 }
 
+function systemFormatter(token) {
+    if (token.parentCtx.ruleIndex === ALParser.RULE_permissionTypeName) {
+        return 'System';
+    }
+
+    return token.symbol.text;
+}
+
 function thenFormatter(token) {
     if (token.parentCtx.ruleIndex === ALParser.RULE_ifStatement) {
         return token.symbol.text.toLowerCase();
@@ -566,6 +582,7 @@ export class TokenFormatter {
         [ALParser.FIELDGROUP, fieldGroupFormatter],
         [ALParser.FIELDGROUPS, fieldGroupsFormatter],
         [ALParser.FIELDS, fieldsFormatter],
+        [ALParser.FILEUPLOADACTION, fileUploadActionFormatter],
         [ALParser.FILTER, filterFormatter],
         [ALParser.FOR, forFormatter],
         [ALParser.FOREACH, foreachFormatter],
@@ -587,6 +604,7 @@ export class TokenFormatter {
         [ALParser.RECORD, recordFormatter],
         [ALParser.REPEAT, repeatFormatter],
         [ALParser.SORTING, sortingFormatter],
+        [ALParser.SYSTEM, systemFormatter],
         [ALParser.TABLE, tableFormatter],
         [ALParser.THEN, thenFormatter],
         [ALParser.THIS, thisFormatter],

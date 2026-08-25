@@ -314,6 +314,56 @@ end;
             expect(formattedCode).to.equal(expected))
     });
 
+    it('Multiple region markers without blank lines', () => {
+        const code = `
+table 71791035 "Dual Ledger Setup Transl. IESC"
+{
+  fields {
+  field(1; PK; Code[10]) {}
+  }
+
+  #region OnInsert
+  trigger OnInsert()
+  begin
+    ClearCaptionClassCache();
+  end;
+  #endregion OnInsert
+
+  #region OnModify
+  trigger OnModify()
+  begin
+    ClearCaptionClassCache();
+  end;
+  #endregion OnModify
+}`;
+
+        const expected = `table 71791035 "Dual Ledger Setup Transl. IESC"
+{
+  fields
+  {
+    field(1; PK; Code[10]) {}
+  }
+
+  #region OnInsert
+  trigger OnInsert()
+  begin
+    ClearCaptionClassCache();
+  end;
+  #endregion OnInsert
+
+  #region OnModify
+  trigger OnModify()
+  begin
+    ClearCaptionClassCache();
+  end;
+  #endregion OnModify
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
     it('Region marker without blank lines and following variable', () => {
         const code = `
 codeunit 50000 MyCodeunit
@@ -600,5 +650,49 @@ codeunit 50000 MyCodeunit
 
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
+    });
+
+    it('Trailing comments attached to procedure parameters', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure DoSomeStuff(ParameterOne: Integer; // This is Parameter One
+  ParameterTwo: Integer // And this is parameter too
+  )
+  begin
+  end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure DoSomeStuff(
+    ParameterOne: Integer; // This is Parameter One
+    ParameterTwo: Integer // And this is parameter too
+  )
+  begin
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+
+    it('Pragma instructions around object header', () => {
+        const code = `
+#pragma warning disable AL0432
+tableextension 10000762 "Purchase Price Ext." extends "Purchase Price"
+#pragma warning restore AL0432
+    {}
+`;
+
+        const expected = `#pragma warning disable AL0432
+tableextension 10000762 "Purchase Price Ext." extends "Purchase Price"
+#pragma warning restore AL0432
+{
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
     });
 });
