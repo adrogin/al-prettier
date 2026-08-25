@@ -288,6 +288,56 @@ codeunit 50000 MyCodeunit
             return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
         });
 
+        it('"in" and "and" conditions in one statement' , () => {
+            const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure EvaluateConditions(CodeValue: Code[10]; IntegerValue: Integer): Boolean
+  begin
+    exit(CodeValue in ['CodeA', 'CodeB', 'CodeC'] and (IntegerValue < 0 and IntegerValue > -99));
+  end;
+}
+`;
+
+            const expected = `codeunit 50000 MyCodeunit
+{
+  procedure EvaluateConditions(
+    CodeValue: Code[10];
+    IntegerValue: Integer): Boolean
+  begin
+    exit(
+      CodeValue in ['CodeA', 'CodeB', 'CodeC'] and
+      (IntegerValue < 0 and IntegerValue > -99));
+  end;
+}
+`;
+
+            return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+        });
+
+        it('"OR" expressions inside the "IN" expression' , () => {
+            const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure EvaluateConditions(): Boolean
+  begin
+    exit(true in [ValueA or ValueB or ValueC]);
+  end;
+}
+`;
+
+            const expected = `codeunit 50000 MyCodeunit
+{
+  procedure EvaluateConditions(): Boolean
+  begin
+    exit(true in [ValueA or ValueB or ValueC]);
+  end;
+}
+`;
+
+            return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+        });
+
         it('"IN" operator with long list of conditions wraps line' , () => {
             const code = `
 codeunit 50000 MyCodeunit

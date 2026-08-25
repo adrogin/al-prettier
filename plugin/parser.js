@@ -2,11 +2,30 @@ import { CharStream, CommonTokenStream, ErrorListener, DFA, PredictionContextCac
 import ALLexer from "../parser/ALLexer.js";
 import ALParser from "../parser/ALParser.js";
 
-class BreakProcessErrorListener extends ErrorListener {
-    syntaxError(recognizer, offendingSymbol, line, column, msg, e) {
-        const errorMessage = `Parsing error at line ${line}, column ${column}: ${msg}`;
-        throw new Error(errorMessage);
+// ANTLR registers a ConsoleErrorListener on every lexer/parser by default. Left in place
+// alongside this listener, it would print its own line to the console for the same error
+// before this listener throws, so the caller sees the failure logged twice. Callers must
+// remove the default listener (see resetErrorListeners) to get a single, complete message.
+class ALSyntaxErrorListener extends ErrorListener {
+    constructor(filePath) {
+        super();
+        this.filePath = filePath;
     }
+
+    syntaxError(recognizer, offendingSymbol, line, column, msg) {
+        const location = this.filePath
+            ? `${this.filePath}:${line}:${column}`
+            : `line ${line}, column ${column}`;
+        const symbolText = offendingSymbol?.text;
+        const symbolInfo = symbolText ? ` at symbol '${symbolText}'` : "";
+
+        throw new Error(`AL parser error (${location})${symbolInfo}: ${msg}`);
+    }
+}
+
+function resetErrorListeners(recognizer, filePath) {
+    recognizer.removeErrorListeners();
+    recognizer.addErrorListener(new ALSyntaxErrorListener(filePath));
 }
 
 // ALLexer.js and ALParser.js hold their DFA/prediction-context caches in module-level
@@ -29,7 +48,8 @@ function parse(text, options) {
     const parser = new ALParser(tokens);
     resetAtnCaches(parser);
 
-    parser.addErrorListener(new BreakProcessErrorListener());
+    resetErrorListeners(lexer, options.filepath);
+    resetErrorListeners(parser, options.filepath);
 
     const compilationUnit = parser.compilationUnit();
 

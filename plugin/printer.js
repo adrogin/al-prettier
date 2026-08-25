@@ -527,13 +527,11 @@ function print(path, options, print, args) {
         case ALParser.RULE_variablesList:
             return printVariablesList(path, options, print);
 
-        case ALParser.RULE_triggersList:
-            return printTriggersList(path, options, print);
-
         case ALParser.RULE_triggerDefinition:
             return printTriggerDefinition(path, options, print);
 
         case ALParser.RULE_proceduresList:
+        case ALParser.RULE_triggersList:
             return printProceduresList(path, options, print);
 
         case ALParser.RULE_procedureDefinition:
@@ -1012,7 +1010,15 @@ function printKeyItem(path, options, print) {
         ? path.call(print, 'children', children.length - 3) 
         : path.call(print, 'children', children.length - 2);
     const rBrace = path.call(print, 'children', children.length - 1);
-    const signature = ["key(", keyName, "; ", join(", ", fieldDocs), ")"];
+    const signature = [
+        path.call(print, 'children', 0),
+        path.call(print, 'children', 1),
+        keyName,
+        path.call(print, 'children', 3),
+        " ",
+        join(", ", fieldDocs),
+        path.call(print, 'children', rparenIdx)
+    ];
     let body = [];
     if (propsListIdx > -1) {
         body = [hardline, lBrace, indent([hardline, propsList]), hardline, rBrace];
@@ -1098,15 +1104,19 @@ function printFieldGroupFieldsList(path, options, print) {
 //#region Table extension functions
 
 function printTableExtObject(path, options, print) {
-    // Grammar: TABLEEXTENSION INTEGER_LITERAL IDENTIFIER EXTENDS IDENTIFIER LBRACE tableExtPropertiesList? tableExtFieldsList? tableKeysSection? (variablesList | triggersList | proceduresList)* RBRACE;
+    // Grammar: TABLEEXTENSION INTEGER_LITERAL identifier EXTENDS IDENTIFIER LBRACE tableExtPropertiesList? tableExtFieldsList? tableKeysSection? (variablesList | triggersList | proceduresList)* RBRACE;
     const children = path.node.children;
 
     const objectIdx = children.findIndex(c => c.symbol?.type === ALParser.TABLEEXTENSION);
     if (objectIdx === -1) return "";
 
+    const tableExt = path.call(print, 'children', objectIdx);
     const objectId = path.call(print, 'children', objectIdx + 1);
     const objectName = path.call(print, 'children', objectIdx + 2);
+    const extendsKeyword = path.call(print, 'children', objectIdx + 3);
     const extendedObjectName = path.call(print, 'children', objectIdx + 4);
+    const lBrace = path.call(print, 'children', objectIdx + 5);
+    const rBrace = path.call(print, 'children', children.length - 1);
 
     const elementStart = objectIdx + 6;
     const elementEnd = children.length - 1;
@@ -1119,7 +1129,7 @@ function printTableExtObject(path, options, print) {
         ? [indent([hardline, join([hardline, hardline], elementDocs)]), hardline]
         : [hardline];
 
-    return ["tableextension ", objectId, " ", objectName, " extends ", extendedObjectName, hardline, "{", ...body, "}"];
+    return [tableExt, " ", objectId, " ", objectName, " ", extendsKeyword, " ", extendedObjectName, hardline, lBrace, ...body, rBrace];
 }
 
 function printTableExtFieldModification(path, node, print) {
@@ -1655,8 +1665,17 @@ function printTableRelationFilterRef(path, options, print) {
 }
 
 function printRelationFilterExpression(path, options, print) {
-    if (path.node.children.length === 2 &&
-        (path.node.children[0].symbol?.type === ALParser.RANGE_OP || path.node.children[1].symbol?.type === ALParser.RANGE_OP)
+    const children = path.node.children;
+
+    if (children.length === 2 &&
+        (children[0].symbol?.type === ALParser.RANGE_OP || children[1].symbol?.type === ALParser.RANGE_OP)
+    ) {
+        return path.map(print, 'children');
+    }
+
+    if (children.length === 3 &&
+        children[0].symbol?.type === ALParser.LPAREN &&
+        children[2].symbol?.type === ALParser.RPAREN
     ) {
         return path.map(print, 'children');
     }
@@ -2664,11 +2683,6 @@ function printVariablesList(path, options, print) {
         : [];
 }
 
-function printTriggersList(path, options, print) {
-    // Grammar: triggerDefinition+
-    return join([hardline, hardline], path.map(print, 'children'));
-}
-
 function printTriggerDefinition(path, options, print) {
     // Grammar: triggerDefinition: TRIGGER identifier (SCOPE_OP identifier)? LPAREN parameterList? RPAREN procedureReturnType? SEMICOLON? variablesList? BEGIN statementList? END SEMICOLON
     const children = path.node.children;
@@ -2754,12 +2768,20 @@ function printProcedureDefinition(path, options, print) {
     const name = path.call(print, 'children', procKeywordIdx + 1);
 
     // parameterList is at index procKeywordIdx + 3 only when RPAREN is not immediately after LPAREN (index procKeywordIdx + 2)
-    const paramDoc = rParenIdx > procKeywordIdx + 3 ? path.call(print, 'children', procKeywordIdx + 3) : "";
+    const paramListNode = rParenIdx > procKeywordIdx + 3 ? children[procKeywordIdx + 3] : null;
+    const paramDoc = paramListNode ? path.call(print, 'children', procKeywordIdx + 3) : "";
+
+    // A trailing comment on the last parameter attaches to the parameterList node itself (there is no
+    // following SEMICOLON token to carry it). Without an explicit break here it would float past RPAREN
+    // to the next hardline instead of staying on the parameter's own line.
+    const hasTrailingParamComment = paramListNode?.comments?.some(comment => comment.trailing);
 
     // variablesList: any rule context between RPAREN and BEGIN
     const varDocs = varListIdx > 0 ? path.call(print, 'children', varListIdx) : [];
 
-    let signature = [proc, " ", name, path.call(print, 'children', lParenIdx), group(indent([softline, paramDoc])), path.call(print, 'children', rParenIdx)];
+    let signature = [proc, " ", name, path.call(print, 'children', lParenIdx),
+        group(hasTrailingParamComment ? [indent([softline, paramDoc]), hardline] : indent([softline, paramDoc])),
+        path.call(print, 'children', rParenIdx)];
 
     // If the procedure return type is not defined, returnTypeIdx = -1
     let returnType = [];
@@ -2799,9 +2821,9 @@ function printParameterList(path, options, print) {
     const children = path.node.children;
     const paramDocs = [];
     for (let i = 0; i < children.length; i += 2) {
-        paramDocs.push(path.call(print, 'children', i));
+        paramDocs.push([path.call(print, 'children', i), path.call(print, 'children', i + 1)]);
     }
-    return join([";", line], paramDocs);
+    return join(line, paramDocs);
 }
 
 function printProcReturnType(path, options, print) {

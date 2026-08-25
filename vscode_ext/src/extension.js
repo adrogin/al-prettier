@@ -6,6 +6,16 @@
 import * as vscode from 'vscode';
 
 let alPrettierPlugin;
+let outputChannel;
+
+function logFormattingError(error) {
+    // The parser already reports the file, row, column and offending symbol in error.message
+    // (see plugin/parser.js), so the output channel only needs that single line.
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    outputChannel.appendLine(errorMessage);
+    outputChannel.show(true);
+    return errorMessage;
+}
 
 async function collectAlFilesInWorkspace() {
     if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
@@ -21,7 +31,7 @@ async function collectAlFilesInFolder() {
         return [];
     }
 
-    const currentDir = vscode.Uri.file(editor.document.uri.fsPath).fsPath;
+    const currentDir = vscode.Uri.joinPath(editor.document.uri, '..').fsPath;
     return vscode.workspace.findFiles(
         new vscode.RelativePattern(currentDir, '**/*.al')
     );
@@ -66,6 +76,9 @@ function registerFormatters(context, prettier) {
 }
 
 export async function activate(context) {
+    outputChannel = vscode.window.createOutputChannel('ALPrettier');
+    context.subscriptions.push(outputChannel);
+
     try {
         // Dynamically load prettier and the AL plugin
         const prettier = await import('prettier');
@@ -88,7 +101,7 @@ export function deactivate() {
 
 async function formatDocument(document, options, prettier) {
     try {
-        const formattedText = await runFormatter(document.getText(), options, prettier);
+        const formattedText = await runFormatter(document.getText(), options, prettier, document.uri.fsPath);
 
         // Return a single edit that replaces the entire document
         const lastLine = document.lineCount - 1;
@@ -104,9 +117,8 @@ async function formatDocument(document, options, prettier) {
             )
         ];
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage = logFormattingError(error);
         vscode.window.showErrorMessage(`AL Prettier: ${errorMessage}`);
-        console.error('Formatting error:', error);
         return [];
     }
 }
@@ -148,15 +160,14 @@ async function batchFormatFiles(prettier, options, files) {
                 try {
                     const fileBytes = await vscode.workspace.fs.readFile(fileUri);
                     const text = new TextDecoder().decode(fileBytes);
-                    const formattedText = await runFormatter(text, options, prettier);
+                    const formattedText = await runFormatter(text, options, prettier, fileUri.fsPath);
 
                     // Write formatted content directly to file without opening editor
                     const uint8Array = new TextEncoder().encode(formattedText);
                     await vscode.workspace.fs.writeFile(fileUri, uint8Array);
                     successCount++;
                 } catch (error) {
-                    const errorMessage = error instanceof Error ? error.message : String(error);
-                    console.error(`Error formatting ${fileUri.fsPath}:`, errorMessage);
+                    logFormattingError(error);
                     errorCount++;
                 }
             }
@@ -176,7 +187,7 @@ async function batchFormatFiles(prettier, options, files) {
     );
 }
 
-async function runFormatter(text, options, prettier) {
+async function runFormatter(text, options, prettier, filePath) {
     const config = vscode.workspace.getConfiguration('alPrettier');
 
     if (!text || text.trim().length === 0) {
@@ -188,6 +199,7 @@ async function runFormatter(text, options, prettier) {
     const formattedText = await prettier.format(text, {
         parser: 'al-parse',
         plugins: [plugin],
+        filepath: filePath,
         tabWidth: config.get('tabWidth') || options.tabSize || 4,
         useTabs: config.get('useTabs') || !options.insertSpaces || false,
         printWidth: config.get('printWidth') || 120,
@@ -214,6 +226,7 @@ async function formatRange(document, range, options, prettier) {
         const formattedText = await prettier.format(text, {
             parser: 'al-parse',
             plugins: [plugin],
+            filepath: document.uri.fsPath,
             tabWidth: config.get('tabWidth') || options.tabSize || 4,
             useTabs: config.get('useTabs') || !options.insertSpaces || false,
             printWidth: config.get('printWidth') || 120,
@@ -227,9 +240,8 @@ async function formatRange(document, range, options, prettier) {
             vscode.TextEdit.replace(range, formattedText)
         ];
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage = logFormattingError(error);
         vscode.window.showErrorMessage(`AL Prettier: ${errorMessage}`);
-        console.error('Formatting error:', error);
         return [];
     }
 }
