@@ -7,7 +7,7 @@ A [Prettier](https://prettier.io/) plugin for AL language and a VS Code extensio
 ## Installation
 
 1. Install from VS Code Extensions Marketplace (direct link: [AL Prettier](https://marketplace.visualstudio.com/items?itemName=alexander-drogin.al-prettier-vscode) or search for "AL Prettier")
-2. Or install manually by downloading the `.vsix` file and running `code --install-extension al-prettier-vscode-0.4.4.vsix`
+2. Or install manually by downloading the `.vsix` file and running `code --install-extension al-prettier-vscode-0.5.0.vsix`
 
 ## Usage
 
@@ -28,6 +28,14 @@ Enable format on save in VS Code settings:
   }
 }
 ```
+
+## Commands in VS Code command palette
+### Format all files in current folder
+Formats all files in the folder which contains the file currently open in the editor.
+
+### Format all files in workspace
+Formats all files in the active workspace. The workspace does not have to be defined in a .workspace file. If the working folder was open with the **Open Folder** command (Ctrl+K Ctrl+O), it is still a workspace, and all files in this folder will be formatted.
+
 
 ## Configuration
 
@@ -53,7 +61,7 @@ You can customize the formatting behavior in VS Code settings:
 - **groupGlobalVars** (default: "none"): Group all global vars in the object. Available options: "none" - keep the variables as is; "top": move all variable declarations to the top, after the object properties; "bottom": move variables to the bottom; "beforeCode": place variables before procedures.
 - **noLineBreaksInAttributes** (default: false): Disable wrapping of procedure attributes even if the line exceeds maximum print width. Attributes are always printed in a single line.
 - **removeEmptyElements** (default false): Remove elements without content (this includes table fieldgroups, page actions and layout sections)
-- **collapseEmptyBraces** (default true): Place curly braces without content between them on one line. This option applies, for example, to table field or key definitions without properties.
+- **collapseEmptyBraces** (default true): Place curly braces without content between them on one line. This option applies, for example, to page fields or table key definitions without properties.
 
 ## Requirements
 
