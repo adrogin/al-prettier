@@ -33,6 +33,16 @@
     ],
     "main": "./vscode_ext/dist/extension.js",
     "contributes": {
+        "commands": [
+            {
+                "command": "al-prettier.formatFilesInWorkspace",
+                "title": "AL-Prettier: Format all files in workspace"
+            },
+            {
+                "command": "al-prettier.formatFilesInFolder",
+                "title": "AL-Prettier: Format all files in current folder"
+            }
+        ],
         "configuration": {
             "title": "AL Prettier",
             "properties": {
@@ -85,7 +95,8 @@
         "vscode:prepublish": "npm run build:prod",
         "package": "vsce package --no-dependencies",
         "package:prod": "npm run build:prod && vsce package --no-dependencies",
-        "package:dev": "npm run build && vsce package --no-dependencies --allow-star-activation"
+        "package:dev": "npm run build && vsce package --no-dependencies --allow-star-activation",
+        "package:pre-release": "npm run build:prod && vsce package --no-dependencies --pre-release"
     },
     "dependencies": {
         "antlr4": "^4.13.2",

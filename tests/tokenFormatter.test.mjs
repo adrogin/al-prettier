@@ -404,6 +404,20 @@ describe('TokenFormatter', () => {
         });
     });
 
+    describe('fileUploadActionFormatter', () => {
+        it('should lowercase token when in actionDefinition context', () => {
+            const token = createMockToken('FileUploadACTION', ALParser.ACTION, ALParser.RULE_actionDefinition);
+            const result = TokenFormatter.format(token);
+            expect(result).to.equal('fileuploadaction');
+        });
+
+        it('should return original text when used as identifier', () => {
+            const token = createMockToken('FileUploadAction', ALParser.ACTION, ALParser.RULE_variablesList);
+            const result = TokenFormatter.format(token);
+            expect(result).to.equal('FileUploadAction');
+        });
+    });
+
     describe('filterFormatter', () => {
         it('should lowercase token when in tableRelationFilter context', () => {
             const token = createMockToken('FILTER', ALParser.FILTER, ALParser.RULE_tableRelationFilter);

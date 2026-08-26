@@ -253,6 +253,54 @@ describe('Table field properties', () => {
 
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
+
+    it('Option field with OptionOrdinalValues property', () => {
+        const code = `table 50000 MyTable
+        { fields{
+          field(1; OptionField; Option){
+          OptionMembers=" ",Option1,Option2,"Option 3";
+          OptionOrdinalValues =-1,1,2,3;
+          }
+        }}`;
+
+        const expected = `table 50000 MyTable
+{
+  fields
+  {
+    field(1; OptionField; Option)
+    {
+      OptionMembers = " ", Option1, Option2, "Option 3";
+      OptionOrdinalValues = -1, 1, 2, 3;
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('AccessByPermission property referencing a full object name with namespace', () => {
+        const code = `table 50000 MyTable
+        { fields{
+        field(507; "Qty. on Trans. Order Shipment"; Decimal)
+        {
+            AccessByPermission = TableData Microsoft.Inventory.Transfer."Transfer Header" = R;}
+        }}`;
+
+        const expected = `table 50000 MyTable
+{
+  fields
+  {
+    field(507; "Qty. on Trans. Order Shipment"; Decimal)
+    {
+      AccessByPermission = TableData Microsoft.Inventory.Transfer."Transfer Header" = R;
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
 });
 
 describe('Table triggers and procedures', () => {
@@ -471,6 +519,109 @@ describe('Table relation formula', () => {
 
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
+
+    it('TableRelation filter referencing an enum value', () => {
+        const code = `table 50000 MyTable
+        { fields{
+        field(8; "Partner Code for Acc. Syn."; Code[20])
+        {
+            Caption = 'Account Syncronization Partner Code';
+            TableRelation = "IC Partner".Code where("Inbox Type" = filter("IC Partner Inbox Type"::Database));
+        }
+    }}`;
+
+        const expected = `table 50000 MyTable
+{
+  fields
+  {
+    field(8; "Partner Code for Acc. Syn."; Code[20])
+    {
+      Caption = 'Account Syncronization Partner Code';
+      TableRelation = "IC Partner".Code
+        where("Inbox Type" = filter("IC Partner Inbox Type"::Database));
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('TableRelation property referencing a field name', () => {
+        const code = `table 50000 MyTable
+        { fields{
+        field(1; "Customer No."; Code[20])
+        {
+            TableRelation = Customer."No.";
+        }
+    }}`;
+
+        const expected = `table 50000 MyTable
+{
+  fields
+  {
+    field(1; "Customer No."; Code[20])
+    {
+      TableRelation = Customer."No.";
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('TableRelation property with a negative integer in filter', () => {
+        const code = `table 50000 MyTable
+        { fields{
+        field(1; "Field with TableRef"; Code[20])
+        {
+            TableRelation = "Activity Reservation"."No." where("Reservation No." = field("No."),"Reservation Line No." = filter(-1));
+        }
+    }}`;
+
+        const expected = `table 50000 MyTable
+{
+  fields
+  {
+    field(1; "Field with TableRef"; Code[20])
+    {
+      TableRelation = "Activity Reservation"."No."
+        where("Reservation No." = field("No."),
+          "Reservation Line No." = filter(-1));
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('TableRelation property with a negative integer in "const" link', () => {
+        const code = `table 50000 MyTable
+        { fields{
+        field(1; "Field with TableRef"; Code[20])
+        {
+            TableRelation = "Activity Reservation"."No." where("Reservation No." = field("No."),"Reservation Line No." = const(-1));
+        }
+    }}`;
+
+        const expected = `table 50000 MyTable
+{
+  fields
+  {
+    field(1; "Field with TableRef"; Code[20])
+    {
+      TableRelation = "Activity Reservation"."No."
+        where("Reservation No." = field("No."),
+          "Reservation Line No." = const(-1));
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
 });
 
 describe('FieldGroups', () => {
@@ -564,6 +715,29 @@ describe('FieldGroups', () => {
   fieldgroups
   {
     fieldgroup(DropDown; Code, Description) {}
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+});
+
+describe('Table field types', () => {
+    it('TableFilter type', () => {
+        const code = `table 50000 MyTable
+        { fields{
+        field(1; Code; Code[10])
+        {} field(2; "Security Filter"; TableFilter) {}
+        }
+        }`;
+
+        const expected = `table 50000 MyTable
+{
+  fields
+  {
+    field(1; Code; Code[10]) {}
+    field(2; "Security Filter"; TableFilter) {}
   }
 }
 `;

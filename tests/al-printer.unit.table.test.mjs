@@ -219,7 +219,7 @@ describe('Table keys', () => {
         const expected = [
             "keys", hardline,
             "{", indent([hardline, [
-                'key(', 'PK', '; ', 'ID', ')', hardline,
+                'key', '(', 'PK', ';', ' ', 'ID', ')', hardline,
                 '{', indent([hardline, [
                     "Clustered", " ", "=", " ", "true", ";"
                 ]]), hardline,

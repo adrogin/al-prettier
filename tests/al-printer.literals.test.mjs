@@ -140,4 +140,27 @@ codeunit 55000 MyCodeunit
 
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
     });
+
+    it('Negative integer', () => {
+        const code = `
+codeunit 55000 MyCodeunit
+{
+  trigger OnRun()
+  begin
+    IntVar := - 123;
+  end;
+}
+`;
+
+        const expected = `codeunit 55000 MyCodeunit
+{
+  trigger OnRun()
+  begin
+    IntVar := -123;
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
 });

@@ -288,6 +288,56 @@ codeunit 50000 MyCodeunit
             return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
         });
 
+        it('"in" and "and" conditions in one statement' , () => {
+            const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure EvaluateConditions(CodeValue: Code[10]; IntegerValue: Integer): Boolean
+  begin
+    exit(CodeValue in ['CodeA', 'CodeB', 'CodeC'] and (IntegerValue < 0 and IntegerValue > -99));
+  end;
+}
+`;
+
+            const expected = `codeunit 50000 MyCodeunit
+{
+  procedure EvaluateConditions(
+    CodeValue: Code[10];
+    IntegerValue: Integer): Boolean
+  begin
+    exit(
+      CodeValue in ['CodeA', 'CodeB', 'CodeC'] and
+      (IntegerValue < 0 and IntegerValue > -99));
+  end;
+}
+`;
+
+            return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+        });
+
+        it('"OR" expressions inside the "IN" expression' , () => {
+            const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure EvaluateConditions(): Boolean
+  begin
+    exit(true in [ValueA or ValueB or ValueC]);
+  end;
+}
+`;
+
+            const expected = `codeunit 50000 MyCodeunit
+{
+  procedure EvaluateConditions(): Boolean
+  begin
+    exit(true in [ValueA or ValueB or ValueC]);
+  end;
+}
+`;
+
+            return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+        });
+
         it('"IN" operator with long list of conditions wraps line' , () => {
             const code = `
 codeunit 50000 MyCodeunit
@@ -316,6 +366,35 @@ codeunit 50000 MyCodeunit
 
             return alFormat(code).then(formattedCode =>
                 expect(formattedCode).to.equal(expected))
+        });
+    });
+
+    describe('Long "if" condition breaking the line', () => {
+        it('Long condition breaking the line must be printed with indent', () => {
+            const code = `
+codeunit 50000 MyCodeunit
+{
+  trigger OnRun()
+  begin
+    if VeryLongVariableName = AnotherLongVariableName and YetAnotherConditionCheckInThisProcedure() then begin a := b;end;
+  end;
+}
+`;
+
+            const expected = `codeunit 50000 MyCodeunit
+{
+  trigger OnRun()
+  begin
+    if VeryLongVariableName = AnotherLongVariableName and
+      YetAnotherConditionCheckInThisProcedure()
+    then begin
+      a := b;
+    end;
+  end;
+}
+`;
+
+            return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
         });
     });
 });
@@ -473,7 +552,6 @@ codeunit 50000 MyCodeunit
             expect(formattedCode).to.equal(expected))
     });
 
-
     it('Compound else branch without begin..end', () => {
         const code = `
 codeunit 50000 MyCodeunit
@@ -498,6 +576,70 @@ codeunit 50000 MyCodeunit
       else
         CallProcedure2();
         CallProcedure3();
+    end;
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Empty else branch without trailing semicolon - printer adds the missing semicolon', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure DoSomething()
+  begin
+    case Option of
+    Value1:
+      CallProcedure1();
+    else
+    end;
+  end;
+}`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure DoSomething()
+  begin
+    case Option of
+      Value1:
+        CallProcedure1();
+      else
+        ;
+    end;
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Empty else branch with trailing semicolon - extra semicolon is not added', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  procedure DoSomething()
+  begin
+    case Option of
+    Value1:
+      CallProcedure1();
+    else;
+    end;
+  end;
+}`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  procedure DoSomething()
+  begin
+    case Option of
+      Value1:
+        CallProcedure1();
+      else
+        ;
     end;
   end;
 }
@@ -651,8 +793,61 @@ codeunit 50000 MyCodeunit
 }
 `;
 
-        return alFormat(code).then(formattedCode =>
-            expect(formattedCode).to.equal(expected))
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+
+    it('Boolean assignment with a long "in" operator breaking the line', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  trigger OnRun()
+  begin
+    BoolValue := SomeVariable in [LongVariableName1, LongVariableName2,LongVariableName3,LongVariableName4];
+  end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  trigger OnRun()
+  begin
+    BoolValue :=
+      SomeVariable in [
+        LongVariableName1,
+        LongVariableName2,
+        LongVariableName3,
+        LongVariableName4];
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+
+    it('Verbatim string in procedure arguments', () => {
+        const code = `
+codeunit 50000 MyCodeunit
+{
+  trigger OnRun()
+  begin CallProcedure(@'multiple
+        string
+        argument');
+  end;
+}
+`;
+
+        const expected = `codeunit 50000 MyCodeunit
+{
+  trigger OnRun()
+  begin
+    CallProcedure(@'multiple
+        string
+        argument');
+  end;
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
     });
 });
 
@@ -976,7 +1171,7 @@ codeunit 50000 MyCodeunit
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
 
-    it('OptionMembers function', () => {
+    it('OptionMembers as a function name must be successfully parsed', () => {
         const code = `
 codeunit 50000 MyCodeunit
 {

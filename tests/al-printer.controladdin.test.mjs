@@ -136,4 +136,62 @@ controladdin "NiceUIControl"
 
         return alFormat(code, { removeEmptyElements: true }).then(formattedCode => expect(formattedCode).to.equal(expected))
     });
+
+    it('Printer adds a missing semicolon after event declaration', () => {
+        const code = `
+controladdin "MyControl"
+{
+  event EventOne()
+  event EventTwo()
+}`;
+
+        const expected = `controladdin "MyControl"
+{
+  event EventOne();
+  event EventTwo();
+}
+`;
+
+        return alFormat(code, { removeEmptyElements: true }).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+
+    it('Print event declaration with attributes', () => {
+        const code = `
+controladdin "MyControl"
+{
+  [Obsolete('Use EventTwo instead', '28.0')]
+  event EventOne();
+  event EventTwo();
+}`;
+
+        const expected = `controladdin "MyControl"
+{
+  [Obsolete('Use EventTwo instead', '28.0')]
+  event EventOne();
+  event EventTwo();
+}
+`;
+
+        return alFormat(code, { removeEmptyElements: true }).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
+
+    it('Print control add-in procedure with attributes', () => {
+        const code = `
+controladdin "MyControl"
+{
+  [Obsolete('Not used anymore, use NewProcedure', '28.0')]
+  procedure OldProcedure();
+  procedure NewProcedure();
+}`;
+
+        const expected = `controladdin "MyControl"
+{
+  [Obsolete('Not used anymore, use NewProcedure', '28.0')]
+  procedure OldProcedure();
+  procedure NewProcedure();
+}
+`;
+
+        return alFormat(code, { removeEmptyElements: true }).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
 });

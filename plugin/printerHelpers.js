@@ -67,3 +67,15 @@ export function shouldAddBlankLineAfter(node) {
 
     return shouldAddBlankLineAfter(node.children[node.children.length - 1]);
 }
+
+export function isIfStatementContext(node) {
+    if (node.ruleIndex === ALParser.RULE_ifStatement) {
+        return true;
+    }
+    else if (node.parentCtx === undefined || node.parentCtx === null) {
+        return false;
+    }
+    else {
+        return isIfStatementContext(node.parentCtx);
+    }
+}
