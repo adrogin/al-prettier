@@ -695,4 +695,22 @@ tableextension 10000762 "Purchase Price Ext." extends "Purchase Price"
 
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
     });
+
+    it('Pragma instructions around interface header', () => {
+        const code = `
+#pragma warning disable LC0054
+interface "Label Data"
+#pragma warning restore LC0054
+{
+}`;
+
+        const expected = `#pragma warning disable LC0054
+interface "Label Data"
+#pragma warning restore LC0054
+{
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected))
+    });
 });

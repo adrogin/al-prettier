@@ -391,6 +391,38 @@ page 50001 "Page With Separator"
 
     it('Page separator element with properties', () => {
         const code = `
+page 50001 "Just Some Page"
+{
+    layout
+    {
+        area(content)
+        {
+        Description='This is an area with one field';
+        field(Type; Rec.Type) {}
+        }
+    }
+}`;
+
+        const expected = `page 50001 "Just Some Page"
+{
+  layout
+  {
+    area(content)
+    {
+      Description='This is an area with one field';
+
+      field(Type; Rec.Type) {}
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
+
+    it('Page area properties', () => {
+        const code = `
 page 50001 "Page With Separator"
 {
     layout

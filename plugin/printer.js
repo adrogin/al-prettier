@@ -62,6 +62,7 @@ function print(path, options, print, args) {
         case ALParser.RULE_pageViewPropertiesList:
         case ALParser.RULE_analysisViewPropertiesList:
         case ALParser.RULE_gridPropertiesList:
+        case ALParser.RULE_dotNetAssemblyPropertiesList:
             return printObjectPropertiesList(path, options, print);
 
         case ALParser.RULE_tablePropertyItem:
@@ -314,7 +315,12 @@ function print(path, options, print, args) {
 
         case ALParser.RULE_pageViewsList:
         case ALParser.RULE_analysisViewsList:
+        case ALParser.RULE_pageExtViewsList:
             return printPageViewsList(path, options, print);
+
+        case ALParser.RULE_pageViewElements:
+            return printViewElements(path, options, print);
+
         //#endregion Page object
 
         //#region Codeunit object
@@ -379,8 +385,11 @@ function print(path, options, print, args) {
             return printPageExtensionActions(path, options, print);
 
         case ALParser.RULE_pageExtElementRelocation:
+        case ALParser.RULE_pageExtViewRelocation:
             return printPageExtElementRelocation(path, options, print);
 
+        case ALParser.RULE_pageExtViewAddition:
+            return printPageExtViewAddition(path, options, print);
         //#endregion Page extension
 
         //#region Enum extension
@@ -496,7 +505,6 @@ function print(path, options, print, args) {
             return printControlAddInApiDeclarations(path, options, print);
 
         case ALParser.RULE_eventDeclaration:
-            // return printControlAddInEventDeclaration(path, options, print);
             return printProcedureDeclaration(path, options, print);
 
         case ALParser.RULE_imagesList:
@@ -507,6 +515,21 @@ function print(path, options, print, args) {
         case ALParser.RULE_reportDatasetModification:
         case ALParser.RULE_reportExtDatasetAddition:
             return printReportDatasetModification(path, options, print);
+
+        case ALParser.RULE_dotNetLibraryRef:
+            return printDotNetLibraryRef(path, options, print);
+
+        case ALParser.RULE_dotNetAssemblyRefsList:
+            return printDotNetAssemblyRefsList(path, options, print);
+
+        case ALParser.RULE_dotNetAssemblyRef:
+            return printDotNetAssemblyRef(path, options, print);
+
+        case ALParser.RULE_dotNetAssemblyTypesList:
+            return join(hardline, path.map(print, 'children'));
+
+        case ALParser.RULE_dotNetAssemblyType:
+            return printDotNetAssemblyType(path, options, print);
 
         //#endregion
 
@@ -1214,7 +1237,7 @@ function printPageSegmentDefinition(path, options, print) {
     //          GROUP LPAREN identifier RPAREN LBRACE groupElements RBRACE;
     //          CUEGROUP LPAREN identifier RPAREN LBRACE cueGroupElements RBRACE;
     //          GRID LPAREN identifier RPAREN LBRACE gridControlElements RBRACE;
-    //          VIEW LPAREN identifier RPAREN LBRACE pageViewPropertiesList? RBRACE;
+    //          VIEW LPAREN identifier RPAREN LBRACE pageViewElements RBRACE;
     const elements = path.call(print, 'children', 5);
     
     const definition = [
@@ -1239,7 +1262,7 @@ function printPageSegmentDefinition(path, options, print) {
 }
 
 function printAreaElements(path, options, print) {
-    // Grammar: (groupDefinition | pageFieldItem | userControlItem | pageLabelItem | partDefinition | repeaterDefinition | separatorDefinition | cueGroupDefinition | gridControlDefinition)*
+    // Grammar: areaPropertiesList? (groupDefinition | pageFieldItem | userControlItem | pageLabelItem | partDefinition | repeaterDefinition | separatorDefinition | cueGroupDefinition | gridControlDefinition | fixedLayoutDefinition)*
     const children = path.node.children;
     if (!children || children.length === 0) return "";
     return join(hardline, path.map(print, 'children'));
@@ -1748,8 +1771,14 @@ function printPageViewsList(path, options, print) {
 
     const viewDefs = [];
 
-    if (path.node.children[2].ruleIndex === ALParser.RULE_pageViewDefinition ||
-        path.node.children[2].ruleIndex === ALParser.RULE_analysisViewDefinition
+    if ([
+            ALParser.RULE_pageViewDefinition,
+            ALParser.RULE_pageExtViewAddition,
+            ALParser.RULE_pageExtViewAnchoredAddition,
+            ALParser.RULE_pageExtViewModification,
+            ALParser.RULE_pageExtViewRelocation,
+            ALParser.RULE_analysisViewDefinition
+        ].includes(path.node.children[2].ruleIndex)
     ) {
         for (let i = 2; i < path.node.children.length - 1; i++) {
             viewDefs.push(path.call(print, 'children', i));
@@ -1779,6 +1808,14 @@ function printPageViewsList(path, options, print) {
     views.push(path.call(print, 'children', path.node.children.length - 1));
 
     return views;
+}
+
+function printViewElements(path, options, print) {
+    // Grammar: pageViewPropertiesList? pageExtLayoutDefinition?;
+    if (!path.node.children || path.node.children.length === 0)
+        return [];
+
+    return join([hardline, hardline], path.map(print, 'children'));
 }
 
 //#endregion Page functions
@@ -1881,6 +1918,21 @@ function printPageExtElementRelocation(path, options, print) {
     return [keyword, lparen, identifier, semicolon, " ", idList, rparen];
 }
 
+function printPageExtViewAddition(path, options, print) {
+    // Grammar: (ADDFIRST | ADDLAST) LBRACE pageViewDefinition* RBRACE
+    const children = path.node.children;
+    const keyword = path.call(print, 'children', 0);
+    const lBrace = path.call(print, 'children', 1);
+    const rBrace = path.call(print, 'children', children.length - 1);
+
+    const views = [];
+    for (let i = 2; i < children.length - 1; i++) {
+        views.push(path.call(print, 'children', i));
+    }
+
+    return [keyword, hardline, lBrace, indent([hardline, join(hardline, views)]), hardline, rBrace];
+}
+
 //#endregion Page extension functions
 
 //#region Interface functions
@@ -1924,7 +1976,15 @@ function printInterfaceObject(path, options, print) {
         body.push(hardline, join([hardline], procDeclDocs));
     }
 
-    return [...declaration, hardline, "{", indent([...body]), hardline, "}"];
+    const lBraceIdx = children.findIndex(c => c.symbol?.type === ALParser.LBRACE);
+    return [
+        ...declaration,
+        hardline,
+        path.call(print, 'children', lBraceIdx),
+        indent([...body]),
+        hardline,
+        path.call(print, 'children', children.length - 1)
+    ];
 }
 
 function printInterfacePropertiesList(path, options, print) {
@@ -2217,7 +2277,7 @@ function printQueryColumnDefinition(path, options, print) {
 }
 
 function printOrderByProperty(path, options, print) {
-    // Grammar: ORDERBY EQUAL IDENTIFIER LPAREN identifier RPAREN (COMMA IDENTIFIER LPAREN identifier RPAREN)*;
+    // Grammar: ORDERBY EQUAL IDENTIFIER LPAREN identifiersList RPAREN (COMMA IDENTIFIER LPAREN identifiersList RPAREN)*
     const keyword = path.call(print, 'children', 0);
     const equalSign = path.call(print, 'children', 1);
     const expression = [];
@@ -3333,6 +3393,76 @@ function printALObject(path, options, print, objectType) {
         : [hardline];
 
     return [join(" ", objectDeclaration), hardline, path.call(print, 'children', lBraceIdx), ...body, path.call(print, 'children', rBraceIdx)];
+}
+
+function printDotNetLibraryRef(path, options, print) {
+    // Grammar: DOTNET LBRACE dotNetAssemblyRefsList? RBRACE;
+    const docs = [];
+    docs.push(
+        path.call(print, 'children', 0),
+        hardline,
+        path.call(print, 'children', 1)
+    );
+
+    if (path.node.children[2].ruleIndex === ALParser.RULE_dotNetAssemblyRefsList) {
+        docs.push(indent([hardline, path.call(print, 'children', 2)]));
+    }
+
+    docs.push(hardline, path.call(print, 'children', path.node.children.length - 1));
+
+    return docs;
+}
+
+function printDotNetAssemblyRefsList(path, options, print) {
+    // Grammar: dotNetAssemblyRef+
+    return join(hardline, path.map(print, 'children'));
+}
+
+function printDotNetAssemblyRef(path, options, print) {
+    // Grammar: ASSEMBLY LPAREN identifier RPAREN LBRACE dotNetAssemblyPropertiesList? dotNetAssemblyTypesList? RBRACE
+    const docs = [];
+    docs.push(
+        path.call(print, 'children', 0),
+        path.call(print, 'children', 1),
+        path.call(print, 'children', 2),
+        path.call(print, 'children', 3),
+    );
+
+    const lBrace = path.call(print, 'children', 4);
+    const rBrace = path.call(print, 'children', path.node.children.length - 1);
+    
+    const elements = [];
+    if (path.node.children.length > 6) {
+        for (let i = 5; i < path.node.children.length - 1; i++) {
+            elements.push(path.call(print, 'children', i));
+        }
+    }
+
+    elements.length > 0 || !options.collapseEmptyBraces
+        ? docs.push(hardline, lBrace, indent([hardline, join([hardline, hardline], elements)]), hardline, rBrace)
+        : docs(push(" ", lBrace, rBrace));
+
+    return docs;
+}
+
+function printDotNetAssemblyType(path, options, print) {
+    // Grammar: TYPE LPAREN identifierWithNamespace SEMICOLON identifier RPAREN LBRACE RBRACE
+    const docs = [];
+    docs.push(
+        path.call(print, 'children', 0),
+        path.call(print, 'children', 1),
+        path.call(print, 'children', 2),
+        path.call(print, 'children', 3),
+        " ",
+        path.call(print, 'children', 4),
+        path.call(print, 'children', 5)
+    );
+
+    options.collapseEmptyBraces
+        ? docs.push(" ", path.call(print, 'children', 6), path.call(print, 'children', 7))
+        : docs.push(hardline, path.call(print, 'children', 6), hardline, path.call(print, 'children', 7));
+
+    return docs;
 }
 
 function printArrayDataType(path, options, print) {

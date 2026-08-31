@@ -114,6 +114,57 @@ page 50001 "Page With View"
 
         return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
     });
+
+    it('Page view with layout', () => {
+        const code = `
+page 50001 "Page With View"
+{
+    layout
+    {
+    area(Content){}}
+    views
+    {
+view(UniqueView)
+{
+    Caption = 'View With Unique Layout';
+    Filters = where ("Balance (LCY)" = filter (> 500), Name = filter ('G*')); 
+    SharedLayout = false;
+    
+    layout
+    {
+        movefirst(Control1; "Balance Due (LCY)")
+    }
+}    }
+}
+`;
+
+        const expected = `page 50001 "Page With View"
+{
+  layout
+  {
+    area(Content) {}
+  }
+
+  views
+  {
+    view(UniqueView)
+    {
+      Caption = 'View With Unique Layout';
+      Filters = where("Balance (LCY)" = filter(> 500),
+        Name = filter('G*'));
+      SharedLayout = false;
+
+      layout
+      {
+        movefirst(Control1; "Balance Due (LCY)")
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
 });
 
 describe('Analysis views', () => {
