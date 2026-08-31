@@ -1265,7 +1265,24 @@ function printAreaElements(path, options, print) {
     // Grammar: areaPropertiesList? (groupDefinition | pageFieldItem | userControlItem | pageLabelItem | partDefinition | repeaterDefinition | separatorDefinition | cueGroupDefinition | gridControlDefinition | fixedLayoutDefinition)*
     const children = path.node.children;
     if (!children || children.length === 0) return "";
-    return join(hardline, path.map(print, 'children'));
+
+    const docs = [];
+    let elementsPrinted = 0;
+    if (path.node.children[0].ruleIndex === ALParser.RULE_areaPropertiesList) {
+        docs.push(path.call(print, 'children', 0));
+        if (path.node.children.length > 1) {
+            docs.push(hardline, hardline);
+        }
+        elementsPrinted = 1;
+    }
+
+    const elements = [];
+    for (let i = elementsPrinted; i < path.node.children.length; i++) {
+        elements.push(path.call(print, 'children', i));
+    }
+    docs.push(join(hardline, elements));
+
+    return docs;
 }
 
 function printGroupElements(path, options, print) {
