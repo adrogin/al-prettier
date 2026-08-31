@@ -1,5 +1,17 @@
 # Changelog
 
+## Version v0.5.1
+
+### New features
+
+- **DotNet** assembly definitions (`dotnet { assembly(...) { ... } }`, including `type()` declarations) can now be parsed and formatted.
+
+### Parsing & formatting fixes
+- Views in page extensions: page extensions can now add new views (`addfirst`/`addlast`), move existing views (`moveafter`/`movebefore`), and define analysis views.
+- Page area properties (e.g. `Description`) are now parsed and printed, separated from the area's content elements.
+- **OrderBy** property now supports ordering on multiple columns per direction, e.g. `OrderBy = descending(Column1, Column2), ascending(Column3, Column4);`.
+- Comments placed around an interface header are now printed correctly.
+
 ## Version v0.5.0
 
 ### New features
