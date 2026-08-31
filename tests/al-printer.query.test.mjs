@@ -343,4 +343,41 @@ query 50000 MyQuery
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
+
+    it('Ordering on multiple columns', () => {
+        const code = `
+query 50100 "OrderBy Multi Column Repro"
+{
+    OrderBy = descending(Column1,Column2), ascending(Column3,Column4);
+
+    elements
+    {
+        dataitem(Customer; Customer)
+        {
+            column(Column1; Column1) { }
+            column(Column2; Column2) { }
+            column(Column3; Column3) { }
+        }
+    }
+}`;
+
+        const expected = `query 50100 "OrderBy Multi Column Repro"
+{
+  OrderBy = descending(Column1, Column2), ascending(Column3, Column4);
+
+  elements
+  {
+    dataitem(Customer; Customer)
+    {
+      column(Column1; Column1) {}
+      column(Column2; Column2) {}
+      column(Column3; Column3) {}
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
 });

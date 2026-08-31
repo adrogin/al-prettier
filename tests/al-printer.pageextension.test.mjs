@@ -192,6 +192,51 @@ pageextension 50050 "Some Extended Page" extends "My Base Page"
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
+
+    it('CueGroup in page extension layout', () => {
+        const code = `
+pageextension 50100 "Cuegroup Addafter Repro" extends "O365 Activities"
+{
+    layout
+    {
+        addafter(Intercompany)
+        {
+            cuegroup(MyCues)
+            {
+                Caption = 'Messages';
+
+                field(MyCue; Rec.SystemId)
+                {
+                    ApplicationArea = All;
+                }
+            }
+        }
+    }
+}`;
+
+        const expected = `pageextension 50100 "Cuegroup Addafter Repro" extends "O365 Activities"
+{
+  layout
+  {
+    addafter(Intercompany)
+    {
+      cuegroup(MyCues)
+      {
+        Caption = 'Messages';
+
+        field(MyCue; Rec.SystemId)
+        {
+          ApplicationArea = All;
+        }
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode =>
+            expect(formattedCode).to.equal(expected))
+    });
 });
 
 describe('Custom action in page extension', () => {
@@ -240,6 +285,100 @@ pageextension 50100 CustomerCardExt extends "Customer Card"
     {
       actionref(MyFlowPromoted; MyFlowAction) {}
     }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+});
+
+describe('Views in page extensions', () => {
+    it('Page extension object adding a view', () => {
+        const code = `
+pageextension 50050 "Some Extended Page" extends "My Base Page"
+{
+    views
+    {
+        addlast
+        {
+            view(BellaVista)
+            {
+                Caption = 'Bella Vista View';
+                layout{
+                movefirst(Control1; Control2)
+                }
+            }
+        }
+    }
+}`;
+
+        const expected = `pageextension 50050 "Some Extended Page" extends "My Base Page"
+{
+  views
+  {
+    addlast
+    {
+      view(BellaVista)
+      {
+        Caption = 'Bella Vista View';
+
+        layout
+        {
+          movefirst(Control1; Control2)
+        }
+      }
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Page extension object adding an analysis view', () => {
+        const code = `
+pageextension 50050 "Some Extended Page" extends "My Base Page"
+{
+analysisviews
+{
+    analysisview(PrettyView)
+    {
+        DefinitionFile='.\Resources\Views\Analysis.json';
+    }
+}
+}`;
+
+        const expected = `pageextension 50050 "Some Extended Page" extends "My Base Page"
+{
+  analysisviews
+  {
+    analysisview(PrettyView)
+    {
+      DefinitionFile = '.\Resources\Views\Analysis.json';
+    }
+  }
+}
+`;
+
+        return alFormat(code).then(formattedCode => expect(formattedCode).to.equal(expected));
+    });
+
+    it('Page extension moving views in the extended page', () => {
+        const code = `
+pageextension 50050 "Some Extended Page" extends "My Base Page"
+{
+    views
+    {
+        moveafter(AnchorView;View1,View2,View3)
+    }
+}`;
+
+        const expected = `pageextension 50050 "Some Extended Page" extends "My Base Page"
+{
+  views
+  {
+    moveafter(AnchorView; View1, View2, View3)
   }
 }
 `;
