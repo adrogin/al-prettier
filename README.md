@@ -49,7 +49,8 @@ You can customize the formatting behavior in VS Code settings:
   "alPrettier.groupGlobalVars": "none",
   "alPrettier.noLineBreaksInAttributes": false,
   "alPrettier.removeEmptyElements": false,
-  "alPrettier.collapseEmptyBraces": true
+  "alPrettier.collapseEmptyBraces": true,
+  "alPrettier.wrapOneParameterPerLine": true
 }
 ```
 
@@ -62,6 +63,8 @@ You can customize the formatting behavior in VS Code settings:
 - **noLineBreaksInAttributes** (default: false): Disable wrapping of procedure attributes even if the line exceeds maximum print width. Attributes are always printed in a single line.
 - **removeEmptyElements** (default false): Remove elements without content (this includes table fieldgroups, page actions and layout sections)
 - **collapseEmptyBraces** (default true): Place curly braces without content between them on one line. This option applies, for example, to page fields or table key definitions without properties.
+- **wrapOneParameterPerLine** (default true): Wrap long procedure parameters list placing each parameter on a new line. If set to false, lines are wrapped only when the maximum print width is exceeded. This option applies to both parameters in procedure declaration and arguments list in procedure calls.
+
 
 ## Requirements
 

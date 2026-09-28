@@ -38,6 +38,12 @@ const alPrettier = {
             category: "AL",
             default: true,
             description: "Place curly braces without content between them on one line"
+        },
+        wrapOneParameterPerLine: {
+            type: "boolean",
+            category: "AL",
+            default: true,
+            description: "Wrap long procedure parameters list placing each parameter on a new line. If set to false, lines are wrapped only when the maximum print width is exceeded."
         }
     }
 };

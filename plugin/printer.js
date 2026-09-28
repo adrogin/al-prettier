@@ -3,7 +3,7 @@ import ALParser from '../parser/ALParser.js';
 import { isParagraphStatement, isCompoundStatement, shouldAddBlankLineAfter, isIfStatementContext } from "./printerHelpers.js";
 import { TokenFormatter } from './tokenFormatter.js';
 
-const { hardline, join, indent, group, line, softline } = prettier.doc.builders;
+const { hardline, join, indent, group, fill, line, softline } = prettier.doc.builders;
 
 function getVisitorKeys(node) {
     if (node && Array.isArray(node.children)) {
@@ -2894,13 +2894,19 @@ function printProcedureAttribute(path, options, print) {
 }
 
 function printParameterList(path, options, print) {
-    // Grammar: parameter (SEMICOLON parameter)* — SEMICOLON tokens at indices 1, 3, 5, ... are skipped
+    // Grammar: parameter (SEMICOLON parameter)*
     const children = path.node.children;
-    const paramDocs = [];
+
+    const parts = [];
     for (let i = 0; i < children.length; i += 2) {
-        paramDocs.push([path.call(print, 'children', i), path.call(print, 'children', i + 1)]);
+        parts.push(path.call(print, 'children', i));
+        if (i < children.length - 2) {
+            const semicolon = path.call(print, 'children', i + 1);
+            parts.push([semicolon, line]);
+        }
     }
-    return join(line, paramDocs);
+
+    return options.wrapOneParameterPerLine ? parts : fill(parts);
 }
 
 function printProcReturnType(path, options, print) {
@@ -3230,25 +3236,30 @@ function printProcedureCall(path, options, print, args) {
     // argumentList is present when there is a child between LPAREN and RPAREN
     const argDoc = rParenIdx > lParenIdx + 1 ? path.call(() => print(path, args), 'children', lParenIdx + 1) : "";
 
-    const result = [...nameDocs, path.call(print, 'children', lParenIdx)];
-    if (argDoc.length > 0 && !args?.suppressLineBreaks)
-        result.push(softline);
+    const opening = [...nameDocs, path.call(print, 'children', lParenIdx)];
+    const closingParen = path.call(print, 'children', rParenIdx);
 
-    result.push(argDoc, path.call(print, 'children', rParenIdx));
-    return group(indent(result));
+    if (argDoc.length === 0 || args?.suppressLineBreaks)
+        return [...opening, argDoc, closingParen];
+
+    return options.wrapOneParameterPerLine
+        ? group([...opening, indent([softline, argDoc]), closingParen])
+        : group([...opening, indent([softline, fill(argDoc)]), closingParen]);
 }
 
 function printArgumentList(path, options, print, args) {
     // Grammar: expression (COMMA expression)*
     const children = path.node.children;
-    const argDocs = [];
+    const parts = [];
     for (let i = 0; i < children.length; i += 2) {
-        const argument = path.call(print, 'children', i);
-        const comma = i < children.length - 2 ? [path.call(print, 'children', i + 1), args?.suppressLineBreaks ? " " : line] : [];
-        argDocs.push([...argument, ...comma]);
+        parts.push(path.call(print, 'children', i));
+        if (i < children.length - 2) {
+            const comma = path.call(print, 'children', i + 1);
+            parts.push(args?.suppressLineBreaks ? [comma, " "] : [comma, line]);
+        }
     }
 
-    return argDocs;
+    return parts;
 }
 
 function printUnaryExpression(path, options, print, args) {

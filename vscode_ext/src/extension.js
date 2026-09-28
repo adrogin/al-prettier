@@ -206,7 +206,8 @@ async function runFormatter(text, options, prettier, filePath) {
         groupGlobalVars: config.get('groupGlobalVars') || "none",
         noLineBreaksInAttributes: config.get('noLineBreaksInAttributes') || false,
         removeEmptyElements: config.get('removeEmptyElements') || false,
-        collapseEmptyBraces: config.get('collapseEmptyBraces'),
+        collapseEmptyBraces: config.get('collapseEmptyBraces') && true,
+        wrapOneParameterPerLine: config.get('wrapOneParameterPerLine') && true,
     });
 
     return formattedText;
