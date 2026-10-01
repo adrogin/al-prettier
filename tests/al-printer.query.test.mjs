@@ -81,7 +81,7 @@ query 50000 MyQuery
       {
         DataItemLink = ID = TopLevelDataItem.ID;
 
-        column(Item_No; "Item No.") {}
+        column(Item_No; "Item No.") { }
       }
     }
   }
@@ -117,7 +117,7 @@ query 50000 MyQuery
       {
         DataItemLink = Type = TopLevelDataItem.Type, ID = TopLevelDataItem.ID;
 
-        column(Item_No; "Item No.") {}
+        column(Item_No; "Item No.") { }
       }
     }
   }
@@ -156,7 +156,7 @@ query 50000 MyQuery
           ID = TopLevelDataItem.ID,
           "Line No." = TopLevelDataItem."Line No.";
 
-        column(Item_No; "Item No.") {}
+        column(Item_No; "Item No.") { }
       }
     }
   }
@@ -369,9 +369,9 @@ query 50100 "OrderBy Multi Column Repro"
   {
     dataitem(Customer; Customer)
     {
-      column(Column1; Column1) {}
-      column(Column2; Column2) {}
-      column(Column3; Column3) {}
+      column(Column1; Column1) { }
+      column(Column2; Column2) { }
+      column(Column3; Column3) { }
     }
   }
 }

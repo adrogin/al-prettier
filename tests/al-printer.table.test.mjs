@@ -15,8 +15,8 @@ describe('Basic table structure', () => {
 {
   fields
   {
-    field(1; ID; Integer) {}
-    field(2; Description; Text[100]) {}
+    field(1; ID; Integer) { }
+    field(2; Description; Text[100]) { }
   }
 }
 `
@@ -58,7 +58,7 @@ describe('Basic table structure', () => {
       Caption = 'ID';
       Editable = false;
     }
-    field(2; Description; Text[100]) {}
+    field(2; Description; Text[100]) { }
   }
 }
 `
@@ -72,7 +72,7 @@ describe('Basic table structure', () => {
 {
   fields
   {
-    field(1; ID; Integer) {}
+    field(1; ID; Integer) { }
   }
 
   keys
@@ -323,7 +323,7 @@ describe('Table triggers and procedures', () => {
 {
   fields
   {
-    field(1; "Primary Key"; Code[10]) {}
+    field(1; "Primary Key"; Code[10]) { }
   }
 
   trigger OnAfterGetRecord()
@@ -368,7 +368,7 @@ describe('Table triggers and procedures', () => {
 {
   fields
   {
-    field(1; "Primary Key"; Code[10]) {}
+    field(1; "Primary Key"; Code[10]) { }
   }
 
   procedure DoSomething()
@@ -641,7 +641,7 @@ describe('FieldGroups', () => {
 {
   fields
   {
-    field(1; Code; Code[10]) {}
+    field(1; Code; Code[10]) { }
   }
 
   fieldgroups
@@ -675,7 +675,7 @@ describe('FieldGroups', () => {
 {
   fields
   {
-    field(1; Code; Code[10]) {}
+    field(1; Code; Code[10]) { }
   }
 
   fieldgroups
@@ -708,13 +708,13 @@ describe('FieldGroups', () => {
 {
   fields
   {
-    field(1; Code; Code[10]) {}
-    field(2; Description; Text[50]) {}
+    field(1; Code; Code[10]) { }
+    field(2; Description; Text[50]) { }
   }
 
   fieldgroups
   {
-    fieldgroup(DropDown; Code, Description) {}
+    fieldgroup(DropDown; Code, Description) { }
   }
 }
 `;
@@ -736,8 +736,8 @@ describe('Table field types', () => {
 {
   fields
   {
-    field(1; Code; Code[10]) {}
-    field(2; "Security Filter"; TableFilter) {}
+    field(1; Code; Code[10]) { }
+    field(2; "Security Filter"; TableFilter) { }
   }
 }
 `;

@@ -171,11 +171,11 @@ Access=Internal;
 {
   Access = Internal;
 
-  value(0; procedure) {}
-  value(1; and) {}
-  value(2; event) {}
-  value(3; or) {}
-  value(4; trigger) {}
+  value(0; procedure) { }
+  value(1; and) { }
+  value(2; event) { }
+  value(3; or) { }
+  value(4; trigger) { }
 }
 `;
 

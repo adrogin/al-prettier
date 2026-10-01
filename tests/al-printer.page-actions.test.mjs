@@ -13,7 +13,7 @@ page 50001 "No Actions Page"
 
         const expected = `page 50001 "No Actions Page"
 {
-  actions {}
+  actions { }
 }
 `;
 
@@ -104,7 +104,7 @@ page 50001 "Page With One Action"
     {
       group(PromotedGroup)
       {
-        actionref(AnotherPage_Promoted; RunAnotherPage) {}
+        actionref(AnotherPage_Promoted; RunAnotherPage) { }
       }
     }
   }

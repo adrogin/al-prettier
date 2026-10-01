@@ -40,8 +40,8 @@ Filters = where("Date Filter Type" = const(YearToDate));
     {
       group(FieldGroup)
       {
-        field(FixedField1; FieldDataSource1) {}
-        field(FixedField2; FieldDataSource2) {}
+        field(FixedField1; FieldDataSource1) { }
+        field(FixedField2; FieldDataSource2) { }
       }
     }
   }
@@ -92,7 +92,7 @@ page 50001 "Page With View"
 {
   layout
   {
-    area(Content) {}
+    area(Content) { }
   }
 
   views
@@ -142,7 +142,7 @@ view(UniqueView)
 {
   layout
   {
-    area(Content) {}
+    area(Content) { }
   }
 
   views
@@ -206,7 +206,7 @@ page 55555 MyPageWithView
     {
       repeater(Control1)
       {
-        field("Posting Date"; Rec."Posting Date") {}
+        field("Posting Date"; Rec."Posting Date") { }
       }
     }
   }

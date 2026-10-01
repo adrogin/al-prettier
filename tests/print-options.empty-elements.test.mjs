@@ -78,7 +78,7 @@ page 50000 "Page with empty actions"
   {
     area(content)
     {
-      field(SomePageField; Rec.TableField) {}
+      field(SomePageField; Rec.TableField) { }
     }
   }
 }
@@ -114,7 +114,7 @@ page 50000 "Page with empty actions"
   {
     area(content)
     {
-      field(SomePageField; Rec.TableField) {}
+      field(SomePageField; Rec.TableField) { }
     }
   }
 
@@ -156,7 +156,7 @@ page 50000 "Page with empty actions"
   {
     area(content)
     {
-      field(SomePageField; Rec.TableField) {}
+      field(SomePageField; Rec.TableField) { }
     }
   }
 
@@ -257,7 +257,7 @@ xmlport 50001 MyTestXmlPort
     {
       tableelement(TableElement; "TableElement Source")
       {
-        fieldelement(DocumentType; TableElement."Document Type") {}
+        fieldelement(DocumentType; TableElement."Document Type") { }
       }
     }
   }
@@ -299,14 +299,14 @@ xmlport 50001 MyTestXmlPort
     {
       tableelement(TableElement; "TableElement Source")
       {
-        fieldelement(DocumentType; TableElement."Document Type") {}
+        fieldelement(DocumentType; TableElement."Document Type") { }
       }
     }
   }
 
   requestpage
   {
-    layout {}
+    layout { }
   }
 }
 `;
@@ -340,7 +340,7 @@ page 50001 "Page With View"
   {
     area(Content)
     {
-      field(FixedField1; FieldDataSource1) {}
+      field(FixedField1; FieldDataSource1) { }
     }
   }
 }
@@ -373,11 +373,11 @@ page 50001 "Page With View"
   {
     area(Content)
     {
-      field(FixedField1; FieldDataSource1) {}
+      field(FixedField1; FieldDataSource1) { }
     }
   }
 
-  views {}
+  views { }
 }
 `;
 
@@ -410,7 +410,7 @@ page 50001 "Page With View"
   {
     area(Content)
     {
-      field(FixedField1; FieldDataSource1) {}
+      field(FixedField1; FieldDataSource1) { }
     }
   }
 }
@@ -443,11 +443,11 @@ page 50001 "Page With View"
   {
     area(Content)
     {
-      field(FixedField1; FieldDataSource1) {}
+      field(FixedField1; FieldDataSource1) { }
     }
   }
 
-  analysisviews {}
+  analysisviews { }
 }
 `;
 

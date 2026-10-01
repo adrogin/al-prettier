@@ -40,8 +40,8 @@ dataset{
     {
       RequestFilterFields = "No.";
 
-      column(COMPANYNAME; CompanyName) {}
-      column(FORMAT_TODAY_0_4_; Format(Today, 0, 4)) {}
+      column(COMPANYNAME; CompanyName) { }
+      column(FORMAT_TODAY_0_4_; Format(Today, 0, 4)) { }
     }
   }
 }
@@ -77,7 +77,7 @@ dataset{
     {
       RequestFilterFields = "No.";
 
-      column(COMPANYNAME; CompanyName) {}
+      column(COMPANYNAME; CompanyName) { }
     }
   }
 }
@@ -135,7 +135,7 @@ report 50000 "Report with Dataset"
         DataItemTableView = sorting("LSC BOM Component Type");
         PrintOnlyIfDetail = false;
 
-        column(BOM_Component__No__; "No.") {}
+        column(BOM_Component__No__; "No.") { }
       }
     }
   }
@@ -171,11 +171,11 @@ report 50000 "Report with Dataset"
   {
     dataitem(Item; Item)
     {
-      column(Item__No__; "No.") {}
+      column(Item__No__; "No.") { }
     }
     dataitem("BOM Component"; "BOM Component")
     {
-      column(BOM_Component__No__; "No.") {}
+      column(BOM_Component__No__; "No.") { }
     }
   }
 }
@@ -253,7 +253,7 @@ report 50000 "Report with Request page"
           Caption = 'Options';
           Visible = OptionsVisible;
 
-          field(FinancialReport; FinancialReportName) {}
+          field(FinancialReport; FinancialReportName) { }
         }
       }
     }
@@ -392,8 +392,8 @@ reportextension 50110 MyExtension extends "Customer - Top 10 List"
   {
     add(Integer)
     {
-      column(fromBaseTable; Customer.GLN) {}
-      column(fromBaseTableExt; Customer.MyField) {}
+      column(fromBaseTable; Customer.GLN) { }
+      column(fromBaseTableExt; Customer.MyField) { }
     }
   }
 }
@@ -438,7 +438,7 @@ reportextension 50110 MyExtension extends "Customer - Top 10 List"
   {
     add(Customer)
     {
-      column(netWeight; netWeight) {}
+      column(netWeight; netWeight) { }
     }
     modify(Customer)
     {
@@ -454,7 +454,7 @@ reportextension 50110 MyExtension extends "Customer - Top 10 List"
     {
       addafter(Show)
       {
-        field(fromBaseTableExt; Customer.myField) {}
+        field(fromBaseTableExt; Customer.myField) { }
       }
     }
   }

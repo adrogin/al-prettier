@@ -94,9 +94,9 @@ xmlport 50001 MyTestXmlPort
     {
       tableelement(TableElement; "TableElement Source")
       {
-        fieldelement(DocumentType; TableElement."Document Type") {}
-        fieldelement(DocumentNo; TableElement."Document No.") {}
-        fieldelement(DocumentDate; TableElement."Document Date") {}
+        fieldelement(DocumentType; TableElement."Document Type") { }
+        fieldelement(DocumentNo; TableElement."Document No.") { }
+        fieldelement(DocumentDate; TableElement."Document Date") { }
       }
     }
   }
@@ -249,7 +249,7 @@ xmlport 50001 MyTestXmlPort
     {
       tableelement(TableElement; "TableElement Source")
       {
-        fieldelement(DocumentType; TableElement."Document Type") {}
+        fieldelement(DocumentType; TableElement."Document Type") { }
       }
     }
   }
@@ -307,8 +307,8 @@ xmlport 10012880 "LSC POS Fiscal Transaction"
     {
       XmlName = 'Transaction';
 
-      fieldattribute(Payment; SourceTableName.Payment) {}
-      textattribute(CurrencyInfo) {}
+      fieldattribute(Payment; SourceTableName.Payment) { }
+      textattribute(CurrencyInfo) { }
     }
   }
 }
@@ -355,7 +355,7 @@ xmlport 50000 ImportExportXml {
           LinkTable = DocumentHeader;
           MinOccurs = Zero;
 
-          fieldelement(Code; DocumentLine.Code) {}
+          fieldelement(Code; DocumentLine.Code) { }
         }
       }
     }

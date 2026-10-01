@@ -143,7 +143,7 @@ pageextension 50050 "Some Extended Page" extends "My Base Page"
         {
           ShowCaption = false;
 
-          field(ServiceConnections; ServiceConnectionsLbl) {}
+          field(ServiceConnections; ServiceConnectionsLbl) { }
         }
       }
     }
@@ -283,7 +283,7 @@ pageextension 50100 CustomerCardExt extends "Customer Card"
     }
     addfirst(Promoted)
     {
-      actionref(MyFlowPromoted; MyFlowAction) {}
+      actionref(MyFlowPromoted; MyFlowAction) { }
     }
   }
 }
