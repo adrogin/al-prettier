@@ -1,5 +1,15 @@
 # Changelog
 
+## Version v0.6.0
+
+### New features
+
+- New formatting option `wrapOneParameterPerLine` allows to choose printing style for long lists of procedure parameters exceeding the max print width: whether to print each parameter on a separate line or fit as many as possible into the maximum line width.
+
+### Formatting fix
+
+- When `collapseEmptyBraces` option is enabled, braces without content are printed with a whitespace between them: `{ }` instead of `{}`. This is done to align printing with the Microsoft default formatter and AZ Code Outline.
+
 ## Version v0.5.1
 
 ### New features

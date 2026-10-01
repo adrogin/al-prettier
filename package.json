@@ -2,7 +2,7 @@
     "name": "al-prettier-vscode",
     "displayName": "AL Prettier",
     "description": "Prettier formatter for AL language in VS Code",
-    "version": "0.5.1",
+    "version": "0.6.0",
     "publisher": "alexander-drogin",
     "author": {
         "name": "Alexander Drogin"
