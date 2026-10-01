@@ -341,7 +341,7 @@ table 71791035 "Dual Ledger Setup Transl. IESC"
 {
   fields
   {
-    field(1; PK; Code[10]) {}
+    field(1; PK; Code[10]) { }
   }
 
   #region OnInsert

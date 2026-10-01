@@ -27,7 +27,7 @@ dotnet
     Culture = 'neutral';
     PublicKeyToken = 'null';
 
-    type("EtwPerformanceProfiler.EtwPerformanceProfiler"; "EtwPerformanceProfiler") {}
+    type("EtwPerformanceProfiler.EtwPerformanceProfiler"; "EtwPerformanceProfiler") { }
   }
 }
 `;
@@ -64,10 +64,10 @@ dotnet
 {
   assembly("Microsoft.Dynamics.Nav.EwsWrapper.ALTestHelper")
   {
-    type("Microsoft.Dynamics.Nav.Exchange.ALTest.EmailAddress"; "Microsoft.Dynamics.Nav.Exchange.ALTest.EmailAddress") {}
-    type("Microsoft.Dynamics.Nav.Exchange.ALTest.EmailFolder"; "Microsoft.Dynamics.Nav.Exchange.ALTest.EmailFolder") {}
-    type("Microsoft.Dynamics.Nav.Exchange.ALTest.EmailMessage"; "Microsoft.Dynamics.Nav.Exchange.ALTest.EmailMessage") {}
-    type("Microsoft.Dynamics.Nav.Exchange.Attachment"; "Microsoft.Dynamics.Nav.Exchange.Attachment") {}
+    type("Microsoft.Dynamics.Nav.Exchange.ALTest.EmailAddress"; "Microsoft.Dynamics.Nav.Exchange.ALTest.EmailAddress") { }
+    type("Microsoft.Dynamics.Nav.Exchange.ALTest.EmailFolder"; "Microsoft.Dynamics.Nav.Exchange.ALTest.EmailFolder") { }
+    type("Microsoft.Dynamics.Nav.Exchange.ALTest.EmailMessage"; "Microsoft.Dynamics.Nav.Exchange.ALTest.EmailMessage") { }
+    type("Microsoft.Dynamics.Nav.Exchange.Attachment"; "Microsoft.Dynamics.Nav.Exchange.Attachment") { }
   }
 }
 `;

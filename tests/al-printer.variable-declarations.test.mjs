@@ -751,7 +751,7 @@ table 50000 MyTable
 {
   fields
   {
-    field(1; "Entry No."; Integer) {}
+    field(1; "Entry No."; Integer) { }
   }
 }
 `;

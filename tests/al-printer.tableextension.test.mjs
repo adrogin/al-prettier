@@ -106,7 +106,7 @@ tableextension 55111 "Let's Extend Something" extends "Something Extendable"
 
   fieldgroups
   {
-    addlast(DropDown; "Very Important Field", "Less Important Field") {}
+    addlast(DropDown; "Very Important Field", "Less Important Field") { }
   }
 }
 `;

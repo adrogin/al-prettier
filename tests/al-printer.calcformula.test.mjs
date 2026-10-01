@@ -22,7 +22,7 @@ table 50000 TableWithFlowField
 {
   fields
   {
-    field(1; PK; Code[10]) {}
+    field(1; PK; Code[10]) { }
     field(2; CalculatedField; Decimal)
     {
       FieldClass = FlowField;
@@ -58,7 +58,7 @@ table 50000 TableWithFlowField
 {
   fields
   {
-    field(1; PK; Code[10]) {}
+    field(1; PK; Code[10]) { }
     field(2; CalculatedField; Decimal)
     {
       FieldClass = FlowField;
@@ -92,7 +92,7 @@ table 50000 TableWithFlowField
 {
   fields
   {
-    field(1; PK; Code[10]) {}
+    field(1; PK; Code[10]) { }
     field(2; CalculatedField; Decimal)
     {
       FieldClass = FlowField;
@@ -126,7 +126,7 @@ table 50000 TableWithFlowField
 {
   fields
   {
-    field(1; PK; Code[10]) {}
+    field(1; PK; Code[10]) { }
     field(2; CalculatedField; Decimal)
     {
       FieldClass = FlowField;
@@ -161,7 +161,7 @@ table 50000 TableWithFlowField
 {
   fields
   {
-    field(1; PK; Code[10]) {}
+    field(1; PK; Code[10]) { }
     field(2; CalculatedField; Decimal)
     {
       FieldClass = FlowField;
@@ -196,7 +196,7 @@ CalcFormula = lookup(System.Azure.Identity.Plan.Name where("Plan ID"=field("Plan
 {
   fields
   {
-    field(1; "Plan ID"; Guid) {}
+    field(1; "Plan ID"; Guid) { }
     field(10; "Plan Name"; Text[50])
     {
       FieldClass = FlowField;
@@ -230,7 +230,7 @@ CalcFormula = lookup(System.Azure.Identity.Plan.Name where("Plan ID"=filter((''|
 {
   fields
   {
-    field(1; "Plan ID"; Guid) {}
+    field(1; "Plan ID"; Guid) { }
     field(10; "Plan Name"; Text[50])
     {
       FieldClass = FlowField;

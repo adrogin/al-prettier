@@ -30,7 +30,7 @@ page 50001 "Page With One Field"
       {
         ShowCaption = false;
 
-        field("Code"; Rec.Code) {}
+        field("Code"; Rec.Code) { }
       }
     }
   }
@@ -163,7 +163,7 @@ page 50001 "Page With User Control"
   {
     area(content)
     {
-      field("Code"; Rec.Code) {}
+      field("Code"; Rec.Code) { }
       usercontrol(Map; MapControl)
       {
         Caption = 'Map';
@@ -206,12 +206,12 @@ page 50001 "Page With Three Fields"
       {
         ShowCaption = false;
 
-        field("Code"; Rec.Code) {}
+        field("Code"; Rec.Code) { }
         field(Description; Rec.Description)
         {
           Caption = 'Description';
         }
-        field(Description2; Rec."Description 2") {}
+        field(Description2; Rec."Description 2") { }
       }
     }
   }
@@ -286,7 +286,7 @@ page 50001 "Page With Subpage"
   {
     area(content)
     {
-      field(Price; Rec.Price) {}
+      field(Price; Rec.Price) { }
     }
     area(factboxes)
     {
@@ -328,9 +328,9 @@ page 50001 "Page With Separator"
   {
     area(content)
     {
-      field(Type; Rec.Type) {}
-      separator(Navigate_Separator) {}
-      field(No_; Rec."No.") {}
+      field(Type; Rec.Type) { }
+      separator(Navigate_Separator) { }
+      field(No_; Rec."No.") { }
     }
   }
 }
@@ -373,7 +373,7 @@ page 50001 "Page With Separator"
           RunObject = Page "Another Page";
           RunPageLink = "Source Type";
         }
-        separator(SeparateActions) {}
+        separator(SeparateActions) { }
         action(AnfAnotherPage)
         {
           RunObject = Page "Yet Another Page";
@@ -411,7 +411,7 @@ page 50001 "Just Some Page"
     {
       Description = 'This is an area with one field';
 
-      field(Type; Rec.Type) {}
+      field(Type; Rec.Type) { }
     }
   }
 }
@@ -470,7 +470,7 @@ page 50001 "Page With Separator"
   {
     area(content)
     {
-      field(Type; Rec.Type) {}
+      field(Type; Rec.Type) { }
       separator(Navigate_Separator)
       {
         IsHeader = true;
@@ -506,7 +506,7 @@ page 50001 "Page with factbox part"
   {
     area(factboxes)
     {
-      part(AdditionalInfo; InfoSource) {}
+      part(AdditionalInfo; InfoSource) { }
     }
   }
 }
@@ -534,7 +534,7 @@ page 50001 "Page with Systempart"
   {
     area(factboxes)
     {
-      systempart(Links; Links) {}
+      systempart(Links; Links) { }
     }
   }
 }
@@ -571,7 +571,7 @@ page 50001 MyPage
     {
       repeater(General)
       {
-        field(customerNumber; Rec."No.") {}
+        field(customerNumber; Rec."No.") { }
         part(salesPriceItems; "Customer List")
         {
           SubPageLink = "No." = field("No.");
@@ -739,7 +739,7 @@ page 60000 "Page with Cuegroup"
       {
         cuegroup(Documents)
         {
-          field("Purchase Orders"; Rec."Purchase Orders") {}
+          field("Purchase Orders"; Rec."Purchase Orders") { }
         }
       }
     }
@@ -857,7 +857,7 @@ page 60000 "Page with Grid"
             DrillDownPageID = "Purch. Order";
           }
         }
-        field(JustAnotherField; Rec."Source for Another Field") {}
+        field(JustAnotherField; Rec."Source for Another Field") { }
         group(Group2)
         {
           field("Transfer Orders"; Rec."Transfer Orders")
@@ -906,7 +906,7 @@ page 60000 "Page with Grid"
         {
           Caption = 'Grid View';
 
-          field("Purchase Orders"; Rec."Purchase Orders") {}
+          field("Purchase Orders"; Rec."Purchase Orders") { }
         }
       }
     }
@@ -945,8 +945,8 @@ page 60000 "Page with Grid"
     {
       grid(Grid)
       {
-        field("Purchase Orders"; Rec."Purchase Orders") {}
-        part(Subpage; "Subpage Source") {}
+        field("Purchase Orders"; Rec."Purchase Orders") { }
+        part(Subpage; "Subpage Source") { }
       }
     }
   }
@@ -985,7 +985,7 @@ page 60000 "Page with Grid"
       {
         grid(SubGrid)
         {
-          field("Purchase Orders"; Rec."Purchase Orders") {}
+          field("Purchase Orders"; Rec."Purchase Orders") { }
         }
       }
     }
@@ -1153,8 +1153,8 @@ page 50001 "Page With Fixed Layout"
 
         group(FixedGroup)
         {
-          field(FixedField1; FieldDataSource1) {}
-          field(FixedField2; FieldDataSource2) {}
+          field(FixedField1; FieldDataSource1) { }
+          field(FixedField2; FieldDataSource2) { }
         }
       }
     }
@@ -1198,8 +1198,8 @@ page 50001 "Page With Fixed Layout"
 
           group(FixedGroup)
           {
-            field(FixedField1; FieldDataSource1) {}
-            field(FixedField2; FieldDataSource2) {}
+            field(FixedField1; FieldDataSource1) { }
+            field(FixedField2; FieldDataSource2) { }
           }
         }
       }

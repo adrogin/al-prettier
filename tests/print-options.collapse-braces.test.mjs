@@ -20,8 +20,8 @@ table 50000 "Setup Table"
 {
   fields
   {
-    field(1; "Primary Key"; Code[10]) {}
-    field(2; "Setup Option"; Code[20]) {}
+    field(1; "Primary Key"; Code[10]) { }
+    field(2; "Setup Option"; Code[20]) { }
   }
 }
 `;
@@ -47,8 +47,8 @@ table 50000 "Setup Table"
 {
   fields
   {
-    field(1; "Primary Key"; Code[10]) {}
-    field(2; "Setup Option"; Code[20]) {}
+    field(1; "Primary Key"; Code[10]) { }
+    field(2; "Setup Option"; Code[20]) { }
   }
 }
 `;
@@ -114,12 +114,12 @@ table 50000 "Setup Table"
 {
   fields
   {
-    field(1; "Primary Key"; Code[10]) {}
+    field(1; "Primary Key"; Code[10]) { }
   }
 
   keys
   {
-    key(PK; "Primary Key") {}
+    key(PK; "Primary Key") { }
   }
 }
 `;
@@ -152,7 +152,7 @@ page 50000 MyPage
     {
       repeater(Group)
       {
-        field(FieldName; FieldSource) {}
+        field(FieldName; FieldSource) { }
       }
     }
   }
@@ -221,7 +221,7 @@ page 50000 MyPage
   {
     area(processing)
     {
-      action(DoAction) {}
+      action(DoAction) { }
     }
   }
 }
@@ -243,7 +243,7 @@ page 50000 MyPage
 
         const expected = `page 50000 MyPage
 {
-  actions {}
+  actions { }
 }
 `;
 
@@ -275,18 +275,18 @@ table 50000 MyTable
 {
   fields
   {
-    field(1; "Primary Key"; Code[10]) {}
-    field(2; "Customer No."; Code[20]) {}
+    field(1; "Primary Key"; Code[10]) { }
+    field(2; "Customer No."; Code[20]) { }
   }
 
   keys
   {
-    key(PK; "Primary Key") {}
+    key(PK; "Primary Key") { }
   }
 
   fieldgroups
   {
-    fieldgroup(Brick; "Customer No.") {}
+    fieldgroup(Brick; "Customer No.") { }
   }
 }
 `;
@@ -373,11 +373,11 @@ page 50000 MyPage
   {
     area(processing)
     {
-      action(DoAction) {}
+      action(DoAction) { }
     }
     area(Promoted)
     {
-      actionref(DoActionPromoted; DoAction) {}
+      actionref(DoActionPromoted; DoAction) { }
     }
   }
 }
@@ -453,8 +453,8 @@ elements {
   {
     dataitem(DataItemName; SourceTable)
     {
-      column(ColumnName; SourceFieldName) {}
-      filter(FilterName; SourceField) {}
+      column(ColumnName; SourceFieldName) { }
+      filter(FilterName; SourceField) { }
     }
   }
 }
@@ -514,7 +514,7 @@ labels
 
         const expected = `report 50000 MyReport
 {
-  labels {}
+  labels { }
 }
 `;
 
@@ -568,7 +568,7 @@ page 50001 "Page with factbox part"
   {
     area(factboxes)
     {
-      part(AdditionalInfo; InfoSource) {}
+      part(AdditionalInfo; InfoSource) { }
     }
   }
 }
@@ -643,13 +643,13 @@ page 50001 "Page With View"
   {
     area(Content)
     {
-      field(FixedField1; FieldDataSource1) {}
+      field(FixedField1; FieldDataSource1) { }
     }
   }
 
   views
   {
-    view("Last 30 Days") {}
+    view("Last 30 Days") { }
   }
 }
 `;

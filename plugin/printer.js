@@ -963,8 +963,8 @@ function printTableFieldDefinition(path, options, print) {
     const semicolon2 = path.call(print, 'children', 5);
     const fieldType = path.call(print, 'children', 6);  // dataType (non-terminal)
     const rparen = path.call(print, 'children', 7);
-    const lbrace = path.call(print, 'children', 8);
-    const rbrace = path.call(print, 'children', children.length - 1);
+    const lBrace = path.call(print, 'children', 8);
+    const rBrace = path.call(print, 'children', children.length - 1);
 
     // Table field properties and triggers occupy children[9] through children[length-2]; children[length-1] is RBRACE
     const elementDocs = [];
@@ -975,15 +975,10 @@ function printTableFieldDefinition(path, options, print) {
     const signature = [fieldKeyword, lparen, fieldId, semicolon1, " ", fieldName, semicolon2, " ", fieldType, rparen];
     let body = [];
     if (elementDocs.length > 0) {
-        body = [hardline, lbrace, indent([hardline, join([hardline, hardline], elementDocs)]), hardline, rbrace];
+        body = [hardline, lBrace, indent([hardline, join([hardline, hardline], elementDocs)]), hardline, rBrace];
     }
     else {
-        if (options?.collapseEmptyBraces) {
-            body = [" ", lbrace, rbrace];
-        }
-        else {
-            body = [hardline, lbrace, hardline, rbrace];
-        }
+        body = formatEmptyBraces(options, lBrace, rBrace);
     }
 
     return [...signature, ...body];
@@ -1047,12 +1042,7 @@ function printKeyItem(path, options, print) {
         body = [hardline, lBrace, indent([hardline, propsList]), hardline, rBrace];
     }
     else {
-        if (options.collapseEmptyBraces) {
-            body = [" ", lBrace, rBrace];
-        }
-        else {
-            body = [hardline, lBrace, hardline, rBrace];
-        }
+        body = formatEmptyBraces(options, lBrace, rBrace);
     }
 
     return [...signature, ...body];
@@ -1093,17 +1083,15 @@ function printFieldGroupItem(path, options, print) {
     ];
 
     const propsIdx = path.node.children.findIndex(c => c.ruleIndex === ALParser.RULE_fieldGroupPropertiesList);
-    fieldgroup.push(options.collapseEmptyBraces && propsIdx === -1 ? " " : hardline);
-    fieldgroup.push(path.call(print, 'children', 4));
-    
-    if (!options.collapseEmptyBraces && propsIdx === -1) {
-        fieldgroup.push(hardline);
-    }
+    const lBrace = path.call(print, 'children', 4);
+    const rBrace = path.call(print, 'children', path.node.children.length - 1);
     if (propsIdx > -1) {
-        fieldgroup.push(indent([hardline, path.call(print, 'children', propsIdx)]), hardline);
+        fieldgroup.push(hardline, lBrace, indent([hardline, path.call(print, 'children', propsIdx)]), hardline, rBrace);
+    }
+    else {
+        fieldgroup.push(formatEmptyBraces(options, lBrace, rBrace));
     }
 
-    fieldgroup.push(path.call(print, 'children', path.node.children.length - 1));
     return fieldgroup;
 }
 
@@ -1176,12 +1164,7 @@ function printTableExtFieldModification(path, node, print) {
         body = [hardline, lbrace, indent([hardline, join([hardline, hardline], elementDocs)]), hardline, rbrace];
     }
     else {
-        if (options.collapseEmptyBraces) {
-            body = [" ", lbrace, rbrace];
-        }
-        else {
-            body = [hardline, lbrace, hardline, rbrace];
-        }
+        body = formatEmptyBraces(options, lBrace, rBrace);
     }
 
     return [...signature, ...body];
@@ -1207,21 +1190,16 @@ function printPageLayoutDefinition(path, options, print) {
         return [];
 
     const pageLayout = [path.call(print, 'children', 0)];
-    pageLayout.push(
-        !options.collapseEmptyBraces || (Array.isArray(elements) && elements.length > 0) 
-            ? hardline
-            : " ");
-    pageLayout.push(path.call(print, 'children', 1));
+    const lBrace = path.call(print, 'children', 1);
+    const rBrace = path.call(print, 'children', path.node.children.length - 1);
 
     if (Array.isArray(elements) && elements.length > 0) {
-        pageLayout.push(indent([hardline, join(hardline, elements)]));
+        pageLayout.push(hardline, lBrace, indent([hardline, join(hardline, elements)]), hardline, rBrace);
+    }
+    else {
+        pageLayout.push(formatEmptyBraces(options, lBrace, rBrace));
     }
 
-    if (!options.collapseEmptyBraces || (Array.isArray(elements) && elements.length > 0)) {
-        pageLayout.push(hardline);
-    }
-
-    pageLayout.push(path.call(print, 'children', path.node.children.length - 1));
     return pageLayout;
 }
 
@@ -1247,16 +1225,14 @@ function printPageSegmentDefinition(path, options, print) {
         path.call(print, 'children', 3)
     ];
 
-    definition.push(elements.length > 0 || !options.collapseEmptyBraces ? hardline : " ");
-    definition.push(path.call(print, 'children', 4));
-
+    const lBrace = path.call(print, 'children', 4);
+    const rBrace = path.call(print, 'children', path.node.children.length - 1);
     if (elements.length > 0) {
-        definition.push(indent([hardline, elements]), hardline);
+        definition.push(hardline, lBrace, indent([hardline, elements]), hardline, rBrace);
     }
-    else if (!options.collapseEmptyBraces) {
-        definition.push(hardline);
+    else {
+        definition.push(formatEmptyBraces(options, lBrace, rBrace));
     }
-    definition.push(path.call(print, 'children', path.node.children.length - 1));
 
     return definition;
 }
@@ -1332,17 +1308,9 @@ function printPartDefinition(path, options, print) {
         path.call(print, 'children', 5)   // Parenthesis
     ];
 
-    part.push(props || !options.collapseEmptyBraces ? hardline : " ");
-
-    part.push(lBrace);
-
-    if (props) {
-        part.push(indent([hardline, props]), hardline);
-    }
-    else if (!options.collapseEmptyBraces) {
-        part.push(hardline);
-    }
-    part.push(rBrace);
+    Array.isArray(props) && props.length > 0
+        ? part.push(hardline, lBrace, indent([hardline, props]), hardline, rBrace)
+        : part.push(formatEmptyBraces(options, lBrace, rBrace));
 
     return part;
 }
@@ -1403,8 +1371,8 @@ function printPageFieldItem(path, options, print) {
     const semicolon = path.call(print, 'children', 3);
     const expression = path.call(print, 'children', 4);
     const rparen = path.call(print, 'children', 5);
-    const lbrace = path.call(print, 'children', 6);
-    const rbrace = path.call(print, 'children', children.length - 1);
+    const lBrace = path.call(print, 'children', 6);
+    const rBrace = path.call(print, 'children', children.length - 1);
 
     const elementDocs = [];
     for (let i = 7; i < children.length - 1; i++) {
@@ -1415,15 +1383,10 @@ function printPageFieldItem(path, options, print) {
     const nonEmpty = elementDocs.filter(Boolean);
     let body = [];
     if (nonEmpty.length > 0) {
-        body = [hardline, lbrace, indent([hardline, join([hardline, hardline], nonEmpty)]), hardline, rbrace];
+        body = [hardline, lBrace, indent([hardline, join([hardline, hardline], nonEmpty)]), hardline, rBrace];
     }
     else {
-        if (options.collapseEmptyBraces) {
-            body = [" ", lbrace, rbrace];
-        }
-        else {
-            body = [hardline, lbrace, hardline, rbrace];
-        }
+        body = formatEmptyBraces(options, lBrace, rBrace);
     }
 
     return [...signature, ...body];
@@ -1446,12 +1409,7 @@ function printPageLabelItem(path, options, print) {
         body = [hardline, lbrace, indent([hardline, properties]), hardline, rbrace];
     }
     else {
-        if (options.collapseEmptyBraces) {
-            body = [" ", lbrace, rbrace];
-        }
-        else {
-            body = [hardline, lbrace, hardline, rbrace];
-        }
+        body = formatEmptyBraces(options, lBrace, rBrace);
     }
 
     return [...signature, ...body];
@@ -1476,9 +1434,10 @@ function printSeparatorElement(path, options, print) {
         properties.push(...path.call(print, 'children', children.length - 2));
     }
 
-    const lbrace = children[children.length - 2].ruleIndex === ALParser.RULE_pageFieldPropertiesList
+    const lBrace = children[children.length - 2].ruleIndex === ALParser.RULE_pageFieldPropertiesList
         ? path.call(print, 'children', children.length - 3)
         : path.call(print, 'children', children.length - 2);
+    const rBrace = path.call(print, 'children', children.length - 1);
     
     const separatorDefinition = [];
     separatorDefinition.push(...path.call(print, 'children', 0));
@@ -1486,17 +1445,10 @@ function printSeparatorElement(path, options, print) {
     separatorDefinition.push(...path.call(print, 'children', 2));
     separatorDefinition.push(...path.call(print, 'children', 3));
 
-    separatorDefinition.push(properties.length > 0 || !options.collapseEmptyBraces ? hardline : " ");
-    separatorDefinition.push(...lbrace);
+    properties.length > 0
+        ? separatorDefinition.push(hardline, lBrace, indent([hardline, properties]), hardline, rBrace)
+        : separatorDefinition.push(formatEmptyBraces(options, lBrace, rBrace));
 
-    if (properties.length > 0) {
-        separatorDefinition.push(indent([hardline, properties]));
-    }
-
-    if (properties.length > 0 || !options.collapseEmptyBraces) {
-        separatorDefinition.push(hardline);
-    }
-    separatorDefinition.push(...path.call(print, 'children', children.length - 1));
     return separatorDefinition
 }
 
@@ -1507,21 +1459,13 @@ function printActionsDefinition(path, options, print) {
         return [];
 
     const keyword = path.call(print, 'children', 0);
-    const lbrace = path.call(print, 'children', 1);
-    const rbrace = path.call(print, 'children', 3);
+    const lBrace = path.call(print, 'children', 1);
+    const rBrace = path.call(print, 'children', 3);
 
     const actionsDef = [keyword];
-    actionsDef.push(((Array.isArray(elements) && elements.length > 0) || !options.collapseEmptyBraces) ? hardline : " ");
-    actionsDef.push(lbrace);
-
-    if (Array.isArray(elements) && elements.length > 0) {
-        actionsDef.push(indent([hardline, elements]));
-    }
-
-    if ((Array.isArray(elements) && elements.length > 0) || !options.collapseEmptyBraces) {
-        actionsDef.push(hardline);
-    }
-    actionsDef.push(rbrace);
+    Array.isArray(elements) && elements.length > 0
+        ? actionsDef.push(hardline, lBrace, indent([hardline, elements]), hardline, rBrace)
+        : actionsDef.push(formatEmptyBraces(options, lBrace, rBrace));
 
     return actionsDef;
 }
@@ -1569,21 +1513,16 @@ function printActionDefinition(path, options, print) {
     }
 
     const lbraceIdx = path.node.children.findIndex(c => c.symbol?.type === ALParser.LBRACE);
-    const lbrace = path.call(print, 'children', lbraceIdx);
-    const rbrace = path.call(print, 'children', children.length - 1);
+    const lBrace = path.call(print, 'children', lbraceIdx);
+    const rBrace = path.call(print, 'children', children.length - 1);
     const nonEmpty = elementDocs.filter(Boolean);
     let body = [];
     
     if (nonEmpty.length > 0) {
-        body = [hardline, lbrace, indent([hardline, join([hardline, hardline], nonEmpty)]), hardline, rbrace]
+        body = [hardline, lBrace, indent([hardline, join([hardline, hardline], nonEmpty)]), hardline, rBrace]
     }
     else {
-        if (options.collapseEmptyBraces) {
-            body = [" ", lbrace, rbrace];
-        }
-        else {
-            body = [hardline, lbrace, hardline, rbrace];
-        }
+        body = formatEmptyBraces(options, lBrace, rBrace);
     }
 
     return [actionKeyword, lParen, name, rParen, ...body];
@@ -1651,8 +1590,8 @@ function printActionRef(path, options, print) {
     const semicolon = path.call(print, 'children', 3);
     const actionName = path.call(print, 'children', 4);
     const rparen = path.call(print, 'children', 5);
-    const lbrace = path.call(print, 'children', 6);
-    const rbrace = path.call(print, 'children', path.node.children.length - 1);
+    const lBrace = path.call(print, 'children', 6);
+    const rBrace = path.call(print, 'children', path.node.children.length - 1);
 
     const actionPropsIdx = path.node.children.findIndex(c => c.ruleIndex === ALParser.RULE_actionPropertiesList);
     const properties = [];
@@ -1661,13 +1600,10 @@ function printActionRef(path, options, print) {
     }
 
     const actionRef = [actionRefKeyword, lparen, name, semicolon, " ", actionName, rparen];
-    actionRef.push(properties.length > 0 || !options.collapseEmptyBraces ? hardline : " ");
-    actionRef.push(lbrace, properties);
+    properties.length > 0
+        ? actionRef.push(hardline, lBrace, properties, hardline, rBrace)
+        : actionRef.push(formatEmptyBraces(options, lBrace, rBrace));
 
-    if (properties.length > 0 || !options.collapseEmptyBraces) {
-        actionRef.push(hardline);
-    }
-    actionRef.push(rbrace);
     return actionRef;
 }
 
@@ -1807,22 +1743,12 @@ function printPageViewsList(path, options, print) {
     }
 
     const views = [path.call(print, 'children', 0)];
+    const lBrace = path.call(print, 'children', 1);
+    const rBrace = path.call(print, 'children', path.node.children.length - 1); 
 
-    views.push(viewDefs.length > 0 || !options.collapseEmptyBraces ? hardline : " ");
-    views.push(path.call(print, 'children', 1));
-
-    if (viewDefs.length > 0) {
-        views.push(indent([hardline, join(hardline, viewDefs)]));
-    }
-    else if (!options.collapseEmptyBraces) {
-        viewDefs.push(hardline);
-    }
-
-    if (viewDefs.length > 0 || !options.collapseEmptyBraces) {
-        views.push(hardline);
-    }
-
-    views.push(path.call(print, 'children', path.node.children.length - 1));
+    viewDefs.length > 0
+        ? views.push(hardline, lBrace, indent([hardline, join(hardline, viewDefs)]), hardline, rBrace)
+        : views.push(formatEmptyBraces(options, lBrace, rBrace));
 
     return views;
 }
@@ -2104,6 +2030,8 @@ function printEnumValueDefinition(path, options, print) {
     const semicolonIdx = children.findIndex(c => c.symbol?.type === ALParser.SEMICOLON);
     const lBraceIdx = children.findIndex(c => c.symbol?.type === ALParser.LBRACE);
     const rBraceIdx = children.findIndex(c => c.symbol?.type === ALParser.RBRACE);
+    const lBrace = path.call(print, 'children', lBraceIdx);
+    const rBrace = path.call(print, 'children', rBraceIdx);
 
     const decl = [];
     for (let i = 0; i < semicolonIdx; i++) {
@@ -2124,17 +2052,10 @@ function printEnumValueDefinition(path, options, print) {
 
     const result = [];
     result.push(decl);
-    result.push(props.length > 0 || !options.collapseEmptyBraces ? hardline : " ");
-    result.push(path.call(print, 'children', lBraceIdx));
 
-    if (props.length > 0) {
-        result.push(indent([hardline, props]));
-    }
-
-    if (props.length > 0 || !options.collapseEmptyBraces) {
-        result.push(hardline);
-    }
-    result.push(path.call(print, 'children', rBraceIdx));
+    props.length > 0
+        ? result.push(hardline, lBrace, indent([hardline, props]), hardline, rBrace)
+        : result.push(formatEmptyBraces(options, lBrace, rBrace));
 
     return result;
 }
@@ -2269,8 +2190,8 @@ function printQueryColumnDefinition(path, options, print) {
     const semicolon = semicolonIdx > -1 ? path.call(print, 'children', semicolonIdx) : [];
     const refExpression = refExpIdx > -1 ? path.call(print, 'children', refExpIdx) : [];
     const rparen = path.call(print, 'children', rparenIdx);
-    const lbrace = path.call(print, 'children', lbraceIdx);
-    const rbrace = path.call(print, 'children', rbraceIdx);
+    const lBrace = path.call(print, 'children', lbraceIdx);
+    const rBrace = path.call(print, 'children', rbraceIdx);
     const properties =
         propsListIdx > -1
             ? path.call(print, 'children', propsListIdx)
@@ -2280,16 +2201,12 @@ function printQueryColumnDefinition(path, options, print) {
     if (semicolonIdx > -1)
         content.push(semicolon, " ", refExpression);
 
-    content.push(rparen)
-    content.push(properties.length > 0 || !options.collapseEmptyBraces ? hardline : " ");
-    content.push(lbrace);
-    if (properties.length > 0)
-        content.push(indent([hardline, ...properties]));
+    content.push(rparen);
 
-    if (properties.length > 0 || !options.collapseEmptyBraces) {
-        content.push(hardline)
-    }
-    content.push(rbrace);
+    properties.length > 0
+        ? content.push(hardline, lBrace, indent([hardline, ...properties]), hardline, rBrace)
+        : content.push(formatEmptyBraces(options, lBrace, rBrace));
+
     return content;
 }
 
@@ -2350,8 +2267,8 @@ function printReportDataItemDefinition(path, options, print) {
     const semicolon = path.call(print, 'children', 3);
     const sourceExpression = path.call(print, 'children', 4);
     const rparen = path.call(print, 'children', 5);
-    const lbrace = path.call(print, 'children', 6);
-    const rbrace = path.call(print, 'children', children.length - 1);
+    const lBrace = path.call(print, 'children', 6);
+    const rBrace = path.call(print, 'children', children.length - 1);
 
     const elements = [];
     for (let i = 7; i < children.length - 1; i++) {  // All elements between lbrace and rbrace
@@ -2359,18 +2276,11 @@ function printReportDataItemDefinition(path, options, print) {
     }
 
     const dataItem = [keyword, lparen, dataItemName, semicolon, " ", sourceExpression, rparen];
-    dataItem.push(elements.length > 0 || !options.collapseEmptyBraces ? hardline : " ");
-    dataItem.push(lbrace);
 
-    if (elements.length > 0) {
-        dataItem.push(indent([hardline, join([hardline, hardline], elements)]));
-    }
+    elements.length > 0
+        ? dataItem.push(hardline, lBrace, indent([hardline, join([hardline, hardline], elements)]), hardline, rBrace)
+        : dataItem.push(formatEmptyBraces(options, lBrace, rBrace));
 
-    if (elements.length > 0 || !options.collapseEmptyBraces) {
-        dataItem.push(hardline);
-    }
-
-    dataItem.push(rbrace);
     return dataItem;
 }
 
@@ -2447,8 +2357,8 @@ function printLabelsDefinition(path, options, print) {
     // Grammar: LABELS LBRACE labelDefinition* RBRACE
     const children = path.node.children;
     const keyword = path.call(print, 'children', 0);
-    const lbrace = path.call(print, 'children', 1);
-    const rbrace = path.call(print, 'children', children.length - 1);
+    const lBrace = path.call(print, 'children', 1);
+    const rBrace = path.call(print, 'children', children.length - 1);
 
     const labels = [];
     for (let i = 2; i < children.length - 1; i++) {
@@ -2460,17 +2370,11 @@ function printLabelsDefinition(path, options, print) {
     }
 
     const labelsDocs = [keyword];
-    labelsDocs.push(labels.length > 0 || !options.collapseEmptyBraces ? hardline : " ");
-    labelsDocs.push(lbrace);
-    if (labels.length > 0) {
-        labelsDocs.push(indent([hardline, join(hardline, labels)]));
-    }
 
-    if (labels.length > 0 || !options.collapseEmptyBraces) {
-        labelsDocs.push(hardline);
-    }
+    labels.length > 0
+        ? labelsDocs.push(hardline, lBrace, indent([hardline, join(hardline, labels)]), hardline, rBrace)
+        : labelsDocs.push(formatEmptyBraces(options, lBrace, rBrace));
 
-    labelsDocs.push(rbrace);
     return labelsDocs;
 }
 
@@ -2566,9 +2470,8 @@ function printXmlPortElementWithDataSource(path, options, print) {
 function printXmlPortElementContent(path, options, print) {
     const lBraceIdx = path.node.children.findIndex(c => c.symbol?.type === ALParser.LBRACE);
     const content = [];
-
-    content.push(lBraceIdx < path.node.children.length - 2 || !options.collapseEmptyBraces ? hardline : " ");
-    content.push(path.call(print, 'children', lBraceIdx));
+    const lBrace = path.call(print, 'children', lBraceIdx);
+    const rBrace = path.call(print, 'children', path.node.children.length - 1);
 
     const elements = [];
     let schemaElementsStart = lBraceIdx + 1;
@@ -2600,17 +2503,10 @@ function printXmlPortElementContent(path, options, print) {
         elements.push(triggers);
     }
 
-    if (lBraceIdx < path.node.children.length - 2) {
-        content.push(
-            indent([hardline, join(hardline, elements)]),
-            hardline
-        );
-    }
-    else if (!options.collapseEmptyBraces) {
-        content.push(hardline);
-    }
+    elements.length > 0
+        ? content.push(hardline, lBrace, indent([hardline, join(hardline, elements)]), hardline, rBrace)
+        : content.push(formatEmptyBraces(options, lBrace, rBrace));
 
-    content.push(path.call(print, 'children', path.node.children.length - 1));
     return content;
 }
 
@@ -2622,29 +2518,6 @@ function printControlAddInApiDeclarations(path, options, print) {
     // Grammar: (procedureDeclaration | eventDeclaration)*;
     return join(hardline, path.map(print, 'children'));
 }
-
-// function printControlAddInEventDeclaration(path, options, print) {
-//     // Grammar: procedureAttributesList? EVENT identifier LPAREN parameterList? RPAREN SEMICOLON?;
-//     const children = path.node.children;
-//     const docs = [
-//         path.call(print, 'children', 0),
-//         " ",
-//         path.call(print, 'children', 1),
-//         path.call(print, 'children', 2)
-//     ];
-
-//     const indentedLine = [];
-//     for (let i = 3; i < children.length; i++) {
-//         indentedLine.push(path.call(print, 'children', i));
-//     }
-
-//     if (children[children.length - 1].symbol?.type !== ALParser.SEMICOLON) {
-//         indentedLine.push(";");
-//     }
-
-//     docs.push(children[3]?.ruleIndex === ALParser.RULE_parameterList ? group(indent([softline, indentedLine])) : indentedLine);
-//     return docs;
-// }
 
 function printControlAddinImportsList(path, options, print) {
     // Grammar: IMAGES EQUAL STRING_LITERAL (COMMA STRING_LITERAL)*
@@ -2685,17 +2558,12 @@ function printReportDatasetModification(path, options, print) {
         columns.push(path.call(print, 'children', i));
     }
 
-    mod.push(columns.length > 0 || !options.collapseEmptyBraces ? hardline : " ");
-    mod.push(path.call(print, 'children', 4));
-    if (columns.length > 0) {
-        mod.push(indent([hardline, join(hardline, columns)]));
-    }
+    const lBrace = path.call(print, 'children', 4);
+    const rBrace = path.call(print, 'children', children.length - 1);
 
-    if (columns.length > 0 || !options.collapseEmptyBraces) {
-        mod.push(hardline);
-    }
-
-    mod.push(path.call(print, 'children', children.length - 1));
+    columns.length > 0
+        ? mod.push(hardline, lBrace, indent([hardline, join(hardline, columns)]), hardline, rBrace)
+        : mod.push(formatEmptyBraces(options, lBrace, rBrace));
 
     return mod;
 }
@@ -3059,10 +2927,12 @@ function printForLoopStatement(path, options, print) {
     //        | FOR loopIteratorExpression ASSIGN expression DOWNTO expression DO statement;
 
     const children = path.node.children;
+    const forKeyword = path.call(print, 'children', 0);
     const iterator = path.call(print, 'children', 1);
     const initialization = path.call(print, 'children', 3);
     const increment = path.call(print, 'children', 4);  // "to" or "downto" keyword
     const condition = path.call(print, 'children', 5);
+    const doKeyword = path.call(print, 'children', 6);
     let statement = (children.length > 7) ? path.call(print, 'children', 7) : [];
 
     // Statement executed inside the loop. If it's a compond statement "begin..end", do not insert a hardline before the statement.
@@ -3075,7 +2945,7 @@ function printForLoopStatement(path, options, print) {
         }
     }
 
-    return ["for ", iterator, " := ", initialization, ` ${increment} `, condition, " do", statement];
+    return [forKeyword, " ", iterator, " := ", initialization, " ", increment, " ", condition, " ", doKeyword, statement];
 }
 
 function printLoopIteratorExpression(path, options, print) {
@@ -3466,9 +3336,12 @@ function printDotNetAssemblyRef(path, options, print) {
         }
     }
 
-    elements.length > 0 || !options.collapseEmptyBraces
-        ? docs.push(hardline, lBrace, indent([hardline, join([hardline, hardline], elements)]), hardline, rBrace)
-        : docs(push(" ", lBrace, rBrace));
+    if (elements.length > 0) {
+        docs.push(hardline, lBrace, indent([hardline, join([hardline, hardline], elements)]), hardline, rBrace)
+    }
+    else {
+        docs.push(formatEmptyBraces(options, lBrace, rBrace));
+    }
 
     return docs;
 }
@@ -3486,9 +3359,7 @@ function printDotNetAssemblyType(path, options, print) {
         path.call(print, 'children', 5)
     );
 
-    options.collapseEmptyBraces
-        ? docs.push(" ", path.call(print, 'children', 6), path.call(print, 'children', 7))
-        : docs.push(hardline, path.call(print, 'children', 6), hardline, path.call(print, 'children', 7));
+    docs.push(formatEmptyBraces(options, path.call(print, 'children', 6), path.call(print, 'children', 7)));
 
     return docs;
 }
@@ -3824,6 +3695,14 @@ function isALObjectPropertiesList(node) {
         ALParser.RULE_queryPropertiesList,
         ALParser.RULE_tableExtPropertiesList
     ].includes(node.ruleIndex);
+}
+
+function formatEmptyBraces(options, lBrace, rBrace) {
+    if (options?.collapseEmptyBraces) {
+        return [" ", lBrace, " ", rBrace];
+    }
+
+    return [hardline, lBrace, hardline, rBrace];
 }
 
 export default {
