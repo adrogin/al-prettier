@@ -1,5 +1,9 @@
 # Changelog
 
+## Version v0.6.1
+
+- Support for new functionality in runtime 18: default interface implementation directly in the interface object.
+
 ## Version v0.6.0
 
 ### New features
