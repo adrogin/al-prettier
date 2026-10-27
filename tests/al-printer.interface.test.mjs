@@ -173,4 +173,63 @@ end;}`;
         return alFormat(code).then(formattedCode =>
             expect(formattedCode).to.equal(expected))
     });
+
+    describe('Interfaces containing procedures with implementation', () => {
+        it('Single procedure implementation in interface', () => {
+            const code = `interface "Interface With Implementation"{
+            procedure DoSomething()
+            begin
+            end;
+            }`;
+
+            const expected = `interface "Interface With Implementation"
+{
+  procedure DoSomething()
+  begin
+  end;
+}
+`;
+
+            return alFormat(code).then(formattedCode =>
+                expect(formattedCode).to.equal(expected))
+        });
+
+        it('Interface with both declarations and implementations', () => {
+            const code = `interface "Interface With Implementation"{
+            procedure DoSomething()
+            begin
+            end;
+            procedure DoSomethingElse()
+            begin
+            end;
+            procedure DoSomethingVeryDifferently()
+            procedure YetAnotherProcedureDeclaration()
+            procedure AndFinallyOneMoreImplementation()
+            begin
+            end;
+            }`;
+
+            const expected = `interface "Interface With Implementation"
+{
+  procedure DoSomething()
+  begin
+  end;
+
+  procedure DoSomethingElse()
+  begin
+  end;
+
+  procedure DoSomethingVeryDifferently();
+  procedure YetAnotherProcedureDeclaration();
+
+  procedure AndFinallyOneMoreImplementation()
+  begin
+  end;
+}
+`;
+
+            return alFormat(code).then(formattedCode =>
+                expect(formattedCode).to.equal(expected))
+        });
+    });
 });

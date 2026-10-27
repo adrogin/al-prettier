@@ -1882,7 +1882,7 @@ function printPageExtViewAddition(path, options, print) {
 
 function printInterfaceObject(path, options, print) {
     const children = path.node.children;
-    // Grammar: INTERFACE identifier (EXTENDS identifierWithNamespace)? LBRACE interfacePropertiesList? procedureDeclaration* RBRACE
+    // Grammar: INTERFACE identifier (EXTENDS identifiersList)? LBRACE interfacePropertiesList? (procedureDeclaration | proceduresList)* RBRACE;
     const keyword = path.call(print, 'children', 0);
     const objectName = path.call(print, 'children', 1);
 
@@ -1892,11 +1892,19 @@ function printInterfaceObject(path, options, print) {
         properties = path.call(print, 'children', propsListIdx);
     }
 
-    const procListStart = children.findIndex(c => c.ruleIndex === ALParser.RULE_procedureDeclaration);
+    const procListStart = children.findIndex(c => c.ruleIndex === ALParser.RULE_procedureDeclaration || c.ruleIndex === ALParser.RULE_proceduresList);
     const procListEnd = children.length - 1;
     const procDeclDocs = [];
     if (procListStart > -1) {
         for (let i = procListStart; i < procListEnd; i++) {
+            if (i > procListStart) {
+                if (children[i].ruleIndex !== children[i - 1].ruleIndex) {
+                   procDeclDocs.push([hardline, hardline]);
+                }
+                else {
+                    procDeclDocs.push(hardline);
+                }
+            }
             procDeclDocs.push(path.call(print, 'children', i));
         }
     }
@@ -1916,7 +1924,8 @@ function printInterfaceObject(path, options, print) {
         if (body.length > 0) {
             body.push(hardline);
         }
-        body.push(hardline, join([hardline], procDeclDocs));
+        // body.push(hardline, join([hardline], procDeclDocs));
+        body.push(hardline, procDeclDocs);
     }
 
     const lBraceIdx = children.findIndex(c => c.symbol?.type === ALParser.LBRACE);
